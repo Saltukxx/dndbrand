@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DnD Brand | Premium Giyim</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js" integrity="sha512-Tn2m0TIpgVyTzzvmxLNuqbSJH3JP8jm+Cy3hvHrW7ndTDcJ1w5mBiksqDBb8GpE2ksktFvDB/ykZ0mDpsZj20w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>DnD Brand</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html" class="active">Ana Sayfa</a></li>
+                    <li><a href="shop.html">Mağaza</a></li>
+                    <li><a href="about.html">Hakkımızda</a></li>
+                </ul>
+            </nav>
+            <div class="nav-icons">
+                <a href="search.html"><i class="fas fa-search"></i></a>
+                <a href="account.html"><i class="fas fa-user"></i></a>
+                <a href="cart.html"><i class="fas fa-shopping-bag"></i><span class="cart-count">0</span></a>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero" style="background-image: url('turuncukaza.jpg'); background-size: cover; background-position: center;">
+        <div class="hero-overlay"></div>
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title animate-text">Tarzınızı Yeniden <span class="highlight">Tanımlayın</span></h1>
+                <p class="hero-subtitle animate-text">Modern birey için lüks giyim koleksiyonu</p>
+                <div class="hero-buttons animate-text">
+                    <a href="shop.html" class="btn btn-primary">Şimdi Alışveriş Yap</a>
+                    <a href="collections.html" class="btn btn-secondary">Koleksiyonları Keşfet</a>
+                </div>
+                <div class="hero-features">
+                    <div class="hero-feature animate-up">
+                        <i class="fas fa-shipping-fast"></i>
+                        <span>Hızlı Teslimat</span>
+                    </div>
+                    <div class="hero-feature animate-up">
+                        <i class="fas fa-undo"></i>
+                        <span>30 Gün İade</span>
+                    </div>
+                    <div class="hero-feature animate-up">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Güvenli Ödeme</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-scroll-indicator">
+            <span>Keşfet</span>
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </section>
+
+    <section class="featured-collections">
+        <div class="container">
+            <h2 class="section-title">Öne Çıkan Koleksiyonlar</h2>
+            <div class="collection-grid">
+                <div class="collection-item">
+                    <img src="images/collection-1.jpg" alt="Erkek Koleksiyonu">
+                    <div class="collection-info">
+                        <h3>Erkek Koleksiyonu</h3>
+                        <a href="collections.html?type=men" class="btn-secondary">Koleksiyonu Gör</a>
+                    </div>
+                </div>
+                <div class="collection-item">
+                    <img src="images/collection-2.jpg" alt="Kadın Koleksiyonu">
+                    <div class="collection-info">
+                        <h3>Kadın Koleksiyonu</h3>
+                        <a href="collections.html?type=women" class="btn-secondary">Koleksiyonu Gör</a>
+                    </div>
+                </div>
+                <div class="collection-item">
+                    <img src="images/collection-3.jpg" alt="Aksesuarlar">
+                    <div class="collection-info">
+                        <h3>Aksesuarlar</h3>
+                        <a href="collections.html?type=accessories" class="btn-secondary">Koleksiyonu Gör</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="trending">
+        <div class="container">
+            <h2 class="section-title">Trend Ürünler</h2>
+            <div class="product-grid">
+                <!-- Products will be loaded dynamically from shop products -->
+            </div>
+            <div class="view-all">
+                <a href="shop.html" class="btn">Tüm Ürünleri Gör</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="newsletter">
+        <div class="container">
+            <div class="newsletter-content">
+                <h2>Özel Listemize Katılın</h2>
+                <p>Yeni koleksiyonlar ve özel teklifler hakkında güncellemeler almak için abone olun.</p>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="E-posta adresiniz" required>
+                    <button type="submit" class="btn">Abone Ol</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>DnD Brand</h3>
+                    <p>Modern birey için premium giyim. Özel koleksiyonlarımızla tarzınızı yeniden tanımlayın.</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-pinterest-p"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Alışveriş</h3>
+                    <ul>
+                        <li><a href="collections.html?type=men">Erkek Koleksiyonu</a></li>
+                        <li><a href="collections.html?type=women">Kadın Koleksiyonu</a></li>
+                        <li><a href="collections.html?type=accessories">Aksesuarlar</a></li>
+                        <li><a href="shop.html?sale=true">İndirim</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Yardım</h3>
+                    <ul>
+                        <li><a href="contact.html">Bize Ulaşın</a></li>
+                        <li><a href="shipping.html">Kargo Bilgileri</a></li>
+                        <li><a href="returns.html">İade ve Değişim</a></li>
+                        <li><a href="faq.html">Sıkça Sorulan Sorular</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Hakkımızda</h3>
+                    <ul>
+                        <li><a href="about.html">Hikayemiz</a></li>
+                        <li><a href="sustainability.html">Sürdürülebilirlik</a></li>
+                        <li><a href="careers.html">Kariyer</a></li>
+                        <li><a href="privacy.html">Gizlilik Politikası</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 DnD Brand. Tüm hakları saklıdır.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script src="storage-manager.js"></script>
+    <script src="index.js"></script>
+</body>
+</html> 

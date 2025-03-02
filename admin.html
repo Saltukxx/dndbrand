@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yönetim Paneli | DnD Brand</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="admin.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="admin-body">
+    <div class="admin-container">
+        <aside class="admin-sidebar">
+            <div class="admin-logo">
+                <h2>DnD Brand</h2>
+                <p>Yönetim Paneli</p>
+            </div>
+            <nav class="admin-nav">
+                <ul>
+                    <li><a href="#" class="active" data-section="dashboard"><i class="fas fa-tachometer-alt"></i> Gösterge Paneli</a></li>
+                    <li><a href="#" data-section="products"><i class="fas fa-box"></i> Ürünler</a></li>
+                    <li><a href="#" data-section="orders"><i class="fas fa-shopping-cart"></i> Siparişler</a></li>
+                    <li><a href="#" data-section="customers"><i class="fas fa-users"></i> Müşteriler</a></li>
+                    <li><a href="#" data-section="analytics"><i class="fas fa-chart-line"></i> Analitik</a></li>
+                    <li><a href="#" data-section="settings"><i class="fas fa-cog"></i> Ayarlar</a></li>
+                </ul>
+            </nav>
+            <div class="admin-logout">
+                <a href="index.html"><i class="fas fa-sign-out-alt"></i> Çıkış Yap</a>
+            </div>
+        </aside>
+        
+        <main class="admin-content">
+            <header class="admin-header">
+                <div class="admin-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Ara...">
+                </div>
+                <div class="admin-user">
+                    <div class="admin-notifications">
+                        <i class="far fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </div>
+                    <div class="admin-profile">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iIzMzMyIvPjxwYXRoIGQ9Ik0yMCAxMEMxNy4yIDEwIDE1IDEyLjIgMTUgMTVDMTUgMTcuOCAxNy4yIDIwIDIwIDIwQzIyLjggMjAgMjUgMTcuOCAyNSAxNUMyNSAxMi4yIDIyLjggMTAgMjAgMTBaTTIwIDIyLjVDMTYuNjY2NyAyMi41IDEwIDI0LjE2NjcgMTAgMjcuNVYzMEgzMFYyNy41QzMwIDI0LjE2NjcgMjMuMzMzMyAyMi41IDIwIDIyLjVaIiBmaWxsPSIjOTk5Ii8+PC9zdmc+" alt="Admin">
+                        <span>Admin</span>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="admin-section active">
+                <h1 class="section-title">Gösterge Paneli</h1>
+                
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Toplam Satış</h3>
+                            <p class="stat-value">₺24,500</p>
+                            <p class="stat-change positive"><i class="fas fa-arrow-up"></i> 12.5%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Toplam Müşteri</h3>
+                            <p class="stat-value">142</p>
+                            <p class="stat-change positive"><i class="fas fa-arrow-up"></i> 8.3%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Toplam Ürün</h3>
+                            <p class="stat-value">38</p>
+                            <p class="stat-change neutral"><i class="fas fa-minus"></i> 0%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>İadeler</h3>
+                            <p class="stat-value">3</p>
+                            <p class="stat-change negative"><i class="fas fa-arrow-down"></i> 2.1%</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-charts">
+                    <div class="chart-container">
+                        <h3>Satış İstatistikleri</h3>
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>En Çok Satan Ürünler</h3>
+                        <canvas id="productsChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="recent-orders">
+                    <div class="section-header">
+                        <h3>Son Siparişler</h3>
+                        <a href="#" class="view-all" data-section="orders">Tümünü Gör</a>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Sipariş No</th>
+                                    <th>Müşteri</th>
+                                    <th>Tarih</th>
+                                    <th>Tutar</th>
+                                    <th>Durum</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#ORD-2305</td>
+                                    <td>Ahmet Yılmaz</td>
+                                    <td>12 Kas 2023</td>
+                                    <td>₺1,250.00</td>
+                                    <td><span class="status-badge completed">Tamamlandı</span></td>
+                                    <td><a href="#" class="action-btn"><i class="fas fa-eye"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>#ORD-2304</td>
+                                    <td>Ayşe Demir</td>
+                                    <td>11 Kas 2023</td>
+                                    <td>₺3,420.50</td>
+                                    <td><span class="status-badge processing">İşleniyor</span></td>
+                                    <td><a href="#" class="action-btn"><i class="fas fa-eye"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>#ORD-2303</td>
+                                    <td>Mehmet Kaya</td>
+                                    <td>10 Kas 2023</td>
+                                    <td>₺750.00</td>
+                                    <td><span class="status-badge shipped">Kargoda</span></td>
+                                    <td><a href="#" class="action-btn"><i class="fas fa-eye"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>#ORD-2302</td>
+                                    <td>Zeynep Şahin</td>
+                                    <td>09 Kas 2023</td>
+                                    <td>₺2,100.00</td>
+                                    <td><span class="status-badge completed">Tamamlandı</span></td>
+                                    <td><a href="#" class="action-btn"><i class="fas fa-eye"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>#ORD-2301</td>
+                                    <td>Mustafa Öztürk</td>
+                                    <td>08 Kas 2023</td>
+                                    <td>₺890.00</td>
+                                    <td><span class="status-badge cancelled">İptal Edildi</span></td>
+                                    <td><a href="#" class="action-btn"><i class="fas fa-eye"></i></a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Products Section -->
+            <section id="products" class="admin-section">
+                <h1 class="section-title">Ürünler</h1>
+                
+                <div class="products-header">
+                    <div class="products-filters">
+                        <div class="filter-group">
+                            <input type="text" placeholder="Ürün ara..." class="product-search">
+                        </div>
+                        <div class="filter-group">
+                            <select class="filter-select">
+                                <option value="">Durum Seç</option>
+                                <option value="active">Aktif</option>
+                                <option value="inactive">Pasif</option>
+                                <option value="out-of-stock">Stokta Yok</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <select class="filter-select">
+                                <option value="">Kategori Seç</option>
+                                <option value="erkek">Erkek Giyim</option>
+                                <option value="kadin">Kadın Giyim</option>
+                                <option value="aksesuar">Aksesuarlar</option>
+                                <option value="ayakkabi">Ayakkabı</option>
+                                <option value="canta">Çanta</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="products-actions">
+                        <button class="btn btn-primary add-product-btn">
+                            <i class="fas fa-plus"></i> Yeni Ürün Ekle
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="admin-table products-table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" class="select-all-checkbox">
+                                </th>
+                                <th>Ürün</th>
+                                <th>SKU</th>
+                                <th>Kategori</th>
+                                <th>Fiyat</th>
+                                <th>Stok</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="product-checkbox">
+                                </td>
+                                <td class="product-cell">
+                                    <img src="images/product-1.jpg" alt="Premium Deri Ceket">
+                                    <span>Premium Deri Ceket</span>
+                                </td>
+                                <td>DND-LC-001</td>
+                                <td>Erkek</td>
+                                <td>₺4,999.99</td>
+                                <td>15</td>
+                                <td><span class="status-badge active">Aktif</span></td>
+                                <td class="actions-cell">
+                                    <a href="#" class="action-btn edit-btn"><i class="fas fa-edit"></i></a>
+                                    <a href="#" class="action-btn delete-btn"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="product-checkbox">
+                                </td>
+                                <td class="product-cell">
+                                    <img src="images/product-2.jpg" alt="Slim Fit Pantolon">
+                                    <span>Slim Fit Pantolon</span>
+                                </td>
+                                <td>DND-SP-002</td>
+                                <td>Erkek</td>
+                                <td>₺1,299.99</td>
+                                <td>28</td>
+                                <td><span class="status-badge active">Aktif</span></td>
+                                <td class="actions-cell">
+                                    <a href="#" class="action-btn edit-btn"><i class="fas fa-edit"></i></a>
+                                    <a href="#" class="action-btn delete-btn"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="product-checkbox">
+                                </td>
+                                <td class="product-cell">
+                                    <img src="images/product-3.jpg" alt="Kaşmir Kazak">
+                                    <span>Kaşmir Kazak</span>
+                                </td>
+                                <td>DND-CS-003</td>
+                                <td>Erkek</td>
+                                <td>₺2,799.99</td>
+                                <td>10</td>
+                                <td><span class="status-badge active">Aktif</span></td>
+                                <td class="actions-cell">
+                                    <a href="#" class="action-btn edit-btn"><i class="fas fa-edit"></i></a>
+                                    <a href="#" class="action-btn delete-btn"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="product-checkbox">
+                                </td>
+                                <td class="product-cell">
+                                    <img src="images/product-4.jpg" alt="Terzi Dikimi Yün Palto">
+                                    <span>Terzi Dikimi Yün Palto</span>
+                                </td>
+                                <td>DND-WC-004</td>
+                                <td>Erkek</td>
+                                <td>₺4,299.99</td>
+                                <td>8</td>
+                                <td><span class="status-badge active">Aktif</span></td>
+                                <td class="actions-cell">
+                                    <a href="#" class="action-btn edit-btn"><i class="fas fa-edit"></i></a>
+                                    <a href="#" class="action-btn delete-btn"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="product-checkbox">
+                                </td>
+                                <td class="product-cell">
+                                    <img src="images/product-5.jpg" alt="Tasarım Bluz">
+                                    <span>Tasarım Bluz</span>
+                                </td>
+                                <td>DND-WB-005</td>
+                                <td>Kadın</td>
+                                <td>₺1,899.99</td>
+                                <td>0</td>
+                                <td><span class="status-badge out-of-stock">Stokta Yok</span></td>
+                                <td class="actions-cell">
+                                    <a href="#" class="action-btn edit-btn"><i class="fas fa-edit"></i></a>
+                                    <a href="#" class="action-btn delete-btn"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination">
+                    <a href="#" class="prev-page"><i class="fas fa-chevron-left"></i></a>
+                    <a href="#" class="active">1</a>
+                    <a href="#">2</a>
+                    <a href="#">3</a>
+                    <a href="#" class="next-page"><i class="fas fa-chevron-right"></i></a>
+                </div>
+            </section>
+            
+            <!-- Product Modal -->
+            <div id="productModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Yeni Ürün Ekle</h3>
+                        <span class="close-modal">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <form id="productForm">
+                            <input type="hidden" id="productId" name="productId">
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="productName">Ürün Adı*</label>
+                                    <input type="text" id="productName" name="productName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="productPrice">Fiyat (₺)*</label>
+                                    <input type="text" id="productPrice" name="productPrice" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="productCategory">Kategori*</label>
+                                    <select id="productCategory" name="productCategory" required>
+                                        <option value="">Kategori Seçin</option>
+                                        <option value="erkek">Erkek Giyim</option>
+                                        <option value="kadin">Kadın Giyim</option>
+                                        <option value="aksesuar">Aksesuarlar</option>
+                                        <option value="ayakkabi">Ayakkabı</option>
+                                        <option value="canta">Çanta</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="productSKU">SKU</label>
+                                    <input type="text" id="productSKU" name="productSKU" readonly>
+                                    <small>Otomatik oluşturulur</small>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="productDescription">Ürün Açıklaması</label>
+                                <textarea id="productDescription" name="productDescription" rows="4"></textarea>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Renk Seçenekleri</label>
+                                    <div class="checkbox-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="colors" value="siyah"> Siyah
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="colors" value="beyaz"> Beyaz
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="colors" value="kirmizi"> Kırmızı
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="colors" value="mavi"> Mavi
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="colors" value="yesil"> Yeşil
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Beden Seçenekleri</label>
+                                    <div class="checkbox-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="sizes" value="xs"> XS
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="sizes" value="s"> S
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="sizes" value="m"> M
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="sizes" value="l"> L
+                                        </label>
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="sizes" value="xl"> XL
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Ürün Görselleri</label>
+                                <div class="file-upload">
+                                    <input type="file" id="productImages" name="productImages" multiple accept="image/*">
+                                    <label for="productImages" class="file-upload-label">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <span>Görselleri Sürükleyin veya Tıklayın</span>
+                                        <small>En fazla 5 görsel, her biri 2MB'dan küçük</small>
+                                    </label>
+                                </div>
+                                <div class="image-preview"></div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="productStatus">Durum</label>
+                                    <select id="productStatus" name="productStatus">
+                                        <option value="active">Aktif</option>
+                                        <option value="inactive">Pasif</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="productFeatured">Öne Çıkan</label>
+                                    <select id="productFeatured" name="productFeatured">
+                                        <option value="0">Hayır</option>
+                                        <option value="1">Evet</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="productStock">Stok Miktarı</label>
+                                <input type="number" id="productStock" name="productStock" min="0" value="0">
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary close-modal">İptal</button>
+                                <button type="submit" class="btn btn-primary">Kaydet</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Delete Confirmation Modal -->
+            <div id="deleteModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Ürünü Sil</h3>
+                        <span class="close-modal">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p>Bu ürünü silmek istediğinizden emin misiniz?</p>
+                        <p><strong id="deleteProductName"></strong></p>
+                        <input type="hidden" id="deleteProductId">
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancelDelete">İptal</button>
+                            <button type="button" class="btn btn-danger" id="confirmDelete">Sil</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Orders Section -->
+            <section id="orders" class="admin-section">
+                <h1 class="section-title">Siparişler</h1>
+                
+                <div class="orders-filters">
+                    <div class="filter-group">
+                        <input type="text" placeholder="Sipariş ara..." class="order-search">
+                    </div>
+                    <div class="filter-group">
+                        <select class="filter-select">
+                            <option value="">Durum Seç</option>
+                            <option value="processing">İşleniyor</option>
+                            <option value="shipped">Kargoda</option>
+                            <option value="completed">Tamamlandı</option>
+                            <option value="cancelled">İptal Edildi</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <input type="date" class="date-filter">
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="admin-table orders-table">
+                        <thead>
+                            <tr>
+                                <th>Sipariş No</th>
+                                <th>Müşteri</th>
+                                <th>Tarih</th>
+                                <th>Ürünler</th>
+                                <th>Tutar</th>
+                                <th>Ödeme</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#ORD-2305</td>
+                                <td>Ahmet Yılmaz</td>
+                                <td>12 Kas 2023</td>
+                                <td>3 ürün</td>
+                                <td>₺1,250.00</td>
+                                <td>Kredi Kartı</td>
+                                <td><span class="status-badge completed">Tamamlandı</span></td>
+                                <td class="actions-cell">
+                                    <a href="#" class="action-btn view-btn"><i class="fas fa-eye"></i></a>
+                                    <a href="#" class="action-btn print-btn"><i class="fas fa-print"></i></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#ORD-2304</td>
+                                <td>Ayşe Demir</td>
+                                <td>11 Kas 2023</td>
+                                <td>2 ürün</td>
+                                <td>₺3,420.50</td>
+                                <td>Kredi Kartı</td>
+                                <td><span class="status-badge processing">İşleniyor</span></td>
+                                <td class="actions-cell">
+                                    <a href="#" class="action-btn view-btn"><i class="fas fa-eye"></i></a>
+                                    <a href="#" class="action-btn print-btn"><i class="fas fa-print"></i></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#ORD-2303</td>
+                                <td>Mehmet Kaya</td>
+                                <td>10 Kas 2023</td>
+                                <td>1 ürün</td>
+                                <td>₺750.00</td>
+                                <td>Havale</td>
+                                <td><span class="status-badge shipped">Kargoda</span></td>
+                                <td class="actions-cell">
+                                    <a href="#" class="action-btn view-btn"><i class="fas fa-eye"></i></a>
+                                    <a href="#" class="action-btn print-btn"><i class="fas fa-print"></i></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#ORD-2302</td>
+                                <td>Zeynep Şahin</td>
+                                <td>09 Kas 2023</td>
+                                <td>4 ürün</td>
+                                <td>₺2,100.00</td>
+                                <td>Kredi Kartı</td>
+                                <td><span class="status-badge completed">Tamamlandı</span></td>
+                                <td class="actions-cell">
+                                    <a href="#" class="action-btn view-btn"><i class="fas fa-eye"></i></a>
+                                    <a href="#" class="action-btn print-btn"><i class="fas fa-print"></i></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#ORD-2301</td>
+                                <td>Mustafa Öztürk</td>
+                                <td>08 Kas 2023</td>
+                                <td>2 ürün</td>
+                                <td>₺890.00</td>
+                                <td>Kapıda Ödeme</td>
+                                <td><span class="status-badge cancelled">İptal Edildi</span></td>
+                                <td class="actions-cell">
+                                    <a href="#" class="action-btn view-btn"><i class="fas fa-eye"></i></a>
+                                    <a href="#" class="action-btn print-btn"><i class="fas fa-print"></i></a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination">
+                    <a href="#" class="prev-page"><i class="fas fa-chevron-left"></i></a>
+                    <a href="#" class="active">1</a>
+                    <a href="#">2</a>
+                    <a href="#">3</a>
+                    <a href="#" class="next-page"><i class="fas fa-chevron-right"></i></a>
+                </div>
+            </section>
+            
+            <!-- Customers Section -->
+            <section id="customers" class="admin-section">
+                <h1 class="section-title">Müşteriler</h1>
+                
+                <!-- Customers content will go here -->
+            </section>
+            
+            <!-- Analytics Section -->
+            <section id="analytics" class="admin-section">
+                <h1 class="section-title">Analitik</h1>
+                
+                <!-- Analytics content will go here -->
+            </section>
+            
+            <!-- Settings Section -->
+            <section id="settings" class="admin-section">
+                <h1 class="section-title">Ayarlar</h1>
+                
+                <!-- Settings content will go here -->
+            </section>
+        </main>
+    </div>
+    
+    <script src="admin.js"></script>
+    <script src="storage-manager.js"></script>
+</body>
+</html> 
