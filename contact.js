@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize scroll animations
     initializeScrollAnimations();
+    
+    // Initialize WhatsApp button animation
+    initializeWhatsAppButton();
 });
 
 /**
@@ -338,4 +341,43 @@ function showNotification(message, type = 'info') {
             }, 300);
         }
     }, 5000);
+}
+
+/**
+ * Initialize WhatsApp button animation
+ */
+function initializeWhatsAppButton() {
+    const whatsappFloat = document.querySelector('.whatsapp-float');
+    
+    if (whatsappFloat) {
+        // Add pulse animation
+        setInterval(() => {
+            whatsappFloat.classList.add('pulse');
+            
+            setTimeout(() => {
+                whatsappFloat.classList.remove('pulse');
+            }, 1000);
+        }, 3000);
+        
+        // Show button after scrolling
+        const showWhatsAppButton = () => {
+            if (window.scrollY > 300) {
+                whatsappFloat.style.opacity = '1';
+                whatsappFloat.style.transform = 'scale(1)';
+            } else {
+                whatsappFloat.style.opacity = '0';
+                whatsappFloat.style.transform = 'scale(0.8)';
+            }
+        };
+        
+        // Initial state
+        whatsappFloat.style.opacity = '0';
+        whatsappFloat.style.transform = 'scale(0.8)';
+        
+        // Add scroll event
+        window.addEventListener('scroll', showWhatsAppButton);
+        
+        // Check initial scroll position
+        showWhatsAppButton();
+    }
 } 
