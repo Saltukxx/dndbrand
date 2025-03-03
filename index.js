@@ -6,6 +6,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Load featured products
     loadFeaturedProducts();
+    
+    // Debug image loading
+    debugImageLoading();
+    
+    // Add this function to help debug file access issues
+    listFilesInDirectory();
 });
 
 // Get products from localStorage
@@ -153,4 +159,84 @@ function addToCart(productId) {
     
     // Update cart count
     updateCartCount();
-} 
+}
+
+function debugImageLoading() {
+    // Check background images
+    const heroSections = document.querySelectorAll('.hero');
+    
+    heroSections.forEach((section, index) => {
+        const bgImage = section.style.backgroundImage;
+        if (bgImage) {
+            const imgUrl = bgImage.replace('url("', '').replace('")', '');
+            console.log(`Hero section ${index + 1} background image: ${imgUrl}`);
+            
+            // Test if image exists
+            const img = new Image();
+            img.onload = function() {
+                console.log(`✅ Image loaded successfully: ${imgUrl}`);
+            };
+            img.onerror = function() {
+                console.error(`❌ Failed to load image: ${imgUrl}`);
+                // Try to suggest correct path
+                console.log(`Try checking if the file exists at this path or if it should be: dndbannersection3.jpg`);
+            };
+            img.src = imgUrl;
+        } else {
+            console.log(`Hero section ${index + 1} has no background image`);
+        }
+    });
+    
+    // Check regular images
+    const images = document.querySelectorAll('img');
+    images.forEach((img, index) => {
+        console.log(`Image ${index + 1} src: ${img.src}`);
+        
+        // Clone the image to test loading without affecting the page
+        const testImg = new Image();
+        testImg.onload = function() {
+            console.log(`✅ Image loaded successfully: ${img.src}`);
+        };
+        testImg.onerror = function() {
+            console.error(`❌ Failed to load image: ${img.src}`);
+        };
+        testImg.src = img.src;
+    });
+}
+
+// Add this function to help debug file access issues
+async function listFilesInDirectory() {
+    try {
+        // Request permission to access files
+        const dirHandle = await window.showDirectoryPicker();
+        
+        // List files in the directory
+        console.log("Files in directory:");
+        for await (const entry of dirHandle.values()) {
+            console.log(`- ${entry.name} (${entry.kind})`);
+        }
+    } catch (error) {
+        console.error("Error accessing files:", error);
+        console.log("Note: This feature only works in supported browsers and requires user permission");
+    }
+}
+
+// Call this function when a button is clicked
+document.addEventListener('DOMContentLoaded', function() {
+    const debugButton = document.createElement('button');
+    debugButton.textContent = "Debug: List Files";
+    debugButton.style.position = "fixed";
+    debugButton.style.bottom = "10px";
+    debugButton.style.left = "10px";
+    debugButton.style.zIndex = "9999";
+    debugButton.style.padding = "5px 10px";
+    debugButton.style.backgroundColor = "#333";
+    debugButton.style.color = "#fff";
+    debugButton.style.border = "none";
+    debugButton.style.borderRadius = "4px";
+    debugButton.style.cursor = "pointer";
+    
+    debugButton.addEventListener('click', listFilesInDirectory);
+    
+    document.body.appendChild(debugButton);
+}); 

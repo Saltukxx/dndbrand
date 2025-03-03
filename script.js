@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize hero animations
     initializeHeroAnimations();
+    
+    // Initialize mobile navigation
+    initializeMobileNavigation();
 });
 
 // Initialize mobile menu
@@ -58,8 +61,9 @@ function initializeNewsletterForm() {
 
 // Update cart count
 function updateCartCount() {
-    const cartCountElement = document.querySelector('.cart-count');
-    if (!cartCountElement) return;
+    const cartCountElements = document.querySelectorAll('.cart-count');
+    
+    if (cartCountElements.length === 0) return;
     
     // Get cart from localStorage
     let cart = localStorage.getItem('dndCart');
@@ -68,14 +72,20 @@ function updateCartCount() {
     // Calculate total quantity
     const totalQuantity = cart.reduce((total, item) => total + item.quantity, 0);
     
-    // Update cart count
-    cartCountElement.textContent = totalQuantity;
+    // Update cart count elements
+    cartCountElements.forEach(element => {
+        element.textContent = totalQuantity;
+    });
     
     // Show/hide cart count
     if (totalQuantity > 0) {
-        cartCountElement.style.display = 'flex';
+        cartCountElements.forEach(element => {
+            element.style.display = 'flex';
+        });
     } else {
-        cartCountElement.style.display = 'none';
+        cartCountElements.forEach(element => {
+            element.style.display = 'none';
+        });
     }
     
     // Update cart preview
@@ -429,28 +439,95 @@ function initializeHeroAnimations() {
         });
     }
     
-    // Improved parallax effect on hero background
-    const hero = document.querySelector('.hero');
-    if (hero) {
-        let initialBackgroundPosition = 'center';
-        
-        // Store the initial position
-        if (hero.style.backgroundPosition) {
-            initialBackgroundPosition = hero.style.backgroundPosition;
-        }
-        
+    // Advanced parallax effect on hero backgrounds
+    const heroBackgrounds = document.querySelectorAll('.hero-background');
+    if (heroBackgrounds.length > 0) {
         window.addEventListener('scroll', () => {
             const scrollPosition = window.scrollY;
-            const heroHeight = hero.offsetHeight;
             
-            // Only apply parallax if we're within the hero section
-            if (scrollPosition <= heroHeight) {
-                // Calculate a smooth parallax effect (slower movement)
-                const yPos = scrollPosition * 0.3; // Reduced speed for smoother effect
-                hero.style.backgroundPosition = `center calc(${initialBackgroundPosition} + ${yPos}px)`;
-            }
+            heroBackgrounds.forEach(background => {
+                const heroSection = background.closest('.hero');
+                const heroRect = heroSection.getBoundingClientRect();
+                const heroTop = heroRect.top + scrollPosition;
+                const heroBottom = heroTop + heroRect.height;
+                
+                // Only apply parallax if the hero section is in view
+                if (scrollPosition + window.innerHeight > heroTop && scrollPosition < heroBottom) {
+                    const relativeScroll = scrollPosition - heroTop;
+                    const speed = 0.5; // Adjust this value to control the parallax speed
+                    
+                    // Calculate the new position
+                    const yPos = relativeScroll * speed;
+                    
+                    // Apply the transform with a 3D effect for better performance
+                    background.style.transform = `translate3d(0, ${yPos}px, 0)`;
+                }
+            });
         });
     }
+    
+    // Animate hero content elements
+    const animateHeroElements = () => {
+        const heroTitle = document.querySelector('.hero-title');
+        const heroSubtitle = document.querySelector('.hero-subtitle');
+        const heroButtons = document.querySelector('.hero-buttons');
+        const heroFeatures = document.querySelectorAll('.hero-feature');
+        
+        if (heroTitle && heroSubtitle && heroButtons) {
+            setTimeout(() => {
+                heroTitle.classList.add('animate-text');
+                
+                setTimeout(() => {
+                    heroSubtitle.classList.add('animate-text');
+                    
+                    setTimeout(() => {
+                        heroButtons.classList.add('animate-text');
+                        
+                        // Animate features with staggered delay
+                        heroFeatures.forEach((feature, index) => {
+                            setTimeout(() => {
+                                feature.classList.add('animate-up');
+                            }, 200 * (index + 1));
+                        });
+                    }, 200);
+                }, 200);
+            }, 300);
+        }
+    };
+    
+    // Run hero animations on page load
+    animateHeroElements();
+    
+    // Animate banner hero sections when they come into view
+    const animateBannerHeroes = () => {
+        const bannerHeroes = document.querySelectorAll('.banner-hero');
+        
+        bannerHeroes.forEach(banner => {
+            const bannerRect = banner.getBoundingClientRect();
+            const screenPosition = window.innerHeight * 0.8;
+            
+            if (bannerRect.top < screenPosition) {
+                banner.classList.add('animate');
+                
+                // Add animation classes to banner content
+                const title = banner.querySelector('.banner-hero-title');
+                const subtitle = banner.querySelector('.banner-hero-subtitle');
+                const button = banner.querySelector('.banner-hero-button');
+                
+                if (title && subtitle && button) {
+                    title.classList.add('animate-text');
+                    subtitle.classList.add('animate-text');
+                    button.classList.add('animate-text');
+                }
+            }
+        });
+    };
+    
+    // Run on load
+    animateBannerHeroes();
+    
+    // Run on scroll
+    window.addEventListener('scroll', animateBannerHeroes);
     
     // Animate elements when they come into view
     const animateOnScroll = () => {
@@ -471,4 +548,64 @@ function initializeHeroAnimations() {
     
     // Run on scroll
     window.addEventListener('scroll', animateOnScroll);
+}
+
+// Mobile Navigation
+function initializeMobileNavigation() {
+    const mobileMenuToggle = document.createElement('button');
+    mobileMenuToggle.className = 'mobile-menu-toggle';
+    mobileMenuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+    
+    const navIcons = document.querySelector('.nav-icons');
+    navIcons.parentNode.insertBefore(mobileMenuToggle, navIcons);
+    
+    const nav = document.querySelector('nav');
+    
+    const navClose = document.createElement('button');
+    navClose.className = 'nav-close';
+    navClose.innerHTML = '<i class="fas fa-times"></i>';
+    nav.appendChild(navClose);
+    
+    const mobileMenuOverlay = document.createElement('div');
+    mobileMenuOverlay.className = 'mobile-menu-overlay';
+    document.body.appendChild(mobileMenuOverlay);
+    
+    mobileMenuToggle.addEventListener('click', function() {
+        nav.classList.add('active');
+        mobileMenuOverlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    });
+    
+    navClose.addEventListener('click', function() {
+        nav.classList.remove('active');
+        mobileMenuOverlay.style.display = 'none';
+        document.body.style.overflow = '';
+    });
+    
+    mobileMenuOverlay.addEventListener('click', function() {
+        nav.classList.remove('active');
+        mobileMenuOverlay.style.display = 'none';
+        document.body.style.overflow = '';
+    });
+}
+
+// Initialize cart preview
+function initializeCartPreview() {
+    const cartIcon = document.querySelector('.cart-icon');
+    
+    if (cartIcon) {
+        cartIcon.addEventListener('mouseenter', function() {
+            const cartPreview = this.querySelector('.cart-preview');
+            if (cartPreview) {
+                cartPreview.classList.add('active');
+            }
+        });
+        
+        cartIcon.addEventListener('mouseleave', function() {
+            const cartPreview = this.querySelector('.cart-preview');
+            if (cartPreview) {
+                cartPreview.classList.remove('active');
+            }
+        });
+    }
 } 
