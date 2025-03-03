@@ -284,7 +284,7 @@
     }
     
     .cart-sidebar {
-        margin-top: 30px;
+        margin-top: 40px;
     }
 }
 
@@ -295,17 +295,19 @@
     
     .cart-item {
         flex-wrap: wrap;
-        position: relative;
         padding: 20px 0;
+        position: relative;
     }
     
     .cart-item-product {
-        flex: 100%;
+        flex: 0 0 100%;
         margin-bottom: 15px;
     }
     
     .cart-item-price, .cart-item-quantity, .cart-item-total {
         flex: 1;
+        text-align: left;
+        margin-bottom: 10px;
     }
     
     .cart-item-remove {
@@ -316,23 +318,36 @@
     
     .cart-item-price::before, .cart-item-quantity::before, .cart-item-total::before {
         content: attr(data-label);
+        font-weight: 600;
         display: block;
-        font-size: 0.8rem;
-        color: #999;
         margin-bottom: 5px;
+        color: #ccc;
+        font-size: 0.8rem;
     }
     
     .coupon-form {
-        flex-direction: column;
+        margin-top: 20px;
     }
     
     .coupon-form input {
-        width: 100%;
-        margin-bottom: 10px;
+        font-size: 14px;
     }
     
     .coupon-form button {
-        width: 100%;
+        font-size: 14px;
+    }
+    
+    .cart-summary {
+        padding: 20px;
+    }
+    
+    .cart-summary h2 {
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+    }
+    
+    .summary-item, .summary-total {
+        font-size: 0.95rem;
     }
 }
 
@@ -340,20 +355,90 @@
     .cart-item-product {
         flex-direction: column;
         align-items: flex-start;
+        gap: 15px;
     }
     
     .cart-item-image {
         width: 80px;
         height: 80px;
-        margin-bottom: 10px;
     }
     
     .cart-summary-row {
         flex-direction: column;
-        align-items: flex-start;
     }
     
     .cart-summary-label {
         margin-bottom: 5px;
     }
+    
+    .quantity-selector {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .quantity-selector input {
+        width: 50px;
+    }
+    
+    .checkout-btn {
+        padding: 12px 20px;
+        font-size: 0.9rem;
+    }
+    
+    .continue-shopping {
+        margin-top: 20px;
+        text-align: center;
+    }
+    
+    .empty-cart i {
+        font-size: 3rem;
+    }
+    
+    .empty-cart h2 {
+        font-size: 1.5rem;
+    }
+    
+    .empty-cart p {
+        font-size: 0.9rem;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) {
+    .remove-button:hover {
+        color: #999;
+    }
+    
+    .remove-button:active {
+        color: #f44336;
+    }
+    
+    .quantity-selector button:hover {
+        background-color: #1a1a1a;
+    }
+    
+    .quantity-selector button:active {
+        background-color: #333;
+    }
+}
+
+/* Improve tap targets for mobile */
+.remove-button,
+.quantity-selector button,
+.coupon-input .btn,
+.checkout-btn,
+.continue-shopping a {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-selector {
+    height: 44px;
+}
+
+.quantity-selector input {
+    height: 44px;
 } 

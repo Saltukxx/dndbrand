@@ -442,7 +442,7 @@
 @media (max-width: 992px) {
     .product-layout {
         grid-template-columns: 1fr;
-        gap: 40px;
+        gap: 30px;
     }
     
     .tab-header {
@@ -450,30 +450,67 @@
     }
     
     .tab {
-        padding: 12px 20px;
+        flex: 0 0 auto;
+        margin-bottom: 10px;
+    }
+    
+    .product-gallery {
+        max-width: 600px;
+        margin: 0 auto;
     }
 }
 
 @media (max-width: 768px) {
     .form-row {
-        grid-template-columns: 1fr;
+        flex-direction: column;
         gap: 15px;
     }
     
     .product-actions {
-        flex-direction: column;
+        flex-wrap: wrap;
     }
     
     .wishlist-btn {
         width: 100%;
-        height: auto;
-        padding: 12px 30px;
+        height: 50px;
+        margin-top: 10px;
+    }
+    
+    .product-info h1 {
+        font-size: 2rem;
+    }
+    
+    .product-price {
+        font-size: 1.5rem;
+    }
+    
+    .thumbnail-images {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .product-meta p {
+        font-size: 13px;
+    }
+    
+    .product-share {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .product-share span {
+        margin-right: 0;
+    }
+    
+    .tab-pane {
+        padding: 20px 15px;
     }
 }
 
 @media (max-width: 576px) {
     .product-info h1 {
-        font-size: 2rem;
+        font-size: 1.8rem;
     }
     
     .tab {
@@ -485,4 +522,98 @@
         width: 60px;
         height: 60px;
     }
+    
+    .color-options, .size-options {
+        flex-wrap: wrap;
+    }
+    
+    .size-option {
+        width: 35px;
+        height: 35px;
+        font-size: 13px;
+    }
+    
+    .product-description {
+        font-size: 14px;
+    }
+    
+    .product-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .add-to-cart-btn, .wishlist-btn {
+        width: 100%;
+    }
+    
+    .review-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .review-date {
+        margin-left: 0;
+    }
+    
+    .additional-info {
+        font-size: 14px;
+    }
+    
+    .additional-info th, .additional-info td {
+        padding: 8px;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) {
+    .size-option:hover {
+        border-color: var(--border-color);
+    }
+    
+    .size-option.active {
+        border-color: var(--accent-color);
+    }
+    
+    .quantity-btn:hover {
+        background-color: var(--secondary-color);
+    }
+    
+    .quantity-btn:active {
+        background-color: var(--accent-color);
+    }
+    
+    .tab:hover {
+        color: var(--text-color);
+    }
+    
+    .tab.active {
+        color: var(--accent-color);
+    }
+    
+    .main-image:hover img {
+        transform: none;
+    }
+}
+
+/* Improve tap targets for mobile */
+.quantity-btn,
+.size-option,
+.color-option,
+.tab,
+.wishlist-btn,
+.add-to-cart-btn {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ensure form elements are properly sized for touch */
+.review-form input[type="text"],
+.review-form input[type="email"],
+.review-form textarea {
+    padding: 12px 15px;
+    font-size: 16px;
 } 

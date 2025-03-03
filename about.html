@@ -15,47 +15,48 @@
     <header>
         <div class="container">
             <div class="logo">
-                <h1>DnD Brand</h1>
+                <h1>DnD <span>Brand</span></h1>
             </div>
             <nav>
                 <ul>
                     <li><a href="index.html">Ana Sayfa</a></li>
-                    <li><a href="shop.html">Mağaza</a></li>
+                    <li><a href="shop.html">Koleksiyon</a></li>
                     <li><a href="about.html" class="active">Hakkımızda</a></li>
+                    <li><a href="contact.html">İletişim</a></li>
                 </ul>
             </nav>
             <div class="nav-icons">
-                <a href="search.html" class="search-icon"><i class="fas fa-search"></i></a>
-                <a href="account.html" class="account-icon"><i class="fas fa-user"></i></a>
+                <div class="nav-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="nav-icon">
+                    <a href="account.html"><i class="fas fa-user"></i></a>
+                </div>
                 <div class="cart-icon">
-                    <i class="fas fa-shopping-bag"></i>
-                    <span>Sepet</span>
+                    <a href="cart.html"><i class="fas fa-shopping-bag"></i></a>
                     <span class="cart-count">0</span>
-                    
-                    <div class="cart-preview">
-                        <div class="cart-preview-header">
-                            <h3>Sepetiniz</h3>
-                            <span class="cart-preview-count">0 Ürün</span>
-                        </div>
-                        <div class="cart-preview-items">
-                            <!-- Cart items will be added here by JavaScript -->
-                            <div class="empty-cart-message">Sepetiniz boş</div>
-                        </div>
-                        <div class="cart-preview-footer">
-                            <div class="cart-preview-total">
-                                <span>Toplam:</span>
-                                <span class="cart-preview-total-price">₺0.00</span>
-                            </div>
-                            <div class="cart-preview-actions">
-                                <a href="cart.html" class="view-cart">Sepeti Görüntüle</a>
-                                <a href="checkout.html" class="checkout">Ödeme</a>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+                <div class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
                 </div>
             </div>
         </div>
     </header>
+
+    <div class="mobile-menu">
+        <div class="close-menu">
+            <i class="fas fa-times"></i>
+        </div>
+        <ul>
+            <li><a href="index.html">Ana Sayfa</a></li>
+            <li><a href="shop.html">Koleksiyon</a></li>
+            <li><a href="about.html">Hakkımızda</a></li>
+            <li><a href="contact.html">İletişim</a></li>
+            <li><a href="account.html">Hesabım</a></li>
+            <li><a href="cart.html">Sepetim</a></li>
+        </ul>
+    </div>
+    <div class="mobile-menu-overlay"></div>
 
     <section class="page-header">
         <div class="container">

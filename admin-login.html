@@ -3,62 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yönetici Girişi | DnD Brand</title>
+    <title>Admin Girişi | DnD Brand</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="admin.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body class="admin-login-body">
     <div class="admin-login-container">
-        <div class="admin-login-card">
+        <div class="admin-login-form-container">
             <div class="admin-login-logo">
-                <h2>DnD Brand</h2>
+                <h1>DnD Brand</h1>
                 <p>Yönetim Paneli</p>
             </div>
+            
             <form id="adminLoginForm" class="admin-login-form">
                 <div class="form-group">
-                    <label for="username">Kullanıcı Adı</label>
-                    <input type="text" id="username" name="username" required>
+                    <label for="email">E-posta</label>
+                    <input type="email" id="email" name="email" required>
                 </div>
+                
                 <div class="form-group">
                     <label for="password">Şifre</label>
                     <input type="password" id="password" name="password" required>
                 </div>
+                
                 <div class="form-group">
-                    <button type="submit" class="btn btn-primary">Giriş Yap</button>
+                    <button type="submit" class="admin-login-btn">Giriş Yap</button>
                 </div>
-                <div class="login-error" style="display: none;">
-                    Geçersiz kullanıcı adı veya şifre!
-                </div>
+                
+                <div id="loginError" class="login-error"></div>
             </form>
+            
             <div class="admin-login-footer">
-                <a href="index.html">Ana Sayfaya Dön</a>
+                <p>&copy; 2023 DnD Brand. Tüm hakları saklıdır.</p>
             </div>
         </div>
     </div>
     
+    <script src="admin.js"></script>
     <script>
-        document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('adminLoginForm');
+            const loginError = document.getElementById('loginError');
             
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            
-            // In a real application, this would be a server-side authentication
-            // For demo purposes, we'll use a simple check
-            if (username === 'admin' && password === 'secure123') {
-                // Set authentication in session storage
-                sessionStorage.setItem('adminAuthenticated', 'true');
-                
-                // Redirect to admin dashboard
+            // Check if already logged in
+            if (sessionStorage.getItem('adminToken')) {
                 window.location.href = 'admin.html';
-            } else {
-                // Show error message
-                document.querySelector('.login-error').style.display = 'block';
             }
+            
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Clear previous error
+                loginError.textContent = '';
+                
+                // Get form data
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                try {
+                    // Call login function from admin.js
+                    await loginAdmin(email, password);
+                } catch (error) {
+                    // Show error message
+                    loginError.textContent = error.message || 'Login failed. Please check your credentials.';
+                }
+            });
         });
     </script>
 </body>

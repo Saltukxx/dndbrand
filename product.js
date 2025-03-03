@@ -1,7 +1,10 @@
 /**
  * DnD Brand E-commerce - Product Detail Page Functionality
- * Displays product details from admin panel
+ * Displays product details from backend API
  */
+
+// API URL
+const API_URL = 'http://localhost:5000/api';
 
 document.addEventListener('DOMContentLoaded', function() {
     // Get product ID from URL
@@ -10,307 +13,388 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (productId) {
         // Load product details
-        loadProductDetails(parseInt(productId));
+        loadProductDetails(productId);
     } else {
         // Redirect to shop page if no product ID
         window.location.href = 'shop.html';
     }
     
-    // Initialize cart count
-    updateCartCount();
+    // Initialize quantity selector
+    initializeQuantitySelector();
+    
+    // Initialize product image gallery
+    initializeProductGallery();
+    
+    // Initialize product tabs
+    initializeProductTabs();
+    
+    // Initialize related products
+    initializeRelatedProducts();
 });
 
-// Get products from localStorage
-function getProducts() {
-    return storageManager.getProducts();
+// Fetch product details from API
+async function fetchProductDetails(productId) {
+    try {
+        const response = await fetch(`${API_URL}/products/${productId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            return data.data;
+        } else {
+            throw new Error(data.message || 'Failed to fetch product details');
+        }
+    } catch (error) {
+        console.error('Error fetching product details:', error);
+        return null;
+    }
 }
 
 // Load product details
-function loadProductDetails(productId) {
-    // Get products from localStorage
-    const products = getProducts();
+async function loadProductDetails(productId) {
+    // Show loading
+    const productContainer = document.querySelector('.product-detail');
+    if (productContainer) {
+        productContainer.innerHTML = '<div class="loading-product"><p>Loading product details...</p></div>';
+    }
     
-    // Find product by ID
-    const product = products.find(p => p.id === productId);
+    // Fetch product details from API
+    const product = await fetchProductDetails(productId);
     
     if (!product) {
-        // Product not found, redirect to shop page
-        window.location.href = 'shop.html';
+        // Show error message
+        if (productContainer) {
+            productContainer.innerHTML = '<div class="error-message"><p>Product not found</p><a href="shop.html" class="btn">Back to Shop</a></div>';
+        }
         return;
     }
     
     // Update page title
     document.title = `${product.name} | DnD Brand`;
     
-    // Update product details
+    // Update product details in the DOM
     updateProductDetails(product);
     
-    // Initialize product functionality
-    initializeProductFunctionality(product);
+    // Initialize add to cart button
+    initializeAddToCart(product);
 }
 
 // Update product details in the DOM
 function updateProductDetails(product) {
-    // Product title
-    const productTitle = document.querySelector('.product-title');
-    if (productTitle) {
-        productTitle.textContent = product.name;
-    }
+    // Get product container
+    const productContainer = document.querySelector('.product-detail');
+    if (!productContainer) return;
     
-    // Product price
-    const productPrice = document.querySelector('.product-price');
-    if (productPrice) {
-        productPrice.textContent = `₺${product.price.toLocaleString('tr-TR', {
+    // Format price
+    const price = product.price.toLocaleString('tr-TR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    
+    // Format compare price if exists
+    let comparePriceHtml = '';
+    if (product.comparePrice && product.comparePrice > product.price) {
+        const comparePrice = product.comparePrice.toLocaleString('tr-TR', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
-        })}`;
+        });
+        comparePriceHtml = `<span class="compare-price">₺${comparePrice}</span>`;
     }
     
-    // Product description
-    const productDescription = document.querySelector('.product-description');
-    if (productDescription) {
-        productDescription.textContent = product.description;
+    // Create sale badge if on sale
+    const saleBadge = product.onSale ? '<span class="sale-badge">İndirim</span>' : '';
+    
+    // Create featured badge if featured
+    const featuredBadge = product.featured ? '<span class="featured-badge">Öne Çıkan</span>' : '';
+    
+    // Create image gallery HTML
+    let galleryHtml = '';
+    let thumbnailsHtml = '';
+    
+    if (product.images && product.images.length > 0) {
+        // Main image
+        galleryHtml = `
+            <div class="product-main-image">
+                <img src="${product.images[0]}" alt="${product.name}">
+                ${saleBadge}
+                ${featuredBadge}
+            </div>
+        `;
+        
+        // Thumbnails
+        thumbnailsHtml = `
+            <div class="product-thumbnails">
+                ${product.images.map((image, index) => `
+                    <div class="thumbnail ${index === 0 ? 'active' : ''}" data-index="${index}">
+                        <img src="${image}" alt="${product.name} - Image ${index + 1}">
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } else {
+        // Placeholder image
+        galleryHtml = `
+            <div class="product-main-image">
+                <img src="https://via.placeholder.com/600x800" alt="${product.name}">
+                ${saleBadge}
+                ${featuredBadge}
+            </div>
+        `;
     }
     
-    // Product SKU
-    const productSku = document.querySelector('.product-sku');
-    if (productSku) {
-        productSku.textContent = product.sku;
-    }
-    
-    // Product category
-    const productCategory = document.querySelector('.product-category');
-    if (productCategory) {
-        const categoryMap = {
-            'erkek': 'Erkek',
-            'kadin': 'Kadın',
-            'aksesuar': 'Aksesuar',
-            'ayakkabi': 'Ayakkabı',
-            'canta': 'Çanta'
-        };
-        productCategory.textContent = categoryMap[product.category] || product.category;
-    }
-    
-    // Product availability
-    const productAvailability = document.querySelector('.product-availability');
-    if (productAvailability) {
-        if (product.stock > 0) {
-            productAvailability.textContent = 'Stokta';
-            productAvailability.classList.add('in-stock');
-            productAvailability.classList.remove('out-of-stock');
-        } else {
-            productAvailability.textContent = 'Tükendi';
-            productAvailability.classList.add('out-of-stock');
-            productAvailability.classList.remove('in-stock');
-        }
-    }
-    
-    // Product colors
-    const colorOptions = document.querySelector('.color-options');
-    if (colorOptions && product.colors && product.colors.length > 0) {
-        colorOptions.innerHTML = '';
-        product.colors.forEach(color => {
-            const colorOption = document.createElement('div');
-            colorOption.className = 'color-option';
-            colorOption.setAttribute('data-color', color);
-            colorOption.style.backgroundColor = getColorCode(color);
-            colorOptions.appendChild(colorOption);
+    // Create variants HTML
+    let variantsHtml = '';
+    if (product.variants && product.variants.length > 0) {
+        product.variants.forEach(variant => {
+            variantsHtml += `
+                <div class="product-variant">
+                    <h4>${variant.name}</h4>
+                    <div class="variant-options">
+                        ${variant.options.map(option => `
+                            <button class="variant-option" data-variant="${variant.name}" data-value="${option}">${option}</button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
         });
     }
     
-    // Product sizes
-    const sizeOptions = document.querySelector('.size-options');
-    if (sizeOptions && product.sizes && product.sizes.length > 0) {
-        sizeOptions.innerHTML = '';
-        product.sizes.forEach(size => {
-            const sizeOption = document.createElement('div');
-            sizeOption.className = 'size-option';
-            sizeOption.setAttribute('data-size', size);
-            sizeOption.textContent = size.toUpperCase();
-            sizeOptions.appendChild(sizeOption);
-        });
-    }
+    // Create product HTML
+    const productHtml = `
+        <div class="product-images">
+            ${galleryHtml}
+            ${thumbnailsHtml}
+        </div>
+        <div class="product-info">
+            <h1 class="product-name">${product.name}</h1>
+            <div class="product-price">
+                <span class="current-price">₺${price}</span>
+                ${comparePriceHtml}
+            </div>
+            <div class="product-description">
+                ${product.description}
+            </div>
+            ${variantsHtml}
+            <div class="product-quantity">
+                <h4>Adet</h4>
+                <div class="quantity-selector">
+                    <button class="quantity-decrease">-</button>
+                    <input type="number" value="1" min="1" max="${product.inventory}" id="product-quantity">
+                    <button class="quantity-increase">+</button>
+                </div>
+                <span class="stock-info">${product.inventory} adet stokta</span>
+            </div>
+            <div class="product-actions">
+                <button class="add-to-cart-btn" data-id="${product._id}">Sepete Ekle</button>
+                <button class="add-to-wishlist-btn" data-id="${product._id}"><i class="far fa-heart"></i></button>
+            </div>
+            <div class="product-meta">
+                <p><strong>SKU:</strong> ${product.sku}</p>
+                <p><strong>Kategori:</strong> ${product.category}</p>
+                ${product.tags && product.tags.length > 0 ? `<p><strong>Etiketler:</strong> ${product.tags.join(', ')}</p>` : ''}
+            </div>
+        </div>
+    `;
     
-    // Product images
-    const mainImage = document.querySelector('.main-image img');
-    if (mainImage) {
-        mainImage.src = product.images[0];
-        mainImage.alt = product.name;
-    }
+    // Update product container
+    productContainer.innerHTML = productHtml;
     
-    // Thumbnails
-    const thumbnailsContainer = document.querySelector('.thumbnails');
-    if (thumbnailsContainer && product.images && product.images.length > 0) {
-        thumbnailsContainer.innerHTML = '';
-        product.images.forEach((image, index) => {
-            const thumbnail = document.createElement('div');
-            thumbnail.className = 'thumbnail';
-            if (index === 0) {
-                thumbnail.classList.add('active');
-            }
-            thumbnail.innerHTML = `<img src="${image}" alt="${product.name} - Görsel ${index + 1}">`;
-            thumbnailsContainer.appendChild(thumbnail);
-        });
-    }
+    // Initialize product gallery
+    initializeProductGallery();
     
-    // Add to cart button
-    const addToCartBtn = document.querySelector('.add-to-cart-btn');
-    if (addToCartBtn) {
-        if (product.stock > 0) {
-            addToCartBtn.disabled = false;
-            addToCartBtn.textContent = 'Sepete Ekle';
-        } else {
-            addToCartBtn.disabled = true;
-            addToCartBtn.textContent = 'Tükendi';
-        }
-    }
+    // Initialize quantity selector
+    initializeQuantitySelector();
+    
+    // Initialize variant selection
+    initializeVariantSelection();
 }
 
-// Initialize product functionality
-function initializeProductFunctionality(product) {
-    // Color options
-    const colorOptions = document.querySelectorAll('.color-option');
-    colorOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            // Remove active class from all options
-            colorOptions.forEach(opt => opt.classList.remove('active'));
-            
-            // Add active class to clicked option
-            this.classList.add('active');
+// Initialize add to cart button
+function initializeAddToCart(product) {
+    const addToCartBtn = document.querySelector('.add-to-cart-btn');
+    if (!addToCartBtn) return;
+    
+    addToCartBtn.addEventListener('click', function() {
+        // Get selected quantity
+        const quantity = parseInt(document.getElementById('product-quantity').value) || 1;
+        
+        // Get selected variants
+        const selectedVariants = {};
+        document.querySelectorAll('.variant-option.selected').forEach(option => {
+            const variantName = option.dataset.variant;
+            const variantValue = option.dataset.value;
+            selectedVariants[variantName] = variantValue;
         });
+        
+        // Create cart item
+        const cartItem = {
+            id: product._id,
+            name: product.name,
+            price: product.price,
+            image: product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/100',
+            quantity: quantity,
+            variants: selectedVariants
+        };
+        
+        // Add to cart
+        addToCart(cartItem);
+        
+        // Show success message
+        showNotification('Ürün sepete eklendi!', 'success');
+    });
+}
+
+// Initialize quantity selector
+function initializeQuantitySelector() {
+    const decreaseBtn = document.querySelector('.quantity-decrease');
+    const increaseBtn = document.querySelector('.quantity-increase');
+    const quantityInput = document.getElementById('product-quantity');
+    
+    if (!decreaseBtn || !increaseBtn || !quantityInput) return;
+    
+    decreaseBtn.addEventListener('click', function() {
+        const currentValue = parseInt(quantityInput.value) || 1;
+        if (currentValue > 1) {
+            quantityInput.value = currentValue - 1;
+        }
     });
     
-    // Size options
-    const sizeOptions = document.querySelectorAll('.size-option');
-    sizeOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            // Remove active class from all options
-            sizeOptions.forEach(opt => opt.classList.remove('active'));
-            
-            // Add active class to clicked option
-            this.classList.add('active');
-        });
+    increaseBtn.addEventListener('click', function() {
+        const currentValue = parseInt(quantityInput.value) || 1;
+        const maxValue = parseInt(quantityInput.getAttribute('max')) || 100;
+        if (currentValue < maxValue) {
+            quantityInput.value = currentValue + 1;
+        }
     });
     
-    // Thumbnails
+    quantityInput.addEventListener('change', function() {
+        const currentValue = parseInt(this.value) || 1;
+        const maxValue = parseInt(this.getAttribute('max')) || 100;
+        
+        if (currentValue < 1) {
+            this.value = 1;
+        } else if (currentValue > maxValue) {
+            this.value = maxValue;
+        }
+    });
+}
+
+// Initialize product gallery
+function initializeProductGallery() {
+    const mainImage = document.querySelector('.product-main-image img');
     const thumbnails = document.querySelectorAll('.thumbnail');
-    const mainImage = document.querySelector('.main-image img');
+    
+    if (!mainImage || thumbnails.length === 0) return;
     
     thumbnails.forEach(thumbnail => {
         thumbnail.addEventListener('click', function() {
-            // Remove active class from all thumbnails
-            thumbnails.forEach(thumb => thumb.classList.remove('active'));
-            
-            // Add active class to clicked thumbnail
-            this.classList.add('active');
-            
             // Update main image
-            const thumbnailImg = this.querySelector('img');
-            mainImage.src = thumbnailImg.src;
+            const imageUrl = this.querySelector('img').getAttribute('src');
+            mainImage.setAttribute('src', imageUrl);
+            
+            // Update active thumbnail
+            thumbnails.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
         });
     });
-    
-    // Quantity controls
-    const quantityInput = document.querySelector('.quantity-input');
-    const increaseBtn = document.querySelector('.increase-quantity');
-    const decreaseBtn = document.querySelector('.decrease-quantity');
-    
-    if (increaseBtn) {
-        increaseBtn.addEventListener('click', function() {
-            if (quantityInput) {
-                quantityInput.value = parseInt(quantityInput.value) + 1;
-            }
-        });
-    }
-    
-    if (decreaseBtn) {
-        decreaseBtn.addEventListener('click', function() {
-            if (quantityInput && parseInt(quantityInput.value) > 1) {
-                quantityInput.value = parseInt(quantityInput.value) - 1;
-            }
-        });
-    }
-    
-    // Add to cart button
-    const addToCartBtn = document.querySelector('.add-to-cart-btn');
-    if (addToCartBtn && !addToCartBtn.disabled) {
-        addToCartBtn.addEventListener('click', function() {
-            // Get selected color
-            const selectedColor = document.querySelector('.color-option.active');
-            const color = selectedColor ? selectedColor.getAttribute('data-color') : null;
-            
-            // Get selected size
-            const selectedSize = document.querySelector('.size-option.active');
-            const size = selectedSize ? selectedSize.getAttribute('data-size') : null;
-            
-            // Get quantity
-            const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
-            
-            // Validate selections if product has options
-            if (product.colors && product.colors.length > 0 && !color) {
-                showNotification('Lütfen bir renk seçin', 'error');
-                return;
-            }
-            
-            if (product.sizes && product.sizes.length > 0 && !size) {
-                showNotification('Lütfen bir beden seçin', 'error');
-                return;
-            }
-            
-            // Add to cart
-            addToCart(product, quantity, color, size);
-        });
-    }
 }
 
-// Add product to cart
-function addToCart(product, quantity = 1, color = null, size = null) {
+// Initialize variant selection
+function initializeVariantSelection() {
+    const variantOptions = document.querySelectorAll('.variant-option');
+    
+    if (variantOptions.length === 0) return;
+    
+    variantOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            // Get variant name
+            const variantName = this.dataset.variant;
+            
+            // Remove active class from all options in this variant
+            document.querySelectorAll(`.variant-option[data-variant="${variantName}"]`).forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Add active class to clicked option
+            this.classList.add('selected');
+        });
+    });
+}
+
+// Initialize product tabs
+function initializeProductTabs() {
+    const tabButtons = document.querySelectorAll('.product-tab-button');
+    const tabContents = document.querySelectorAll('.product-tab-content');
+    
+    if (tabButtons.length === 0 || tabContents.length === 0) return;
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Get tab ID
+            const tabId = this.dataset.tab;
+            
+            // Remove active class from all buttons and contents
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Add active class to clicked button and corresponding content
+            this.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+}
+
+// Add to cart function
+function addToCart(item) {
     // Get cart from localStorage
-    let cart = localStorage.getItem('dndCart');
-    cart = cart ? JSON.parse(cart) : [];
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
     
-    // Create cart item
-    const cartItem = {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.images[0],
-        quantity: quantity,
-        color: color,
-        size: size
-    };
-    
-    // Check if product already in cart with same options
-    const existingItemIndex = cart.findIndex(item => 
-        item.id === product.id && 
-        item.color === color && 
-        item.size === size
-    );
+    // Check if item already exists in cart
+    const existingItemIndex = cart.findIndex(cartItem => cartItem.id === item.id);
     
     if (existingItemIndex !== -1) {
-        // Update quantity
-        cart[existingItemIndex].quantity += quantity;
+        // Update quantity if item exists
+        cart[existingItemIndex].quantity += item.quantity;
     } else {
-        // Add new item
-        cart.push(cartItem);
+        // Add new item to cart
+        cart.push(item);
     }
     
     // Save cart to localStorage
-    localStorage.setItem('dndCart', JSON.stringify(cart));
-    
-    // Show notification
-    showNotification('Ürün sepete eklendi!', 'success');
+    localStorage.setItem('cart', JSON.stringify(cart));
     
     // Update cart count
     updateCartCount();
+}
+
+// Update cart count
+function updateCartCount() {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+    
+    // Update cart count in header
+    const cartCountElement = document.querySelector('.cart-count');
+    if (cartCountElement) {
+        cartCountElement.textContent = cartCount;
+        
+        if (cartCount > 0) {
+            cartCountElement.classList.add('active');
+        } else {
+            cartCountElement.classList.remove('active');
+        }
+    }
 }
 
 // Show notification
 function showNotification(message, type = 'info') {
     // Create notification element
     const notification = document.createElement('div');
-    notification.className = `product-notification ${type}`;
-    notification.textContent = message;
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <p>${message}</p>
+        </div>
+        <button class="notification-close">&times;</button>
+    `;
     
     // Add to document
     document.body.appendChild(notification);
@@ -320,54 +404,24 @@ function showNotification(message, type = 'info') {
         notification.classList.add('show');
     }, 10);
     
-    // Remove notification after delay
+    // Hide notification after 3 seconds
     setTimeout(() => {
         notification.classList.remove('show');
+        
+        // Remove from DOM after animation
         setTimeout(() => {
-            document.body.removeChild(notification);
+            notification.remove();
         }, 300);
     }, 3000);
-}
-
-// Update cart count
-function updateCartCount() {
-    const cartCountElement = document.querySelector('.cart-count');
-    if (!cartCountElement) return;
     
-    // Get cart from localStorage
-    let cart = localStorage.getItem('dndCart');
-    cart = cart ? JSON.parse(cart) : [];
-    
-    // Calculate total quantity
-    const totalQuantity = cart.reduce((total, item) => total + item.quantity, 0);
-    
-    // Update cart count
-    cartCountElement.textContent = totalQuantity;
-    
-    // Show/hide cart count
-    if (totalQuantity > 0) {
-        cartCountElement.style.display = 'flex';
-    } else {
-        cartCountElement.style.display = 'none';
-    }
-}
-
-// Helper function to get color code from color name
-function getColorCode(colorName) {
-    const colorMap = {
-        'siyah': '#000000',
-        'beyaz': '#ffffff',
-        'kirmizi': '#ff0000',
-        'mavi': '#0000ff',
-        'yesil': '#008000',
-        'kahverengi': '#8b4513',
-        'gri': '#808080',
-        'lacivert': '#000080',
-        'pembe': '#ffc0cb',
-        'mor': '#800080',
-        'turuncu': '#ffa500',
-        'sari': '#ffff00'
-    };
-    
-    return colorMap[colorName] || '#cccccc';
+    // Close button
+    const closeBtn = notification.querySelector('.notification-close');
+    closeBtn.addEventListener('click', function() {
+        notification.classList.remove('show');
+        
+        // Remove from DOM after animation
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    });
 } 

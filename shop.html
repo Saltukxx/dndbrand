@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mağaza | DnD Brand</title>
+    <title>Koleksiyon | DnD Brand</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="shop.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,170 +16,223 @@
     <header>
         <div class="container">
             <div class="logo">
-                <h1>DnD Brand</h1>
+                <h1>DnD <span>Brand</span></h1>
             </div>
             <nav>
                 <ul>
                     <li><a href="index.html">Ana Sayfa</a></li>
-                    <li><a href="shop.html" class="active">Mağaza</a></li>
+                    <li><a href="shop.html" class="active">Koleksiyon</a></li>
                     <li><a href="about.html">Hakkımızda</a></li>
+                    <li><a href="contact.html">İletişim</a></li>
                 </ul>
             </nav>
             <div class="nav-icons">
-                <a href="search.html"><i class="fas fa-search"></i></a>
-                <a href="account.html"><i class="fas fa-user"></i></a>
-                <a href="cart.html"><i class="fas fa-shopping-bag"></i><span class="cart-count">0</span></a>
+                <div class="nav-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="nav-icon">
+                    <a href="account.html"><i class="fas fa-user"></i></a>
+                </div>
+                <div class="cart-icon">
+                    <a href="cart.html"><i class="fas fa-shopping-bag"></i></a>
+                    <span class="cart-count">0</span>
+                </div>
+                <div class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </div>
             </div>
         </div>
     </header>
 
+    <div class="mobile-menu">
+        <div class="close-menu">
+            <i class="fas fa-times"></i>
+        </div>
+        <ul>
+            <li><a href="index.html">Ana Sayfa</a></li>
+            <li><a href="shop.html">Koleksiyon</a></li>
+            <li><a href="about.html">Hakkımızda</a></li>
+            <li><a href="contact.html">İletişim</a></li>
+            <li><a href="account.html">Hesabım</a></li>
+            <li><a href="cart.html">Sepetim</a></li>
+        </ul>
+    </div>
+    <div class="mobile-menu-overlay"></div>
+
     <section class="page-header">
         <div class="container">
-            <h1>Mağaza</h1>
+            <h1>Koleksiyon</h1>
             <div class="breadcrumb">
-                <a href="index.html">Ana Sayfa</a> / <span>Mağaza</span>
+                <a href="index.html">Ana Sayfa</a> / <span>Koleksiyon</span>
             </div>
         </div>
     </section>
 
-    <section class="shop-products">
+    <section class="shop-section">
         <div class="container">
-            <div class="shop-header">
-                <h1>Ürünlerimiz</h1>
-                <div class="shop-filters">
-                    <div class="filter-group">
-                        <label for="sort">Sırala:</label>
-                        <select id="sort" class="sort-select">
-                            <option value="featured">Öne Çıkanlar</option>
-                            <option value="price-asc">Fiyat (Düşükten Yükseğe)</option>
-                            <option value="price-desc">Fiyat (Yüksekten Düşüğe)</option>
-                            <option value="name-asc">İsim (A-Z)</option>
-                            <option value="name-desc">İsim (Z-A)</option>
-                        </select>
-                    </div>
-                </div>
+            <div class="mobile-filter-toggle">
+                <i class="fas fa-filter"></i> Filtreleri Göster
             </div>
-            
-            <div class="shop-content">
+            <div class="shop-layout">
                 <div class="shop-sidebar">
-                    <div class="mobile-filter-toggle">
-                        <i class="fas fa-filter"></i>
-                        <span>Filtreleri Göster</span>
+                    <div class="filter-close">
+                        <i class="fas fa-times"></i>
+                    </div>
+                    <div class="sidebar-widget">
+                        <h3>Kategoriler</h3>
+                        <ul class="category-list">
+                            <li><a href="#" data-category="all" class="active">Tümü</a></li>
+                            <li><a href="#" data-category="men">Erkek</a></li>
+                            <li><a href="#" data-category="women">Kadın</a></li>
+                            <li><a href="#" data-category="accessories">Aksesuarlar</a></li>
+                        </ul>
                     </div>
 
-                    <div class="filter-overlay"></div>
+                    <div class="sidebar-widget">
+                        <h3>Fiyat Aralığı</h3>
+                        <div class="price-filter">
+                            <div id="price-slider"></div>
+                            <div class="price-inputs">
+                                <div class="price-input">
+                                    <span>Min:</span>
+                                    <input type="text" id="min-price" readonly>
+                                </div>
+                                <div class="price-input">
+                                    <span>Max:</span>
+                                    <input type="text" id="max-price" readonly>
+                                </div>
+                            </div>
+                            <button id="apply-price-filter" class="btn btn-secondary">Uygula</button>
+                        </div>
+                    </div>
 
-                    <div class="shop-filters">
-                        <button class="filter-close"><i class="fas fa-times"></i></button>
-                        
-                        <div class="filter-section">
-                            <h3 class="filter-title">
-                                Kategoriler
-                                <i class="fas fa-chevron-down"></i>
-                            </h3>
-                            <div class="filter-content">
-                                <div class="category-filters">
-                                    <div class="category-filter active">
-                                        <input type="checkbox" id="category-all" checked>
-                                        <label for="category-all">Tüm Ürünler</label>
-                                        <span class="count">42</span>
-                                    </div>
-                                    <div class="category-filter">
-                                        <input type="checkbox" id="category-men">
-                                        <label for="category-men">Erkek</label>
-                                        <span class="count">18</span>
-                                    </div>
-                                    <div class="category-filter">
-                                        <input type="checkbox" id="category-women">
-                                        <label for="category-women">Kadın</label>
-                                        <span class="count">16</span>
-                                    </div>
-                                    <div class="category-filter">
-                                        <input type="checkbox" id="category-accessories">
-                                        <label for="category-accessories">Aksesuarlar</label>
-                                        <span class="count">8</span>
-                                    </div>
-                                    <div class="category-filter">
-                                        <input type="checkbox" id="category-shoes">
-                                        <label for="category-shoes">Ayakkabı</label>
-                                        <span class="count">12</span>
-                                    </div>
-                                    <div class="category-filter">
-                                        <input type="checkbox" id="category-bags">
-                                        <label for="category-bags">Çanta</label>
-                                        <span class="count">6</span>
-                                    </div>
-                                </div>
+                    <div class="sidebar-widget">
+                        <h3>Özellikler</h3>
+                        <div class="filter-options">
+                            <label class="filter-option">
+                                <input type="checkbox" data-feature="new">
+                                <span class="checkmark"></span>
+                                Yeni Gelenler
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" data-feature="sale">
+                                <span class="checkmark"></span>
+                                İndirimli Ürünler
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" data-feature="featured">
+                                <span class="checkmark"></span>
+                                Öne Çıkanlar
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-widget">
+                        <h3>Renkler</h3>
+                        <div class="color-filters">
+                            <div class="color-filter">
+                                <input type="checkbox" id="color-black" value="black">
+                                <span class="color-swatch" style="background-color: #000;"></span>
+                                <span>Siyah</span>
+                            </div>
+                            <div class="color-filter">
+                                <input type="checkbox" id="color-white" value="white">
+                                <span class="color-swatch" style="background-color: #fff; border: 1px solid #ddd;"></span>
+                                <span>Beyaz</span>
+                            </div>
+                            <div class="color-filter">
+                                <input type="checkbox" id="color-red" value="red">
+                                <span class="color-swatch" style="background-color: #e74c3c;"></span>
+                                <span>Kırmızı</span>
+                            </div>
+                            <div class="color-filter">
+                                <input type="checkbox" id="color-blue" value="blue">
+                                <span class="color-swatch" style="background-color: #3498db;"></span>
+                                <span>Mavi</span>
+                            </div>
+                            <div class="color-filter">
+                                <input type="checkbox" id="color-green" value="green">
+                                <span class="color-swatch" style="background-color: #2ecc71;"></span>
+                                <span>Yeşil</span>
+                            </div>
+                            <div class="color-filter">
+                                <input type="checkbox" id="color-yellow" value="yellow">
+                                <span class="color-swatch" style="background-color: #f1c40f;"></span>
+                                <span>Sarı</span>
                             </div>
                         </div>
-                        
-                        <div class="filter-section">
-                            <h3 class="filter-title">
-                                Renkler
-                                <i class="fas fa-chevron-down"></i>
-                            </h3>
-                            <div class="filter-content">
-                                <div class="color-filters">
-                                    <div class="color-filter" style="background-color: #000000;" title="Siyah"></div>
-                                    <div class="color-filter" style="background-color: #FFFFFF; border: 1px solid #333;" title="Beyaz"></div>
-                                    <div class="color-filter" style="background-color: #FF0000;" title="Kırmızı"></div>
-                                    <div class="color-filter" style="background-color: #0000FF;" title="Mavi"></div>
-                                    <div class="color-filter" style="background-color: #00FF00;" title="Yeşil"></div>
-                                    <div class="color-filter" style="background-color: #FFFF00;" title="Sarı"></div>
-                                    <div class="color-filter" style="background-color: #FFA500;" title="Turuncu"></div>
-                                    <div class="color-filter" style="background-color: #800080;" title="Mor"></div>
-                                    <div class="color-filter" style="background-color: #A52A2A;" title="Kahverengi"></div>
-                                    <div class="color-filter" style="background-color: #808080;" title="Gri"></div>
-                                </div>
+                    </div>
+
+                    <div class="sidebar-widget">
+                        <h3>Bedenler</h3>
+                        <div class="size-filters">
+                            <div class="size-filter">
+                                <input type="checkbox" id="size-xs" value="xs">
+                                <span>XS</span>
+                            </div>
+                            <div class="size-filter">
+                                <input type="checkbox" id="size-s" value="s">
+                                <span>S</span>
+                            </div>
+                            <div class="size-filter">
+                                <input type="checkbox" id="size-m" value="m">
+                                <span>M</span>
+                            </div>
+                            <div class="size-filter">
+                                <input type="checkbox" id="size-l" value="l">
+                                <span>L</span>
+                            </div>
+                            <div class="size-filter">
+                                <input type="checkbox" id="size-xl" value="xl">
+                                <span>XL</span>
+                            </div>
+                            <div class="size-filter">
+                                <input type="checkbox" id="size-xxl" value="xxl">
+                                <span>XXL</span>
                             </div>
                         </div>
-                        
-                        <div class="filter-section">
-                            <h3 class="filter-title">
-                                Fiyat Aralığı
-                                <i class="fas fa-chevron-down"></i>
-                            </h3>
-                            <div class="filter-content">
-                                <div class="price-range">
-                                    <div class="price-slider" id="price-slider"></div>
-                                    <div class="price-inputs">
-                                        <div class="price-input">
-                                            <input type="text" id="min-price" value="0">
-                                            <span>₺</span>
-                                        </div>
-                                        <span class="price-separator">-</span>
-                                        <div class="price-input">
-                                            <input type="text" id="max-price" value="5000">
-                                            <span>₺</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <button class="apply-filters">Filtreleri Uygula</button>
-                        <button class="reset-filters">Filtreleri Sıfırla</button>
+                    </div>
+
+                    <div class="sidebar-widget">
+                        <button id="apply-filters" class="btn filter-apply-btn">Filtreleri Uygula</button>
+                        <button id="reset-filters" class="btn btn-secondary filter-reset-btn">Filtreleri Sıfırla</button>
                     </div>
                 </div>
-                
-                <div class="shop-main">
-                    <div class="product-count">
-                        <span id="productCount">0</span> ürün bulundu
+                <div class="shop-products">
+                    <div class="shop-header">
+                        <div class="product-count">
+                            <span id="product-count">0</span> ürün bulundu
+                        </div>
+                        <div class="shop-sorting">
+                            <label for="sort-by">Sırala:</label>
+                            <select id="sort-by">
+                                <option value="default">Varsayılan</option>
+                                <option value="price-low">Fiyat: Düşükten Yükseğe</option>
+                                <option value="price-high">Fiyat: Yüksekten Düşüğe</option>
+                                <option value="name-asc">İsim: A-Z</option>
+                                <option value="name-desc">İsim: Z-A</option>
+                                <option value="newest">En Yeniler</option>
+                            </select>
+                        </div>
                     </div>
-                    
-                    <div class="products-grid">
-                        <!-- Products will be added here by JavaScript -->
+                    <div class="shop-grid" id="products-container">
+                        <!-- Products will be loaded here -->
+                    </div>
+                    <div class="pagination" id="pagination">
+                        <!-- Pagination will be generated here -->
                     </div>
                 </div>
             </div>
         </div>
     </section>
+    
+    <div class="filter-overlay"></div>
 
     <section class="newsletter">
         <div class="container">
             <div class="newsletter-content">
-                <h2>Özel Listemize Katılın</h2>
-                <p>Yeni koleksiyonlar ve özel teklifler hakkında güncellemeler almak için abone olun.</p>
+                <h2>Yeniliklerden Haberdar Olun</h2>
+                <p>En yeni koleksiyonlar ve özel fırsatlar için bültenimize abone olun.</p>
                 <form class="newsletter-form">
                     <input type="email" placeholder="E-posta adresiniz" required>
                     <button type="submit" class="btn">Abone Ol</button>
@@ -193,51 +246,52 @@
             <div class="footer-content">
                 <div class="footer-column">
                     <h3>DnD Brand</h3>
-                    <p>Modern birey için premium giyim. Özel koleksiyonlarımızla tarzınızı yeniden tanımlayın.</p>
+                    <p>Premium kalite, modern tasarım ve benzersiz detaylarla öne çıkan lüks giyim markası.</p>
                     <div class="social-icons">
                         <a href="#"><i class="fab fa-facebook-f"></i></a>
                         <a href="#"><i class="fab fa-instagram"></i></a>
                         <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-pinterest-p"></i></a>
+                        <a href="#"><i class="fab fa-pinterest"></i></a>
                     </div>
                 </div>
                 <div class="footer-column">
                     <h3>Alışveriş</h3>
                     <ul>
-                        <li><a href="collections.html?type=men">Erkek Koleksiyonu</a></li>
-                        <li><a href="collections.html?type=women">Kadın Koleksiyonu</a></li>
-                        <li><a href="collections.html?type=accessories">Aksesuarlar</a></li>
-                        <li><a href="shop.html?sale=true">İndirim</a></li>
+                        <li><a href="shop.html?category=men">Erkek</a></li>
+                        <li><a href="shop.html?category=women">Kadın</a></li>
+                        <li><a href="shop.html?category=accessories">Aksesuarlar</a></li>
+                        <li><a href="shop.html?category=new">Yeni Gelenler</a></li>
+                        <li><a href="shop.html?category=sale">İndirimli Ürünler</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
-                    <h3>Yardım</h3>
+                    <h3>Bilgi</h3>
                     <ul>
-                        <li><a href="contact.html">Bize Ulaşın</a></li>
-                        <li><a href="shipping.html">Kargo Bilgileri</a></li>
-                        <li><a href="returns.html">İade ve Değişim</a></li>
-                        <li><a href="faq.html">Sıkça Sorulan Sorular</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h3>Hakkımızda</h3>
-                    <ul>
-                        <li><a href="about.html">Hikayemiz</a></li>
-                        <li><a href="sustainability.html">Sürdürülebilirlik</a></li>
-                        <li><a href="careers.html">Kariyer</a></li>
+                        <li><a href="about.html">Hakkımızda</a></li>
+                        <li><a href="contact.html">İletişim</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                        <li><a href="faq.html">SSS</a></li>
                         <li><a href="privacy.html">Gizlilik Politikası</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>İletişim</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Bağdat Caddesi No:123, Kadıköy, İstanbul</li>
+                        <li><i class="fas fa-phone"></i> +90 212 123 45 67</li>
+                        <li><i class="fas fa-envelope"></i> info@dndbrand.com</li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2023 DnD Brand. Tüm hakları saklıdır.</p>
+                <p>&copy; 2023 DnD Brand. Tüm hakları saklıdır. | Tasarım: <a href="#">DnD Brand</a></p>
             </div>
         </div>
     </footer>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.6.3/nouislider.min.js"></script>
     <script src="storage-manager.js"></script>
     <script src="script.js"></script>
     <script src="shop.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.6.3/nouislider.min.js"></script>
 </body>
 </html> 

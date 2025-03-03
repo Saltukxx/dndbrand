@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İletişim | DnD Brand</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="contact.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js" integrity="sha512-Tn2m0TIpgVyTzzvmxLNuqbSJH3JP8jm+Cy3hvHrW7ndTDcJ1w5mBiksqDBb8GpE2ksktFvDB/ykZ0mDpsZj20w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>DnD <span>Brand</span></h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Ana Sayfa</a></li>
+                    <li><a href="shop.html">Koleksiyon</a></li>
+                    <li><a href="about.html">Hakkımızda</a></li>
+                    <li><a href="contact.html" class="active">İletişim</a></li>
+                </ul>
+            </nav>
+            <div class="nav-icons">
+                <div class="nav-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="nav-icon">
+                    <a href="account.html"><i class="fas fa-user"></i></a>
+                </div>
+                <div class="cart-icon">
+                    <a href="cart.html"><i class="fas fa-shopping-bag"></i></a>
+                    <span class="cart-count">0</span>
+                </div>
+                <div class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="mobile-menu">
+        <div class="close-menu">
+            <i class="fas fa-times"></i>
+        </div>
+        <ul>
+            <li><a href="index.html">Ana Sayfa</a></li>
+            <li><a href="shop.html">Koleksiyon</a></li>
+            <li><a href="about.html">Hakkımızda</a></li>
+            <li><a href="contact.html" class="active">İletişim</a></li>
+            <li><a href="account.html">Hesabım</a></li>
+            <li><a href="cart.html">Sepetim</a></li>
+        </ul>
+    </div>
+    
+    <div class="mobile-menu-overlay"></div>
+
+    <main>
+        <section class="contact-hero">
+            <div class="container">
+                <h1>Bize Ulaşın</h1>
+                <p>Sorularınız, önerileriniz veya işbirliği teklifleriniz için bizimle iletişime geçin.</p>
+            </div>
+        </section>
+
+        <section class="contact-info">
+            <div class="container">
+                <div class="contact-grid">
+                    <div class="contact-card">
+                        <div class="contact-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <h3>Adres</h3>
+                        <p>Cumhuriyet Caddesi No: 123</p>
+                        <p>Yakutiye, Erzurum</p>
+                    </div>
+                    <div class="contact-card">
+                        <div class="contact-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
+                        <h3>Telefon</h3>
+                        <p>+90 (537) 305 85 28</p>
+                        <p>Pazartesi - Pazar: 10:00 - 19:00</p>
+                    </div>
+                    <div class="contact-card">
+                        <div class="contact-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <h3>E-posta</h3>
+                        <p>info@dndbrand.com</p>
+                        <p>destek@dndbrand.com</p>
+                    </div>
+                    <div class="contact-card">
+                        <div class="contact-icon">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <h3>Sosyal Medya</h3>
+                        <div class="social-icons">
+                            <a href="#"><i class="fab fa-instagram"></i></a>
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="#"><i class="fab fa-pinterest-p"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="contact-form-section">
+            <div class="container">
+                <div class="contact-wrapper">
+                    <div class="form-container">
+                        <h2>İletişim Formu</h2>
+                        <form id="contact-form" class="contact-form">
+                            <div class="form-group">
+                                <label for="name">Adınız Soyadınız</label>
+                                <input type="text" id="name" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">E-posta Adresiniz</label>
+                                <input type="email" id="email" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="subject">Konu</label>
+                                <select id="subject" name="subject">
+                                    <option value="general">Genel Bilgi</option>
+                                    <option value="order">Sipariş Durumu</option>
+                                    <option value="return">İade ve Değişim</option>
+                                    <option value="complaint">Şikayet</option>
+                                    <option value="partnership">İş Birliği</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="message">Mesajınız</label>
+                                <textarea id="message" name="message" rows="5" required></textarea>
+                            </div>
+                            <div class="form-group checkbox-group">
+                                <input type="checkbox" id="privacy" name="privacy" required>
+                                <label for="privacy">Kişisel verilerimin işlenmesine izin veriyorum.</label>
+                            </div>
+                            <button type="submit" class="btn">Gönder</button>
+                        </form>
+                    </div>
+                    <div class="map-container">
+                        <div id="map"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="faq-section">
+            <div class="container">
+                <h2>Sıkça Sorulan Sorular</h2>
+                <div class="faq-container">
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h3>Siparişim ne zaman kargoya verilecek?</h3>
+                            <span class="faq-toggle"><i class="fas fa-plus"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Siparişleriniz genellikle 1-2 iş günü içerisinde hazırlanıp kargoya verilmektedir. Özel koleksiyon ürünleri için bu süre 3-5 iş gününe kadar uzayabilir.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h3>İade ve değişim politikanız nedir?</h3>
+                            <span class="faq-toggle"><i class="fas fa-plus"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Ürünlerimizi teslim aldığınız tarihten itibaren 14 gün içerisinde iade edebilir veya değiştirebilirsiniz. İade ve değişim için ürünlerin kullanılmamış, etiketleri çıkarılmamış ve orijinal ambalajında olması gerekmektedir.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h3>Kargo ücreti ne kadar?</h3>
+                            <span class="faq-toggle"><i class="fas fa-plus"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <p>500 TL ve üzeri alışverişlerinizde kargo ücretsizdir. 500 TL altındaki siparişlerde kargo ücreti 29.90 TL'dir.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h3>Yurt dışına kargo yapıyor musunuz?</h3>
+                            <span class="faq-toggle"><i class="fas fa-plus"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            <p>Evet, dünya genelinde birçok ülkeye kargo gönderimi yapıyoruz. Yurt dışı kargo ücretleri ülkelere göre değişiklik göstermektedir. Detaylı bilgi için müşteri hizmetlerimizle iletişime geçebilirsiniz.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>DnD Brand</h3>
+                    <p>Modern birey için premium giyim. Özel koleksiyonlarımızla tarzınızı yeniden tanımlayın.</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-pinterest-p"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Alışveriş</h3>
+                    <ul>
+                        <li><a href="collections.html?type=men">Erkek Koleksiyonu</a></li>
+                        <li><a href="collections.html?type=women">Kadın Koleksiyonu</a></li>
+                        <li><a href="collections.html?type=accessories">Aksesuarlar</a></li>
+                        <li><a href="shop.html?sale=true">İndirim</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Yardım</h3>
+                    <ul>
+                        <li><a href="contact.html">Bize Ulaşın</a></li>
+                        <li><a href="shipping.html">Kargo Bilgileri</a></li>
+                        <li><a href="returns.html">İade ve Değişim</a></li>
+                        <li><a href="faq.html">Sıkça Sorulan Sorular</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Hakkımızda</h3>
+                    <ul>
+                        <li><a href="about.html">Hikayemiz</a></li>
+                        <li><a href="sustainability.html">Sürdürülebilirlik</a></li>
+                        <li><a href="careers.html">Kariyer</a></li>
+                        <li><a href="privacy.html">Gizlilik Politikası</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 DnD Brand. Tüm hakları saklıdır.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="storage-manager.js"></script>
+    <script src="script.js"></script>
+    <script src="contact.js"></script>
+</body>
+</html> 

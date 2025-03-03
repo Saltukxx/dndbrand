@@ -3,14 +3,239 @@
  * Comprehensive admin panel with product management, order tracking, and analytics
  */
 
+// API URL
+const API_URL = 'http://localhost:5000/api';
+let authToken = sessionStorage.getItem('adminToken');
+
 // Check for admin authentication
 function checkAdminAuth() {
-    // In a real application, this would verify a session token or JWT
-    const isAuthenticated = sessionStorage.getItem('adminAuthenticated');
+    // Check if token exists in session storage
+    const isAuthenticated = sessionStorage.getItem('adminToken');
     
     if (!isAuthenticated) {
         // Redirect to login page
         window.location.href = 'admin-login.html';
+    }
+}
+
+// Login admin user
+async function loginAdmin(email, password) {
+    try {
+        const response = await fetch(`${API_URL}/users/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Save token to session storage
+            sessionStorage.setItem('adminToken', data.token);
+            sessionStorage.setItem('adminAuthenticated', 'true');
+            sessionStorage.setItem('adminUser', JSON.stringify(data.user));
+            
+            // Set global auth token
+            authToken = data.token;
+            
+            // Redirect to admin dashboard
+            window.location.href = 'admin.html';
+        } else {
+            throw new Error(data.message || 'Login failed');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        alert('Login failed: ' + error.message);
+    }
+}
+
+// Fetch products from API
+async function fetchProducts() {
+    try {
+        const response = await fetch(`${API_URL}/products`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            return data.data;
+        } else {
+            throw new Error(data.message || 'Failed to fetch products');
+        }
+    } catch (error) {
+        console.error('Error fetching products:', error);
+        return [];
+    }
+}
+
+// Create product
+async function createProduct(productData) {
+    try {
+        const response = await fetch(`${API_URL}/products`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(productData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            return data.data;
+        } else {
+            throw new Error(data.message || 'Failed to create product');
+        }
+    } catch (error) {
+        console.error('Error creating product:', error);
+        throw error;
+    }
+}
+
+// Update product
+async function updateProduct(productId, productData) {
+    try {
+        const response = await fetch(`${API_URL}/products/${productId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(productData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            return data.data;
+        } else {
+            throw new Error(data.message || 'Failed to update product');
+        }
+    } catch (error) {
+        console.error('Error updating product:', error);
+        throw error;
+    }
+}
+
+// Delete product
+async function deleteProduct(productId) {
+    try {
+        const response = await fetch(`${API_URL}/products/${productId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            return true;
+        } else {
+            throw new Error(data.message || 'Failed to delete product');
+        }
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        throw error;
+    }
+}
+
+// Upload product images
+async function uploadProductImages(formData) {
+    try {
+        const response = await fetch(`${API_URL}/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            return data.data; // Array of image URLs
+        } else {
+            throw new Error(data.message || 'Failed to upload images');
+        }
+    } catch (error) {
+        console.error('Error uploading images:', error);
+        throw error;
+    }
+}
+
+// Fetch customers from API
+async function fetchCustomers() {
+    try {
+        const response = await fetch(`${API_URL}/customers`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            return data.data;
+        } else {
+            throw new Error(data.message || 'Failed to fetch customers');
+        }
+    } catch (error) {
+        console.error('Error fetching customers:', error);
+        return [];
+    }
+}
+
+// Fetch orders from API
+async function fetchOrders() {
+    try {
+        const response = await fetch(`${API_URL}/orders`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            return data.data;
+        } else {
+            throw new Error(data.message || 'Failed to fetch orders');
+        }
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        return [];
+    }
+}
+
+// Update order status
+async function updateOrderStatus(orderId, statusData) {
+    try {
+        const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(statusData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            return data.data;
+        } else {
+            throw new Error(data.message || 'Failed to update order status');
+        }
+    } catch (error) {
+        console.error('Error updating order status:', error);
+        throw error;
     }
 }
 
@@ -42,8 +267,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Check authentication first
         checkAdminAuth();
         
-        // Initialize product table with sample data
+        // Initialize product table with data from API
         initializeProductTable();
+        
+        // Initialize customer table with data from API
+        initializeCustomerTable();
+        
+        // Initialize order table with data from API
+        initializeOrderTable();
         
         // Initialize pagination
         initializePagination();
@@ -95,13 +326,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Initialize delete product buttons
-        deleteProductBtns.forEach(btn => {
-            btn.addEventListener('click', handleDeleteProduct);
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('delete-product')) {
+                handleDeleteProduct(e);
+            }
         });
         
         // Initialize edit product buttons
-        editProductBtns.forEach(btn => {
-            btn.addEventListener('click', handleEditProduct);
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('edit-product')) {
+                handleEditProduct(e);
+            }
         });
         
         // Initialize file upload
@@ -109,26 +344,15 @@ document.addEventListener('DOMContentLoaded', function() {
             fileUpload.addEventListener('change', handleFileUpload);
         }
         
-        // Initialize delete confirmation
+        // Initialize confirm delete button
         if (confirmDeleteBtn) {
             confirmDeleteBtn.addEventListener('click', confirmDelete);
         }
         
+        // Initialize cancel delete button
         if (cancelDeleteBtn) {
-            cancelDeleteBtn.addEventListener('click', cancelDelete);
+            cancelDeleteBtn.addEventListener('click', cancelDeleteModal);
         }
-        
-        // Initialize charts
-        initializeCharts();
-        
-        // Check URL hash for direct navigation
-        checkUrlHash();
-        
-        // Add clear demo button
-        addClearDemoButton();
-        
-        // Add data management buttons
-        addDataManagementButtons();
     }
     
     // ======== NAVIGATION HANDLERS ========
@@ -228,178 +452,130 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         
         // Get form data
-        const formData = new FormData(this);
+        const form = e.target;
+        const formData = new FormData(form);
+        const productId = form.dataset.id;
         
-        // Create product object
-        const product = {
-            id: parseInt(formData.get('productId')) || generateProductId(),
-            name: formData.get('productName'),
-            price: parseFloat(formData.get('productPrice')),
-            description: formData.get('productDescription'),
-            category: formData.get('productCategory'),
-            colors: Array.from(document.querySelectorAll('input[name="productColors"]:checked')).map(el => el.value),
-            sizes: Array.from(document.querySelectorAll('input[name="productSizes"]:checked')).map(el => el.value),
-            stock: parseInt(formData.get('productStock')),
-            sku: formData.get('productSKU'),
-            status: 'active', // Set status to active by default
-            featured: document.getElementById('productFeatured').checked
+        // Create product data object
+        const productData = {
+            name: formData.get('name'),
+            sku: formData.get('sku'),
+            description: formData.get('description'),
+            price: parseFloat(formData.get('price')),
+            comparePrice: parseFloat(formData.get('comparePrice') || 0),
+            category: formData.get('category'),
+            inventory: parseInt(formData.get('inventory')),
+            status: formData.get('status'),
+            featured: formData.get('featured') === 'on',
+            onSale: formData.get('onSale') === 'on',
+            tags: formData.get('tags').split(',').map(tag => tag.trim()).filter(tag => tag),
+            weight: parseFloat(formData.get('weight') || 0),
+            dimensions: {
+                length: parseFloat(formData.get('length') || 0),
+                width: parseFloat(formData.get('width') || 0),
+                height: parseFloat(formData.get('height') || 0)
+            }
         };
         
-        // Validate required fields
-        const productName = product.name;
-        const productPrice = product.price;
-        const productCategory = product.category;
+        // Get variant data
+        const variantNames = document.querySelectorAll('.variant-name');
+        const variantOptions = document.querySelectorAll('.variant-options');
         
-        if (!productName || !productPrice || !productCategory) {
-            showNotification('Lütfen tüm zorunlu alanları doldurun.', 'error');
-            return;
+        productData.variants = [];
+        
+        for (let i = 0; i < variantNames.length; i++) {
+            const name = variantNames[i].value.trim();
+            const options = variantOptions[i].value.split(',').map(option => option.trim()).filter(option => option);
+            
+            if (name && options.length > 0) {
+                productData.variants.push({
+                    name,
+                    options
+                });
+            }
         }
         
-        // Validate price format
-        if (isNaN(parseFloat(productPrice)) || parseFloat(productPrice) <= 0) {
-            showNotification('Lütfen geçerli bir fiyat girin.', 'error');
-            return;
-        }
+        // Handle image uploads
+        const imageFiles = form.querySelector('#productImages').files;
         
-        // Collect color and size data
-        const selectedColors = product.colors;
-        const selectedSizes = product.sizes;
-        
-        // Get image files
-        const imageFiles = document.getElementById('productImages').files;
-        
-        // Check if we're editing an existing product
-        const isEdit = formData.get('productId') ? true : false;
-        
-        // Process image files
-        if (imageFiles && imageFiles.length > 0) {
-            processProductImages(product, imageFiles, isEdit);
-        } else {
-            // No new images, use placeholder or keep existing images
-            if (!isEdit) {
-                // New product with no images, use placeholder
-                product.images = ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMThweCIgZm9udC13ZWlnaHQ9IjUwMCI+VXJuIEdvcnNlbGk8L3RleHQ+PC9zdmc+'];
-            } else {
-                // Editing product, keep existing images
-                const existingProducts = getProducts();
-                const existingProduct = existingProducts.find(p => p.id === product.id);
-                if (existingProduct && existingProduct.images) {
-                    product.images = existingProduct.images;
-                } else {
-                    product.images = ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMThweCIgZm9udC13ZWlnaHQ9IjUwMCI+VXJuIEdvcnNlbGk8L3RleHQ+PC9zdmc+'];
-                }
+        if (imageFiles.length > 0) {
+            // Create form data for image upload
+            const imageFormData = new FormData();
+            for (let i = 0; i < imageFiles.length; i++) {
+                imageFormData.append('images', imageFiles[i]);
             }
             
-            // Save product and update UI
-            saveProduct(product, isEdit);
-            closeModal();
-            showNotification(isEdit ? 'Ürün güncellendi!' : 'Ürün eklendi!', 'success');
-        }
-    }
-    
-    function processProductImages(product, imageFiles, isEdit) {
-        let processedImages = 0;
-        const totalImages = Math.min(imageFiles.length, 5); // Limit to 5 images
-        product.images = [];
-        
-        // Process each image
-        for (let i = 0; i < totalImages; i++) {
-            const file = imageFiles[i];
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                product.images.push(e.target.result);
-                processedImages++;
+            try {
+                // Upload images
+                const imageUrls = await uploadProductImages(imageFormData);
                 
-                // When all images are processed, save the product
-                if (processedImages === totalImages) {
-                    saveProduct(product, isEdit);
-                    closeModal();
-                    showNotification(isEdit ? 'Ürün güncellendi!' : 'Ürün eklendi!', 'success');
-                }
-            };
-            
-            reader.readAsDataURL(file);
-        }
-    }
-    
-    function saveProduct(product, isEdit) {
-        // Get existing products
-        const products = getProducts();
-        
-        if (isEdit) {
-            // Update existing product
-            const index = products.findIndex(p => p.id === product.id);
-            if (index !== -1) {
-                products[index] = product;
-            } else {
-                products.push(product);
+                // Add image URLs to product data
+                productData.images = imageUrls;
+            } catch (error) {
+                alert('Error uploading images: ' + error.message);
+                return;
             }
-        } else {
-            // Add new product
-            products.push(product);
         }
         
-        // Save to localStorage
-        saveProducts(products);
-        
-        // Update product table
-        addProductToTable(product);
+        try {
+            // Create or update product
+            if (productId) {
+                // Update existing product
+                await updateProduct(productId, productData);
+                alert('Product updated successfully');
+            } else {
+                // Create new product
+                await createProduct(productData);
+                alert('Product created successfully');
+            }
+            
+            // Close modal
+            closeModal();
+            
+            // Refresh product table
+            initializeProductTable();
+        } catch (error) {
+            alert('Error saving product: ' + error.message);
+        }
     }
     
     function handleDeleteProduct(e) {
-        e.preventDefault();
-        
-        // Get product row
-        const row = this.closest('tr');
-        const productId = parseInt(row.getAttribute('data-id'));
-        
-        // Get product name
-        const productName = row.querySelector('.product-cell span').textContent;
+        const productId = e.target.closest('.delete-product').dataset.id;
+        const productName = e.target.closest('tr').querySelector('td:nth-child(2)').textContent;
         
         // Show delete confirmation modal
         const deleteModal = document.getElementById('deleteModal');
-        const deleteProductName = document.getElementById('deleteProductName');
-        const deleteProductId = document.getElementById('deleteProductId');
+        const productToDelete = document.getElementById('productToDelete');
         
-        if (deleteModal && deleteProductName && deleteProductId) {
-            deleteProductName.textContent = productName;
-            deleteProductId.value = productId;
+        if (deleteModal && productToDelete) {
+            productToDelete.textContent = productName;
+            deleteModal.dataset.id = productId;
+            deleteModal.style.display = 'flex';
+        }
+    }
+    
+    // Confirm delete product
+    async function confirmDelete() {
+        const deleteModal = document.getElementById('deleteModal');
+        const productId = deleteModal.dataset.id;
+        
+        try {
+            // Delete product
+            await deleteProduct(productId);
             
-            deleteModal.style.display = 'block';
-            deleteModal.classList.add('show');
+            // Close modal
+            cancelDeleteModal();
+            
+            // Refresh product table
+            initializeProductTable();
+            
+            alert('Product deleted successfully');
+        } catch (error) {
+            alert('Error deleting product: ' + error.message);
         }
     }
     
-    function confirmDelete() {
-        const deleteProductId = document.getElementById('deleteProductId');
-        if (!deleteProductId) return;
-        
-        const productId = parseInt(deleteProductId.value);
-        
-        // Get products
-        const products = getProducts();
-        
-        // Remove product
-        const updatedProducts = products.filter(product => product.id !== productId);
-        
-        // Save updated products
-        saveProducts(updatedProducts);
-        
-        // Remove row from table
-        const row = document.querySelector(`tr[data-id="${productId}"]`);
-        if (row) {
-            row.remove();
-        }
-        
-        // Close modal
-        closeModal();
-        
-        // Show notification
-        showNotification('Ürün silindi!', 'success');
-    }
-    
-    function cancelDelete() {
+    function cancelDeleteModal() {
         closeModal();
     }
     
@@ -760,162 +936,172 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Update initializeProductTable function
-    function initializeProductTable() {
+    async function initializeProductTable() {
         const productTable = document.querySelector('.products-table tbody');
         if (!productTable) return;
         
-        // Clear existing rows
+        // Clear table
         productTable.innerHTML = '';
         
-        // Get products from localStorage or use sample data if none exist
-        let products = getProducts();
+        // Show loading
+        productTable.innerHTML = '<tr><td colspan="7" class="text-center">Loading products...</td></tr>';
         
-        // If no products in localStorage, use sample data
+        // Fetch products from API
+        const products = await fetchProducts();
+        
+        // Clear loading
+        productTable.innerHTML = '';
+        
+        // Check if there are products
         if (products.length === 0) {
-            products = [
-                {
-                    id: 1001,
-                    name: 'Premium Deri Ceket',
-                    sku: 'DND-ME-001',
-                    category: 'erkek',
-                    price: 1250.00,
-                    stock: 15,
-                    status: 'active',
-                    description: 'Yüksek kaliteli deri ceket, modern tasarım.',
-                    colors: ['siyah', 'kahverengi'],
-                    sizes: ['m', 'l', 'xl'],
-                    featured: true,
-                    images: ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMThweCIgZm9udC13ZWlnaHQ9IjUwMCI+RGVyaSBDZWtldDwvdGV4dD48L3N2Zz4=']
-                },
-                {
-                    id: 1002,
-                    name: 'Tasarım Bluz',
-                    sku: 'DND-WO-002',
-                    category: 'kadin',
-                    price: 450.00,
-                    stock: 28,
-                    status: 'active',
-                    description: 'Şık ve rahat tasarım bluz.',
-                    colors: ['beyaz', 'mavi', 'kirmizi'],
-                    sizes: ['s', 'm', 'l'],
-                    featured: true,
-                    images: ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMThweCIgZm9udC13ZWlnaHQ9IjUwMCI+VGFzYXJpbSBCbHV6PC90ZXh0Pjwvc3ZnPg==']
-                },
-                {
-                    id: 1003,
-                    name: 'Yün Palto',
-                    sku: 'DND-ME-003',
-                    category: 'erkek',
-                    price: 1850.00,
-                    stock: 8,
-                    status: 'active',
-                    description: 'Sıcak tutan yün palto, kış için ideal.',
-                    colors: ['siyah', 'lacivert', 'gri'],
-                    sizes: ['m', 'l', 'xl'],
-                    featured: false,
-                    images: ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMThweCIgZm9udC13ZWlnaHQ9IjUwMCI+WXVuIFBhbHRvPC90ZXh0Pjwvc3ZnPg==']
-                },
-                {
-                    id: 1004,
-                    name: 'Deri Çanta',
-                    sku: 'DND-BA-004',
-                    category: 'canta',
-                    price: 750.00,
-                    stock: 0,
-                    status: 'inactive',
-                    description: 'Dayanıklı ve şık deri çanta.',
-                    colors: ['siyah', 'kahverengi'],
-                    sizes: [],
-                    featured: false,
-                    images: ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzk5OSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMThweCIgZm9udC13ZWlnaHQ9IjUwMCI+RGVyaSBDYW50YTwvdGV4dD48L3N2Zz4=']
-                }
-            ];
-            
-            // Save sample products to localStorage
-            saveProducts(products);
+            productTable.innerHTML = '<tr><td colspan="7" class="text-center">No products found</td></tr>';
+            return;
         }
         
         // Add products to table
         products.forEach(product => {
-            addProductToTable(product);
+            const row = document.createElement('tr');
+            row.dataset.id = product._id;
+            
+            row.innerHTML = `
+                <td>
+                    <div class="product-image-small">
+                        <img src="${product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/50'}" alt="${product.name}">
+                    </div>
+                </td>
+                <td>${product.name}</td>
+                <td>${product.sku}</td>
+                <td>₺${product.price.toFixed(2)}</td>
+                <td>${product.inventory}</td>
+                <td><span class="status-badge ${product.status}">${product.status}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="edit-product" data-id="${product._id}"><i class="fas fa-edit"></i></button>
+                        <button class="delete-product" data-id="${product._id}"><i class="fas fa-trash"></i></button>
+                    </div>
+                </td>
+            `;
+            
+            productTable.appendChild(row);
         });
+        
+        // Update product count in dashboard
+        const productCount = document.querySelector('#dashboard .stat-value:nth-child(3)');
+        if (productCount) {
+            productCount.textContent = products.length;
+        }
     }
 
-    // Helper function to add a product to the table
-    function addProductToTable(product) {
-        const productTable = document.querySelector('.products-table tbody');
-        if (!productTable) return;
+    // Initialize customer table with data from API
+    async function initializeCustomerTable() {
+        const customerTable = document.querySelector('.customer-table tbody');
+        if (!customerTable) return;
         
-        // Check if product already exists in table
-        const existingRow = document.querySelector(`tr[data-id="${product.id}"]`);
-        if (existingRow) {
-            existingRow.remove();
+        // Clear table
+        customerTable.innerHTML = '';
+        
+        // Show loading
+        customerTable.innerHTML = '<tr><td colspan="6" class="text-center">Loading customers...</td></tr>';
+        
+        // Fetch customers from API
+        const customers = await fetchCustomers();
+        
+        // Clear loading
+        customerTable.innerHTML = '';
+        
+        // Check if there are customers
+        if (customers.length === 0) {
+            customerTable.innerHTML = '<tr><td colspan="6" class="text-center">No customers found</td></tr>';
+            return;
         }
         
-        const newRow = document.createElement('tr');
-        newRow.setAttribute('data-id', product.id);
-        
-        // Get category display name
-        const categoryMap = {
-            'erkek': 'Erkek',
-            'kadin': 'Kadın',
-            'aksesuar': 'Aksesuar',
-            'ayakkabi': 'Ayakkabı',
-            'canta': 'Çanta'
-        };
-        
-        const categoryDisplay = categoryMap[product.category] || product.category;
-        
-        // Format price
-        const price = product.price.toLocaleString('tr-TR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+        // Add customers to table
+        customers.forEach(customer => {
+            const row = document.createElement('tr');
+            row.dataset.id = customer._id;
+            
+            row.innerHTML = `
+                <td>${customer.firstName} ${customer.lastName}</td>
+                <td>${customer.email}</td>
+                <td>${customer.phone || 'N/A'}</td>
+                <td>${customer.orders.length}</td>
+                <td>${new Date(customer.createdAt).toLocaleDateString()}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="view-customer" data-id="${customer._id}"><i class="fas fa-eye"></i></button>
+                    </div>
+                </td>
+            `;
+            
+            customerTable.appendChild(row);
         });
         
-        // Create row HTML
-        newRow.innerHTML = `
-            <td>
-                <input type="checkbox" class="product-checkbox">
-            </td>
-            <td class="product-cell">
-                <img src="${product.images[0]}" alt="${product.name}">
-                <span>${product.name}</span>
-            </td>
-            <td>${product.sku}</td>
-            <td>${categoryDisplay}</td>
-            <td>₺${price}</td>
-            <td>${product.stock}</td>
-            <td><span class="status-badge ${product.status}">${product.status === 'active' ? 'Aktif' : 'Pasif'}</span></td>
-            <td class="actions-cell">
-                <a href="#" class="action-btn edit-btn"><i class="fas fa-edit"></i></a>
-                <a href="#" class="action-btn delete-btn"><i class="fas fa-trash"></i></a>
-            </td>
-        `;
-        
-        // Add event listeners to new buttons
-        newRow.querySelector('.edit-btn').addEventListener('click', handleEditProduct);
-        newRow.querySelector('.delete-btn').addEventListener('click', handleDeleteProduct);
-        
-        // Add to table
-        productTable.prepend(newRow);
+        // Update customer count in dashboard
+        const customerCount = document.querySelector('#dashboard .stat-value:nth-child(2)');
+        if (customerCount) {
+            customerCount.textContent = customers.length;
+        }
     }
 
-    // Clear demo products
-    function clearDemoProducts() {
-        // Get products
-        const products = getProducts();
+    // Initialize order table with data from API
+    async function initializeOrderTable() {
+        const orderTable = document.querySelector('.order-table tbody');
+        if (!orderTable) return;
         
-        // Filter out demo products (those with IDs less than 10000)
-        const userAddedProducts = products.filter(product => product.id > 10000);
+        // Clear table
+        orderTable.innerHTML = '';
         
-        // Save only user-added products
-        saveProducts(userAddedProducts);
+        // Show loading
+        orderTable.innerHTML = '<tr><td colspan="7" class="text-center">Loading orders...</td></tr>';
         
-        // Refresh product table
-        initializeProductTable();
+        // Fetch orders from API
+        const orders = await fetchOrders();
         
-        // Show notification
-        showNotification('Demo ürünler temizlendi!', 'success');
+        // Clear loading
+        orderTable.innerHTML = '';
+        
+        // Check if there are orders
+        if (orders.length === 0) {
+            orderTable.innerHTML = '<tr><td colspan="7" class="text-center">No orders found</td></tr>';
+            return;
+        }
+        
+        // Add orders to table
+        orders.forEach(order => {
+            const row = document.createElement('tr');
+            row.dataset.id = order._id;
+            
+            row.innerHTML = `
+                <td>${order.orderNumber}</td>
+                <td>${order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : 'N/A'}</td>
+                <td>₺${order.total.toFixed(2)}</td>
+                <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                <td><span class="status-badge ${order.paymentStatus}">${order.paymentStatus}</span></td>
+                <td><span class="status-badge ${order.orderStatus}">${order.orderStatus}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="view-order" data-id="${order._id}"><i class="fas fa-eye"></i></button>
+                        <button class="edit-order-status" data-id="${order._id}"><i class="fas fa-edit"></i></button>
+                    </div>
+                </td>
+            `;
+            
+            orderTable.appendChild(row);
+        });
+        
+        // Calculate total sales
+        const totalSales = orders.reduce((total, order) => {
+            if (order.paymentStatus === 'paid') {
+                return total + order.total;
+            }
+            return total;
+        }, 0);
+        
+        // Update sales count in dashboard
+        const salesCount = document.querySelector('#dashboard .stat-value:first-child');
+        if (salesCount) {
+            salesCount.textContent = `₺${totalSales.toFixed(2)}`;
+        }
     }
 
     // Add a button to the admin panel to clear demo products

@@ -643,7 +643,7 @@ textarea:focus {
     
     .form-row {
         flex-direction: column;
-        gap: 0;
+        gap: 15px;
     }
     
     .dashboard-stats {
@@ -651,17 +651,39 @@ textarea:focus {
     }
     
     .addresses-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .account-user {
+        justify-content: center;
+    }
+    
+    .account-menu {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .account-menu li {
+        flex: 0 0 auto;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+    }
+    
+    .account-menu li.active {
+        border-left-color: transparent;
+        border-bottom-color: var(--accent-color);
     }
 }
 
 @media (max-width: 768px) {
     .dashboard-stats {
         grid-template-columns: 1fr;
+        gap: 15px;
     }
     
     .wishlist-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
     }
     
     .order-header {
@@ -675,15 +697,57 @@ textarea:focus {
         align-items: flex-start;
         gap: 15px;
     }
-}
-
-@media (max-width: 576px) {
+    
+    .account-section {
+        padding: 40px 0;
+    }
+    
     .account-main {
         padding: 20px;
     }
     
+    .account-menu {
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding: 10px 0;
+    }
+    
+    .account-menu li {
+        padding: 10px 15px;
+        white-space: nowrap;
+    }
+    
+    .account-menu::-webkit-scrollbar {
+        height: 3px;
+    }
+    
+    .account-menu::-webkit-scrollbar-track {
+        background: #1a1a1a;
+    }
+    
+    .account-menu::-webkit-scrollbar-thumb {
+        background: var(--accent-color);
+    }
+    
+    .order-product {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .order-product-image {
+        width: 80px;
+        height: 80px;
+    }
+}
+
+@media (max-width: 576px) {
+    .account-main {
+        padding: 15px;
+    }
+    
     .wishlist-grid {
-        grid-template-columns: 1fr;
+        gap: 15px;
     }
     
     .auth-tabs {
@@ -693,4 +757,125 @@ textarea:focus {
     .auth-tab {
         padding: 10px;
     }
+    
+    .dashboard-card {
+        padding: 15px;
+    }
+    
+    .card-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .card-info h3 {
+        font-size: 1.2rem;
+    }
+    
+    .card-info p {
+        font-size: 0.9rem;
+    }
+    
+    .address-card {
+        padding: 15px;
+    }
+    
+    .address-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .address-actions button {
+        width: 100%;
+    }
+    
+    .add-address-button {
+        width: 100%;
+    }
+    
+    .order-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .order-actions a {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    
+    .account-tab h2 {
+        font-size: 1.3rem;
+    }
+    
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="date"],
+    select,
+    textarea {
+        font-size: 16px; /* Prevents iOS zoom */
+    }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) {
+    .account-menu li:hover {
+        background-color: transparent;
+        color: #ccc;
+    }
+    
+    .account-menu li.active {
+        background-color: #1a1a1a;
+        color: var(--accent-color);
+    }
+    
+    .dashboard-card:hover {
+        transform: none;
+    }
+    
+    .address-actions button:hover,
+    .add-address-button:hover,
+    .order-actions a:hover,
+    .add-to-cart-button:hover,
+    .remove-wishlist:hover {
+        transform: none;
+        background-color: initial;
+    }
+    
+    .wishlist-item:hover {
+        transform: none;
+    }
+}
+
+/* Improve tap targets for mobile */
+.account-menu li,
+.auth-tab,
+.form-checkbox,
+.address-actions button,
+.add-address-button,
+.order-actions a,
+.add-to-cart-button,
+.remove-wishlist {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="date"],
+select,
+textarea {
+    min-height: 44px;
+}
+
+.form-checkbox input[type="checkbox"] {
+    min-width: 20px;
+    min-height: 20px;
 } 

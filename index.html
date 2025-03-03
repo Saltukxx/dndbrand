@@ -14,53 +14,73 @@
     <header>
         <div class="container">
             <div class="logo">
-                <h1>DnD Brand</h1>
+                <h1>DnD <span>Brand</span></h1>
             </div>
             <nav>
                 <ul>
                     <li><a href="index.html" class="active">Ana Sayfa</a></li>
-                    <li><a href="shop.html">Mağaza</a></li>
+                    <li><a href="shop.html">Koleksiyon</a></li>
                     <li><a href="about.html">Hakkımızda</a></li>
+                    <li><a href="contact.html">İletişim</a></li>
                 </ul>
             </nav>
             <div class="nav-icons">
-                <a href="search.html"><i class="fas fa-search"></i></a>
-                <a href="account.html"><i class="fas fa-user"></i></a>
-                <a href="cart.html"><i class="fas fa-shopping-bag"></i><span class="cart-count">0</span></a>
+                <div class="nav-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="nav-icon">
+                    <a href="account.html"><i class="fas fa-user"></i></a>
+                </div>
+                <div class="cart-icon">
+                    <a href="cart.html"><i class="fas fa-shopping-bag"></i></a>
+                    <span class="cart-count">0</span>
+                </div>
+                <div class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </div>
             </div>
         </div>
     </header>
 
+    <div class="mobile-menu">
+        <div class="close-menu">
+            <i class="fas fa-times"></i>
+        </div>
+        <ul>
+            <li><a href="index.html">Ana Sayfa</a></li>
+            <li><a href="shop.html">Koleksiyon</a></li>
+            <li><a href="about.html">Hakkımızda</a></li>
+            <li><a href="contact.html">İletişim</a></li>
+            <li><a href="account.html">Hesabım</a></li>
+            <li><a href="cart.html">Sepetim</a></li>
+        </ul>
+    </div>
+    <div class="mobile-menu-overlay"></div>
+
     <section class="hero">
-        <div class="hero-background" style="background-image: url('dndherosection.jpg');"></div>
+        <img src="dndherosection.jpg" alt="DnD Brand Koleksiyon" class="hero-background">
         <div class="hero-overlay"></div>
-        <div class="container">
-            <div class="hero-content">
-                <h1 class="hero-title animate-text">Tarzınızı Yeniden <span class="highlight">Tanımlayın</span></h1>
-                <p class="hero-subtitle animate-text">Modern birey için lüks giyim koleksiyonu</p>
-                <div class="hero-buttons animate-text">
-                    <a href="shop.html" class="btn btn-primary">Şimdi Alışveriş Yap</a>
-                    <a href="shop.html" class="btn btn-secondary">Koleksiyonları Keşfet</a>
+        <div class="hero-content">
+            <h1 class="hero-title">Tarzınızı <span class="highlight">Yeniden</span> Tanımlayın</h1>
+            <p class="hero-subtitle">Premium kalite, modern tasarım ve benzersiz detaylarla öne çıkan lüks giyim koleksiyonu.</p>
+            <div class="hero-buttons">
+                <a href="shop.html" class="btn">Koleksiyonu Keşfet</a>
+                <a href="about.html" class="btn btn-secondary">Hikayemiz</a>
+            </div>
+            <div class="hero-features">
+                <div class="hero-feature">
+                    <i class="fas fa-shipping-fast"></i>
+                    <span>Ücretsiz Kargo</span>
                 </div>
-                <div class="hero-features">
-                    <div class="hero-feature animate-up">
-                        <i class="fas fa-shipping-fast"></i>
-                        <span>Hızlı Teslimat</span>
-                    </div>
-                    <div class="hero-feature animate-up">
-                        <i class="fas fa-undo"></i>
-                        <span>30 Gün İade</span>
-                    </div>
-                    <div class="hero-feature animate-up">
-                        <i class="fas fa-shield-alt"></i>
-                        <span>Güvenli Ödeme</span>
-                    </div>
+                <div class="hero-feature">
+                    <i class="fas fa-undo"></i>
+                    <span>30 Gün İade</span>
+                </div>
+                <div class="hero-feature">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Güvenli Ödeme</span>
                 </div>
             </div>
-        </div>
-        <div class="hero-scroll-indicator">
-            <span>Keşfet</span>
-            <i class="fas fa-chevron-down"></i>
         </div>
     </section>
 
@@ -68,47 +88,114 @@
         <div class="container">
             <h2 class="section-title">Öne Çıkan Koleksiyonlar</h2>
             <div class="collection-grid">
-                <div class="collection-item">
-                    <img src="dndherosection.jpg" alt="Erkek Koleksiyonu">
+                <div class="collection-item fade-in">
+                    <img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" alt="Erkek Koleksiyonu">
                     <div class="collection-info">
                         <h3>Erkek Koleksiyonu</h3>
-                        <a href="collections.html?type=men" class="btn-secondary">Koleksiyonu Gör</a>
+                        <p>Modern erkek için tasarlanmış premium parçalar</p>
+                        <a href="shop.html?category=men" class="btn">Keşfet</a>
                     </div>
                 </div>
-                <div class="collection-item">
-                    <img src="dado123.jpg" alt="Kadın Koleksiyonu">
+                <div class="collection-item fade-in">
+                    <img src="https://images.unsplash.com/photo-1581044777550-4cfa60707c03?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=686&q=80" alt="Kadın Koleksiyonu">
                     <div class="collection-info">
-                        <h3>Yeni Gelenler</h3>
-                        <a href="shop.html?new=true" class="btn-secondary">Koleksiyonu Gör</a>
+                        <h3>Kadın Koleksiyonu</h3>
+                        <p>Zarafet ve stil sahibi kadınlar için</p>
+                        <a href="shop.html?category=women" class="btn">Keşfet</a>
                     </div>
                 </div>
-                <div class="collection-item">
-                    <img src="dndbannersection2.jpg" alt="Aksesuarlar">
+                <div class="collection-item fade-in">
+                    <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=764&q=80" alt="Aksesuar Koleksiyonu">
                     <div class="collection-info">
-                        <h3>Aksesuarlar</h3>
-                        <a href="collections.html?type=accessories" class="btn-secondary">Koleksiyonu Gör</a>
+                        <h3>Aksesuar Koleksiyonu</h3>
+                        <p>Tarzınızı tamamlayacak özel parçalar</p>
+                        <a href="shop.html?category=accessories" class="btn">Keşfet</a>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="hero banner-hero" style="background-image: url('dndbannersection2.jpg'); background-size: cover; background-position: top center;">
-        <div class="hero-overlay"></div>
+    <section class="premium-banner">
         <div class="container">
-            <div class="banner-hero-content">
-                <h2 class="banner-hero-title">Yeni Sezon Koleksiyonu</h2>
-                <p class="banner-hero-subtitle">En yeni tasarımlarımızı keşfedin ve tarzınızı yükseltin</p>
-                <a href="shop.html?new=true" class="banner-hero-button">YENİ ÜRÜNLER</a>
+            <div class="premium-banner-content fade-in">
+                <h2>Premium Kalite</h2>
+                <p>En kaliteli kumaşlar ve üstün işçilik ile üretilen DnD Brand ürünleri, uzun ömürlü kullanım için tasarlandı.</p>
+                <a href="about.html" class="btn btn-premium">Daha Fazla Bilgi</a>
+            </div>
+            <div class="premium-banner-image fade-in">
+                <img src="dndbannersection2.jpg" alt="Premium Kalite">
             </div>
         </div>
     </section>
 
     <section class="trending">
         <div class="container">
-            <h2 class="section-title">Trend Ürünler</h2>
+            <h2 class="section-title">Öne Çıkan Ürünler</h2>
             <div class="product-grid">
-                <!-- Products will be loaded dynamically from shop products -->
+                <div class="product-card fade-in">
+                    <div class="product-image">
+                        <span class="product-badge new">Yeni</span>
+                        <img src="https://images.unsplash.com/photo-1578932750294-f5075e85f44a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" alt="Ürün 1">
+                        <div class="product-overlay">
+                            <a href="#"><i class="fas fa-heart"></i></a>
+                            <a href="#"><i class="fas fa-shopping-cart"></i></a>
+                            <a href="product.html?id=1"><i class="fas fa-eye"></i></a>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <div class="brand">DnD Brand</div>
+                        <h3>Premium Pamuklu T-Shirt</h3>
+                        <div class="price">₺599</div>
+                    </div>
+                </div>
+                <div class="product-card fade-in">
+                    <div class="product-image">
+                        <span class="product-badge sale">İndirim</span>
+                        <img src="https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" alt="Ürün 2">
+                        <div class="product-overlay">
+                            <a href="#"><i class="fas fa-heart"></i></a>
+                            <a href="#"><i class="fas fa-shopping-cart"></i></a>
+                            <a href="product.html?id=2"><i class="fas fa-eye"></i></a>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <div class="brand">DnD Brand</div>
+                        <h3>Slim Fit Denim Pantolon</h3>
+                        <div class="price"><span class="old-price">₺1299</span> ₺999</div>
+                    </div>
+                </div>
+                <div class="product-card fade-in">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=736&q=80" alt="Ürün 3">
+                        <div class="product-overlay">
+                            <a href="#"><i class="fas fa-heart"></i></a>
+                            <a href="#"><i class="fas fa-shopping-cart"></i></a>
+                            <a href="product.html?id=3"><i class="fas fa-eye"></i></a>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <div class="brand">DnD Brand</div>
+                        <h3>Oversize Sweatshirt</h3>
+                        <div class="price">₺899</div>
+                    </div>
+                </div>
+                <div class="product-card fade-in">
+                    <div class="product-image">
+                        <span class="product-badge new">Yeni</span>
+                        <img src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" alt="Ürün 4">
+                        <div class="product-overlay">
+                            <a href="#"><i class="fas fa-heart"></i></a>
+                            <a href="#"><i class="fas fa-shopping-cart"></i></a>
+                            <a href="product.html?id=4"><i class="fas fa-eye"></i></a>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <div class="brand">DnD Brand</div>
+                        <h3>Slim Fit Blazer Ceket</h3>
+                        <div class="price">₺1799</div>
+                    </div>
+                </div>
             </div>
             <div class="view-all">
                 <a href="shop.html" class="btn">Tüm Ürünleri Gör</a>
@@ -116,25 +203,14 @@
         </div>
     </section>
 
-    <section class="hero banner-hero" style="background-image: url('dado123.jpg'); background-size: cover; background-position: center;">
-        <div class="hero-overlay"></div>
-        <div class="container">
-            <div class="banner-hero-content">
-                <h2 class="banner-hero-title">Özel İndirimler</h2>
-                <p class="banner-hero-subtitle">Sınırlı süre için seçili ürünlerde %50'ye varan indirimler</p>
-                <a href="shop.html?sale=true" class="banner-hero-button">İNDİRİMLİ ÜRÜNLER</a>
-            </div>
-        </div>
-    </section>
-
     <section class="newsletter">
         <div class="container">
             <div class="newsletter-content">
-                <h2>Özel Listemize Katılın</h2>
-                <p>Yeni koleksiyonlar ve özel teklifler hakkında güncellemeler almak için abone olun.</p>
+                <h2>Yeniliklerden Haberdar Olun</h2>
+                <p>Yeni koleksiyonlar, özel indirimler ve daha fazlası için bültenimize abone olun.</p>
                 <form class="newsletter-form">
                     <input type="email" placeholder="E-posta adresiniz" required>
-                    <button type="submit" class="btn">Abone Ol</button>
+                    <button type="submit">Abone Ol</button>
                 </form>
             </div>
         </div>
@@ -145,50 +221,71 @@
             <div class="footer-content">
                 <div class="footer-column">
                     <h3>DnD Brand</h3>
-                    <p>Modern birey için premium giyim. Özel koleksiyonlarımızla tarzınızı yeniden tanımlayın.</p>
+                    <p>Premium kalite, modern tasarım ve benzersiz detaylarla öne çıkan lüks giyim markası.</p>
                     <div class="social-icons">
                         <a href="#"><i class="fab fa-facebook-f"></i></a>
                         <a href="#"><i class="fab fa-instagram"></i></a>
                         <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-pinterest-p"></i></a>
+                        <a href="#"><i class="fab fa-pinterest"></i></a>
                     </div>
                 </div>
                 <div class="footer-column">
                     <h3>Alışveriş</h3>
                     <ul>
-                        <li><a href="collections.html?type=men">Erkek Koleksiyonu</a></li>
-                        <li><a href="collections.html?type=women">Kadın Koleksiyonu</a></li>
-                        <li><a href="collections.html?type=accessories">Aksesuarlar</a></li>
-                        <li><a href="shop.html?sale=true">İndirim</a></li>
+                        <li><a href="shop.html?category=men">Erkek</a></li>
+                        <li><a href="shop.html?category=women">Kadın</a></li>
+                        <li><a href="shop.html?category=accessories">Aksesuarlar</a></li>
+                        <li><a href="shop.html?category=new">Yeni Gelenler</a></li>
+                        <li><a href="shop.html?category=sale">İndirimli Ürünler</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
-                    <h3>Yardım</h3>
+                    <h3>Bilgi</h3>
                     <ul>
-                        <li><a href="contact.html">Bize Ulaşın</a></li>
-                        <li><a href="shipping.html">Kargo Bilgileri</a></li>
-                        <li><a href="returns.html">İade ve Değişim</a></li>
-                        <li><a href="faq.html">Sıkça Sorulan Sorular</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h3>Hakkımızda</h3>
-                    <ul>
-                        <li><a href="about.html">Hikayemiz</a></li>
-                        <li><a href="sustainability.html">Sürdürülebilirlik</a></li>
-                        <li><a href="careers.html">Kariyer</a></li>
+                        <li><a href="about.html">Hakkımızda</a></li>
+                        <li><a href="contact.html">İletişim</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                        <li><a href="faq.html">SSS</a></li>
                         <li><a href="privacy.html">Gizlilik Politikası</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>İletişim</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Cumartesi Caddesi No:123, Yakutiye, Erzurum</li>
+                        <li><i class="fas fa-phone"></i> +90 537 305 85 28</li>
+                        <li><i class="fas fa-envelope"></i> info@dndbrand.com</li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2023 DnD Brand. Tüm hakları saklıdır.</p>
+                <p>&copy; 2023 DnD Brand. Tüm hakları saklıdır. | Tasarım: <a href="#">DnD Brand</a></p>
             </div>
         </div>
     </footer>
 
-    <script src="script.js"></script>
-    <script src="storage-manager.js"></script>
     <script src="index.js"></script>
+    <script src="storage-manager.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Scroll animation for fade-in elements
+        document.addEventListener('DOMContentLoaded', function() {
+            const fadeElements = document.querySelectorAll('.fade-in');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, {
+                threshold: 0.1
+            });
+            
+            fadeElements.forEach(element => {
+                observer.observe(element);
+            });
+        });
+    </script>
 </body>
 </html> 

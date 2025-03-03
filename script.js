@@ -28,13 +28,82 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Initialize mobile menu
 function initializeMobileMenu() {
-    const menuToggle = document.querySelector('.menu-toggle');
-    const mobileMenu = document.querySelector('nav ul');
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const closeMenuBtn = document.querySelector('.close-menu');
+    const mobileMenu = document.querySelector('.mobile-menu');
+    const mobileMenuOverlay = document.querySelector('.mobile-menu-overlay');
     
-    if (menuToggle && mobileMenu) {
-        menuToggle.addEventListener('click', function() {
-            mobileMenu.classList.toggle('show');
-            this.classList.toggle('active');
+    if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            mobileMenu.classList.add('active');
+            mobileMenuOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        
+        if (closeMenuBtn) {
+            closeMenuBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+        
+        if (mobileMenuOverlay) {
+            mobileMenuOverlay.addEventListener('click', function(e) {
+                e.preventDefault();
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+        
+        // Close mobile menu when clicking on a link
+        const mobileMenuLinks = mobileMenu.querySelectorAll('a');
+        mobileMenuLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+        
+        // Handle touch events for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        mobileMenu.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        }, false);
+        
+        mobileMenu.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, false);
+        
+        function handleSwipe() {
+            if (touchStartX - touchEndX > 50) {
+                // Swipe left to close
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+    }
+    
+    // Header scroll effect
+    const header = document.querySelector('header');
+    
+    if (header) {
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
         });
     }
 }
@@ -550,43 +619,142 @@ function initializeHeroAnimations() {
     window.addEventListener('scroll', animateOnScroll);
 }
 
-// Mobile Navigation
+// Initialize mobile navigation for shop filters
+function initializeMobileFilters() {
+    const filterToggle = document.querySelector('.mobile-filter-toggle');
+    const filterClose = document.querySelector('.filter-close');
+    const shopFilters = document.querySelector('.shop-sidebar');
+    const filterOverlay = document.querySelector('.filter-overlay');
+    
+    if (filterToggle && shopFilters) {
+        filterToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            shopFilters.classList.add('active');
+            filterOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        
+        if (filterClose) {
+            filterClose.addEventListener('click', function(e) {
+                e.preventDefault();
+                shopFilters.classList.remove('active');
+                filterOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+        
+        if (filterOverlay) {
+            filterOverlay.addEventListener('click', function(e) {
+                shopFilters.classList.remove('active');
+                filterOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+        
+        // Handle touch events for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        shopFilters.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        }, false);
+        
+        shopFilters.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, false);
+        
+        function handleSwipe() {
+            if (touchEndX - touchStartX > 50) {
+                // Swipe right to close
+                shopFilters.classList.remove('active');
+                filterOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+    }
+}
+
+// Initialize mobile navigation
 function initializeMobileNavigation() {
-    const mobileMenuToggle = document.createElement('button');
-    mobileMenuToggle.className = 'mobile-menu-toggle';
-    mobileMenuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+    // Initialize mobile filters if on shop page
+    if (document.querySelector('.shop-sidebar')) {
+        initializeMobileFilters();
+    }
     
-    const navIcons = document.querySelector('.nav-icons');
-    navIcons.parentNode.insertBefore(mobileMenuToggle, navIcons);
+    // Make dropdowns touch-friendly
+    const dropdowns = document.querySelectorAll('.dropdown');
     
-    const nav = document.querySelector('nav');
+    if (dropdowns.length > 0) {
+        dropdowns.forEach(dropdown => {
+            const dropdownToggle = dropdown.querySelector('.dropdown-toggle');
+            const dropdownMenu = dropdown.querySelector('.dropdown-menu');
+            
+            if (dropdownToggle && dropdownMenu) {
+                dropdownToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Close all other dropdowns
+                    dropdowns.forEach(otherDropdown => {
+                        if (otherDropdown !== dropdown) {
+                            otherDropdown.querySelector('.dropdown-menu').classList.remove('show');
+                        }
+                    });
+                    
+                    // Toggle current dropdown
+                    dropdownMenu.classList.toggle('show');
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!dropdown.contains(e.target)) {
+                        dropdownMenu.classList.remove('show');
+                    }
+                });
+            }
+        });
+    }
     
-    const navClose = document.createElement('button');
-    navClose.className = 'nav-close';
-    navClose.innerHTML = '<i class="fas fa-times"></i>';
-    nav.appendChild(navClose);
+    // Improve tab navigation for mobile
+    const tabHeaders = document.querySelectorAll('.tab-header');
     
-    const mobileMenuOverlay = document.createElement('div');
-    mobileMenuOverlay.className = 'mobile-menu-overlay';
-    document.body.appendChild(mobileMenuOverlay);
-    
-    mobileMenuToggle.addEventListener('click', function() {
-        nav.classList.add('active');
-        mobileMenuOverlay.style.display = 'block';
-        document.body.style.overflow = 'hidden';
-    });
-    
-    navClose.addEventListener('click', function() {
-        nav.classList.remove('active');
-        mobileMenuOverlay.style.display = 'none';
-        document.body.style.overflow = '';
-    });
-    
-    mobileMenuOverlay.addEventListener('click', function() {
-        nav.classList.remove('active');
-        mobileMenuOverlay.style.display = 'none';
-        document.body.style.overflow = '';
-    });
+    if (tabHeaders.length > 0) {
+        tabHeaders.forEach(tabHeader => {
+            const tabs = tabHeader.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-pane');
+            
+            if (tabs.length > 0 && tabContents.length > 0) {
+                // Make tabs scrollable on mobile
+                if (window.innerWidth < 768) {
+                    tabHeader.style.overflowX = 'auto';
+                    tabHeader.style.whiteSpace = 'nowrap';
+                    tabHeader.style.WebkitOverflowScrolling = 'touch';
+                    tabHeader.style.scrollBehavior = 'smooth';
+                }
+                
+                // Ensure tab functionality works
+                tabs.forEach((tab, index) => {
+                    tab.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        
+                        // Remove active class from all tabs and tab panes
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tabContents.forEach(tc => tc.classList.remove('active'));
+                        
+                        // Add active class to current tab and tab pane
+                        tab.classList.add('active');
+                        tabContents[index].classList.add('active');
+                        
+                        // Scroll tab into view on mobile
+                        if (window.innerWidth < 768) {
+                            tab.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+                        }
+                    });
+                });
+            }
+        });
+    }
 }
 
 // Initialize cart preview

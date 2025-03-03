@@ -385,32 +385,148 @@
     .social-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+    
+    .about-text h2, .shipping-text h2, .contact-info h2, .contact-form h2 {
+        font-size: 2rem;
+    }
+    
+    .about-text p, .shipping-text p {
+        font-size: 1rem;
+    }
+    
+    .value-item {
+        padding: 30px 20px;
+    }
+    
+    .value-icon {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .value-icon i {
+        font-size: 28px;
+    }
 }
 
 @media (max-width: 768px) {
     .about-content {
         flex-direction: column;
+        gap: 40px;
     }
     
     .shipping-content {
         flex-direction: column-reverse;
+        gap: 40px;
     }
     
     .contact-content {
         flex-direction: column;
+        gap: 40px;
     }
     
     .about-image::before {
         display: none;
+    }
+    
+    .about-intro, .about-values, .about-shipping, .about-social, .about-contact {
+        padding: 60px 0;
+    }
+    
+    .about-image, .shipping-image {
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    .social-text {
+        font-size: 1.1rem;
+        margin-bottom: 30px;
+    }
+    
+    .social-item span {
+        font-size: 1.3rem;
+    }
+    
+    .social-item p {
+        font-size: 1rem;
+    }
+    
+    .contact-item {
+        padding: 20px 15px;
+    }
+    
+    .contact-item i {
+        font-size: 28px;
     }
 }
 
 @media (max-width: 576px) {
     .values-grid {
         grid-template-columns: 1fr;
+        gap: 20px;
     }
     
     .social-grid {
         grid-template-columns: 1fr;
+        gap: 20px;
     }
+    
+    .about-text h2, .shipping-text h2, .contact-info h2, .contact-form h2 {
+        font-size: 1.8rem;
+    }
+    
+    .about-image, .shipping-image {
+        height: 300px;
+    }
+    
+    .about-intro, .about-values, .about-shipping, .about-social, .about-contact {
+        padding: 40px 0;
+    }
+    
+    .value-item:hover, .social-item:hover {
+        transform: translateY(-5px);
+    }
+    
+    .form-group label {
+        font-size: 0.9rem;
+    }
+    
+    .form-group input, .form-group textarea {
+        padding: 12px 15px;
+        font-size: 16px;
+    }
+    
+    .contact-form .btn {
+        width: 100%;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) {
+    .about-image:hover img, .shipping-image:hover img {
+        transform: none;
+    }
+    
+    .value-item:hover, .social-item:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .form-group input:focus, .form-group textarea:focus {
+        border-color: var(--accent-color);
+    }
+}
+
+/* Improve tap targets for mobile */
+.contact-item, 
+.social-item,
+.contact-form .btn,
+.shipping-text .btn {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+.form-group input, 
+.form-group textarea {
+    min-height: 44px;
 } 
