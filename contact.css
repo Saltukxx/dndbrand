@@ -439,19 +439,22 @@
 .whatsapp-float::after {
     content: 'WhatsApp ile İletişime Geçin';
     position: absolute;
-    right: 75px;
+    right: auto;
+    left: -220px;
+    top: 50%;
+    transform: translateY(-50%);
     background-color: #333;
     color: white;
     padding: 10px 15px;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     white-space: nowrap;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    min-width: 180px;
+    min-width: 160px;
     text-align: center;
 }
 
@@ -484,10 +487,10 @@
     
     .whatsapp-float::after {
         right: auto;
-        left: auto;
-        right: 65px;
-        bottom: 10px;
-        transform: none;
+        left: -200px;
+        bottom: auto;
+        top: 50%;
+        transform: translateY(-50%);
         min-width: 160px;
         font-size: 13px;
     }
@@ -514,13 +517,13 @@
     }
     
     .whatsapp-float::after {
-        padding: 8px 12px;
-        min-width: 140px;
+        padding: 8px 10px;
+        min-width: 130px;
         font-size: 12px;
-        bottom: 10px;
-        right: 65px;
-        left: auto;
-        white-space: nowrap;
+        left: -180px;
+        bottom: auto;
+        top: 50%;
+        transform: translateY(-50%);
     }
     
     .whatsapp-float:hover {

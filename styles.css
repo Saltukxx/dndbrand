@@ -168,15 +168,21 @@ header .container {
 }
 
 .logo h1 {
-    font-size: 1.8rem;
+    font-size: 2.2rem;
     font-weight: 700;
-    color: #fff;
-    margin: 0;
-    font-family: 'Playfair Display', serif;
+    font-family: 'League Spartan', sans-serif;
+    color: var(--text-color);
+    margin-bottom: 0;
 }
 
 .logo span {
     color: var(--secondary-color);
+}
+
+.logo-image {
+    height: 50px;
+    margin-right: 15px;
+    object-fit: contain;
 }
 
 nav ul {
