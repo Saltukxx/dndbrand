@@ -350,34 +350,16 @@ function initializeWhatsAppButton() {
     const whatsappFloat = document.querySelector('.whatsapp-float');
     
     if (whatsappFloat) {
-        // Add pulse animation
-        setInterval(() => {
-            whatsappFloat.classList.add('pulse');
-            
-            setTimeout(() => {
-                whatsappFloat.classList.remove('pulse');
-            }, 1000);
-        }, 3000);
+        // Show tooltip initially
+        whatsappFloat.classList.add('show-tooltip');
         
-        // Show button after scrolling
-        const showWhatsAppButton = () => {
-            if (window.scrollY > 300) {
-                whatsappFloat.style.opacity = '1';
-                whatsappFloat.style.transform = 'scale(1)';
-            } else {
-                whatsappFloat.style.opacity = '0';
-                whatsappFloat.style.transform = 'scale(0.8)';
-            }
-        };
+        // Hide tooltip after 5 seconds
+        setTimeout(() => {
+            whatsappFloat.classList.remove('show-tooltip');
+        }, 5000);
         
-        // Initial state
-        whatsappFloat.style.opacity = '0';
-        whatsappFloat.style.transform = 'scale(0.8)';
-        
-        // Add scroll event
-        window.addEventListener('scroll', showWhatsAppButton);
-        
-        // Check initial scroll position
-        showWhatsAppButton();
+        // Make button always visible
+        whatsappFloat.style.opacity = '1';
+        whatsappFloat.style.transform = 'scale(1)';
     }
 } 
