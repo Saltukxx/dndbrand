@@ -478,15 +478,16 @@
         width: 55px;
         height: 55px;
         font-size: 28px;
-        bottom: 20px;
+        bottom: 25px;
         right: 20px;
     }
     
     .whatsapp-float::after {
         right: auto;
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: 65px;
+        left: auto;
+        right: 65px;
+        bottom: 10px;
+        transform: none;
         min-width: 160px;
         font-size: 13px;
     }
@@ -507,13 +508,23 @@
         width: 50px;
         height: 50px;
         font-size: 24px;
+        bottom: 20px;
+        right: 15px;
+        box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
     }
     
     .whatsapp-float::after {
         padding: 8px 12px;
         min-width: 140px;
         font-size: 12px;
-        bottom: 60px;
+        bottom: 10px;
+        right: 65px;
+        left: auto;
+        white-space: nowrap;
+    }
+    
+    .whatsapp-float:hover {
+        transform: scale(1.1);
     }
 }
 

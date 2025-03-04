@@ -358,8 +358,33 @@ function initializeWhatsAppButton() {
             whatsappFloat.classList.remove('show-tooltip');
         }, 5000);
         
-        // Make button always visible
-        whatsappFloat.style.opacity = '1';
-        whatsappFloat.style.transform = 'scale(1)';
+        // Make button always visible and handle positioning
+        window.addEventListener('scroll', () => {
+            // Ensure the button stays in view and doesn't overlap with footer on mobile
+            const footer = document.querySelector('footer');
+            const footerRect = footer ? footer.getBoundingClientRect() : null;
+            const windowHeight = window.innerHeight;
+            
+            if (footerRect && footerRect.top < windowHeight) {
+                // Footer is in view, adjust button position
+                const distanceFromFooter = 20;
+                const newBottom = windowHeight - footerRect.top + distanceFromFooter;
+                whatsappFloat.style.bottom = `${newBottom}px`;
+            } else {
+                // Reset to default position
+                whatsappFloat.style.bottom = window.innerWidth <= 576 ? '20px' : '30px';
+            }
+        });
+        
+        // Add touch event for mobile to show tooltip
+        whatsappFloat.addEventListener('touchstart', function() {
+            // Toggle tooltip on touch for mobile
+            if (!whatsappFloat.classList.contains('show-tooltip')) {
+                whatsappFloat.classList.add('show-tooltip');
+                setTimeout(() => {
+                    whatsappFloat.classList.remove('show-tooltip');
+                }, 3000);
+            }
+        });
     }
 } 
