@@ -63,10 +63,10 @@ function getProductImage(imagePath, useOriginal = false) {
     
     // For other API paths, add the API_URL
     if (typeof imagePath === 'string') {
-        if (!imagePath.startsWith('/')) {
-            imagePath = '/' + imagePath;
-        }
-        return `${API_URL}${imagePath}`;
+    if (!imagePath.startsWith('/')) {
+        imagePath = '/' + imagePath;
+    }
+    return `${API_URL}${imagePath}`;
     }
     
     return '/img/no-image.jpg';
@@ -148,19 +148,19 @@ async function loadProductDetails(productId) {
     
     try {
         // Fetch product details
-        const product = await fetchProductDetails(productId);
-        
-        if (!product) {
+    const product = await fetchProductDetails(productId);
+    
+    if (!product) {
             productDetailElement.innerHTML = `
                 <div class="error-message">
                     <p>Ürün bulunamadı.</p>
                     <a href="shop.html" class="btn">Mağazaya Dön</a>
                 </div>
             `;
-            return;
-        }
-        
-        // Update page title
+        return;
+    }
+    
+    // Update page title
         document.title = `${product.name} - DnD Brand`;
         
         // Update breadcrumb
@@ -343,60 +343,140 @@ function updateProductVariants(template, product) {
 
 // Update product additional info
 function updateProductAdditionalInfo(template, product) {
+    // Description tab
     const descriptionTab = template.querySelector('#tab-description');
-    const additionalInfoTab = template.querySelector('#tab-additional-info');
-    const reviewsTab = template.querySelector('#tab-reviews');
-    
     if (descriptionTab) {
-        descriptionTab.innerHTML = `<p>${product.description}</p>`;
+        if (product.description) {
+            // Format description with paragraphs
+            const formattedDescription = product.description
+                .split('\n')
+                .filter(paragraph => paragraph.trim() !== '')
+                .map(paragraph => `<p>${paragraph}</p>`)
+                .join('');
+                
+            descriptionTab.innerHTML = `
+                <div class="enhanced-description">
+                    ${formattedDescription}
+                </div>
+            `;
+        } else {
+            descriptionTab.innerHTML = '<p>Bu ürün için açıklama bulunmamaktadır.</p>';
+        }
     }
     
+    // Additional info tab
+    const additionalInfoTab = template.querySelector('#tab-additional-info');
     if (additionalInfoTab) {
-        let infoHtml = '<table class="additional-info-table">';
+        let additionalInfoHtml = '';
         
-        // Add SKU
+        // Add SKU if available
         if (product.sku) {
-            infoHtml += `<tr><th>SKU</th><td>${product.sku}</td></tr>`;
+            additionalInfoHtml += `
+                <div class="info-item">
+                    <span class="info-label">SKU:</span>
+                    <span class="info-value">${product.sku}</span>
+                </div>
+            `;
         }
         
-        // Add category
+        // Add category if available
         if (product.category) {
-            infoHtml += `<tr><th>Kategori</th><td>${product.category}</td></tr>`;
+            additionalInfoHtml += `
+                <div class="info-item">
+                    <span class="info-label">Kategori:</span>
+                    <span class="info-value">${product.category}</span>
+                </div>
+            `;
         }
         
-        // Add weight
+        // Add brand if available
+        if (product.brand) {
+            additionalInfoHtml += `
+                <div class="info-item">
+                    <span class="info-label">Marka:</span>
+                    <span class="info-value">${product.brand}</span>
+                </div>
+            `;
+        }
+        
+        // Add weight if available
         if (product.weight) {
-            infoHtml += `<tr><th>Ağırlık</th><td>${product.weight} kg</td></tr>`;
+            additionalInfoHtml += `
+                <div class="info-item">
+                    <span class="info-label">Ağırlık:</span>
+                    <span class="info-value">${product.weight} kg</span>
+                </div>
+            `;
         }
         
-        // Add dimensions
+        // Add dimensions if available
         if (product.dimensions) {
-            infoHtml += `<tr><th>Boyutlar</th><td>${product.dimensions}</td></tr>`;
+            additionalInfoHtml += `
+                <div class="info-item">
+                    <span class="info-label">Boyutlar:</span>
+                    <span class="info-value">${product.dimensions}</span>
+                </div>
+            `;
         }
         
-        // Add material
-        if (product.material) {
-            infoHtml += `<tr><th>Malzeme</th><td>${product.material}</td></tr>`;
+        // Add any other additional info
+        if (product.additionalInfo && typeof product.additionalInfo === 'object') {
+            Object.entries(product.additionalInfo).forEach(([key, value]) => {
+                additionalInfoHtml += `
+                    <div class="info-item">
+                        <span class="info-label">${key}:</span>
+                        <span class="info-value">${value}</span>
+                    </div>
+                `;
+            });
         }
         
-        infoHtml += '</table>';
-        additionalInfoTab.innerHTML = infoHtml;
+        if (additionalInfoHtml) {
+            additionalInfoTab.innerHTML = `
+                <div class="additional-info-container">
+                    ${additionalInfoHtml}
+                </div>
+            `;
+        } else {
+            additionalInfoTab.innerHTML = '<p>Bu ürün için ek bilgi bulunmamaktadır.</p>';
+        }
     }
     
+    // Reviews tab
+    const reviewsTab = template.querySelector('#tab-reviews');
     if (reviewsTab) {
-        // Check if product has reviews
         if (product.reviews && product.reviews.length > 0) {
             let reviewsHtml = '';
             
             product.reviews.forEach(review => {
+                // Format date
+                const reviewDate = new Date(review.date);
+                const formattedDate = reviewDate.toLocaleDateString('tr-TR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                // Generate stars
+                let stars = '';
+                for (let i = 1; i <= 5; i++) {
+                    if (i <= review.rating) {
+                        stars += '<i class="fas fa-star"></i>';
+                    } else {
+                        stars += '<i class="far fa-star"></i>';
+                    }
+                }
+                
                 reviewsHtml += `
                     <div class="review">
                         <div class="review-header">
-                            <span class="review-author">${review.author}</span>
-                            <span class="review-date">${new Date(review.date).toLocaleDateString()}</span>
-                        </div>
-                        <div class="review-rating">
-                            ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
+                            <div class="reviewer-info">
+                                <h4>${review.name}</h4>
+                                <span class="review-date">${formattedDate}</span>
+                            </div>
+                            <div class="review-rating">
+                                ${stars}
+                            </div>
                         </div>
                         <div class="review-content">
                             <p>${review.content}</p>
@@ -445,6 +525,9 @@ function initializeProductFunctionality(product) {
     // Initialize add to cart button
     const addToCartBtn = document.querySelector('.add-to-cart-btn');
     if (addToCartBtn) {
+        // Update button text to "Sepete Ekle"
+        addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Sepete Ekle';
+        
         addToCartBtn.addEventListener('click', () => {
             // Get quantity
             const quantity = parseInt(quantityInput.value) || 1;
@@ -462,6 +545,12 @@ function initializeProductFunctionality(product) {
             // Add to cart
             addToCart(product, quantity, selectedVariants);
         });
+    }
+    
+    // Remove wishlist button functionality
+    const wishlistBtn = document.querySelector('.wishlist-btn');
+    if (wishlistBtn) {
+        wishlistBtn.style.display = 'none';
     }
     
     // Initialize tabs
@@ -490,6 +579,17 @@ function initializeProductFunctionality(product) {
                 }
             });
         });
+        
+        // Enhance the Açıklama tab content
+        const descriptionTab = document.getElementById('tab-description');
+        if (descriptionTab && product.description) {
+            // Add more styling to the description content
+            descriptionTab.innerHTML = `
+                <div class="enhanced-description">
+                    ${product.description}
+                </div>
+            `;
+        }
     }
 }
 
@@ -648,12 +748,12 @@ function displayRelatedProducts(products) {
     
     // Add each product
     products.forEach(product => {
-        // Format price
-        const price = product.price.toLocaleString('tr-TR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-        
+            // Format price
+            const price = product.price.toLocaleString('tr-TR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            
         // Create product card
         const productCard = document.createElement('div');
         productCard.className = 'product-card';
@@ -661,7 +761,7 @@ function displayRelatedProducts(products) {
         productCard.innerHTML = `
             <div class="product-card-image">
                 <img src="${getProductImage(product)}" alt="${product.name}">
-            </div>
+                        </div>
             <div class="product-card-info">
                 <h3 class="product-card-title">${product.name}</h3>
                 <div class="product-card-price">₺${price}</div>
@@ -672,9 +772,9 @@ function displayRelatedProducts(products) {
                     <button class="add-to-cart-quick-btn" data-id="${product._id}">
                         <i class="fas fa-shopping-cart"></i>
                     </button>
+                        </div>
                 </div>
-            </div>
-        `;
+            `;
         
         // Add click event to product card
         productCard.addEventListener('click', function(e) {
