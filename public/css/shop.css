@@ -16,10 +16,11 @@
 /* Page Header */
 .page-header {
     background-color: var(--secondary-color);
-    padding-top: 200px !important; /* Increased padding to account for fixed header */
-    padding-bottom: 50px;
+    padding-top: 120px !important; /* Adjusted padding to account for fixed header */
+    padding-bottom: 30px;
     position: relative;
     z-index: 1;
+    margin-top: 0;
 }
 
 .page-header::after {

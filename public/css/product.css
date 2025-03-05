@@ -2,16 +2,18 @@
 
 /* Fix for header overlapping content */
 .page-header {
-    padding-top: 200px !important; /* Increased padding to account for fixed header */
+    padding-top: 120px !important; /* Adjusted padding to account for fixed header */
+    padding-bottom: 30px;
     margin-top: 0;
     position: relative;
     z-index: 1;
 }
 
 .product-detail {
-    padding-top: 50px;
+    padding-top: 30px;
     position: relative;
     z-index: 1;
+    margin-top: 0;
 }
 
 /* Product Layout */
@@ -20,6 +22,7 @@
     grid-template-columns: 1fr 1fr;
     gap: 50px;
     margin-bottom: 80px;
+    margin-top: 0;
 }
 
 /* Product Gallery */
