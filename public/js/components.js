@@ -297,8 +297,10 @@ function fixHeaderStyling() {
     console.log('Fixing header styling...');
     const header = document.querySelector('header');
     if (header) {
-        // Check if we're on the account page
+        // Check if we're on the account page or checkout page
         const isAccountPage = window.location.pathname.includes('account.html');
+        const isCheckoutPage = window.location.pathname.includes('checkout.html');
+        
         if (isAccountPage) {
             console.log('Applying account page header styles');
             header.style.position = 'relative';
@@ -323,35 +325,24 @@ function fixHeaderStyling() {
                 container.style.alignItems = 'center';
                 container.style.justifyContent = 'space-between';
             }
+        } else if (isCheckoutPage) {
+            console.log('Applying checkout page header styles');
+            header.style.position = 'relative';
+            header.style.top = 'auto';
+            header.style.left = 'auto';
+            header.style.width = '100%';
+            header.style.zIndex = '3';
+            header.style.backgroundColor = 'rgba(15, 15, 15, 0.9)';
             
-            // Ensure the logo is properly styled
-            const logo = header.querySelector('.logo');
-            if (logo) {
-                logo.style.display = 'flex';
-                logo.style.alignItems = 'center';
-            }
-            
-            // Ensure the navigation is properly styled
-            const nav = header.querySelector('nav');
-            if (nav) {
-                nav.style.display = 'block';
-                const navUl = nav.querySelector('ul');
-                if (navUl) {
-                    navUl.style.display = 'flex';
-                    navUl.style.listStyle = 'none';
-                    navUl.style.margin = '0';
-                }
-            }
-            
-            // Ensure the nav icons are properly styled
-            const navIcons = header.querySelector('.nav-icons');
-            if (navIcons) {
-                navIcons.style.display = 'flex';
-                navIcons.style.alignItems = 'center';
-            }
-        } else {
-            header.style.position = 'fixed';
-            header.style.top = '0';
+            // Add a class for additional CSS targeting
+            header.classList.add('checkout-header');
+        }
+        
+        // Ensure the logo is properly styled
+        const logo = header.querySelector('.logo');
+        if (logo) {
+            logo.style.display = 'flex';
+            logo.style.alignItems = 'center';
         }
     }
 }

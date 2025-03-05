@@ -1,6 +1,27 @@
 /* Add these responsive styles to your checkout.css file */
 
 @media (max-width: 992px) {
+    .checkout-steps {
+        max-width: 600px;
+        margin: 15px auto 30px;
+    }
+
+    .checkout-step span {
+        width: 36px;
+        height: 36px;
+        font-size: 15px;
+    }
+
+    .checkout-step p {
+        font-size: 13px;
+    }
+
+    .checkout-step:after {
+        top: 18px;
+        left: calc(50% + 25px);
+        width: calc(100% - 50px);
+    }
+
     .checkout-content {
         flex-direction: column;
     }
@@ -61,16 +82,29 @@
 
 @media (max-width: 576px) {
     .checkout-steps {
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
         gap: 15px;
+        margin: 10px auto 25px;
     }
     
     .checkout-step {
-        width: calc(50% - 10px);
+        width: 100%;
     }
     
     .checkout-step:after {
         display: none;
+    }
+    
+    .checkout-step span {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+    
+    .checkout-step p {
+        font-size: 11px;
+        margin-top: 5px;
     }
     
     .modal-actions {
@@ -106,8 +140,16 @@
 .checkout-steps {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 40px;
+    margin: 20px auto 40px;
     position: relative;
+    max-width: 800px;
+    padding: 0 20px;
+    width: 100%;
+    z-index: 5;
+    background-color: var(--primary-color);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .checkout-step {
@@ -116,16 +158,17 @@
     align-items: center;
     position: relative;
     z-index: 2;
-    width: 25%;
+    flex: 1;
     text-align: center;
+    padding: 0 10px;
 }
 
 .checkout-step:after {
     content: '';
     position: absolute;
     top: 20px;
-    left: 50%;
-    width: 100%;
+    left: calc(50% + 30px);
+    width: calc(100% - 60px);
     height: 2px;
     background-color: var(--step-inactive);
     z-index: 1;
@@ -155,7 +198,8 @@
 .checkout-step p {
     font-size: 14px;
     font-weight: 500;
-    color: var(--text-muted);
+    color: var(--text-color);
+    margin: 0;
     transition: all 0.3s ease;
 }
 
@@ -179,6 +223,8 @@
     display: flex;
     gap: 30px;
     margin-top: 30px;
+    position: relative;
+    z-index: 4;
 }
 
 .checkout-form {
@@ -1017,6 +1063,27 @@ textarea.form-control {
 
 /* Responsive Styles */
 @media (max-width: 992px) {
+    .checkout-steps {
+        max-width: 600px;
+        margin: 15px auto 30px;
+    }
+
+    .checkout-step span {
+        width: 36px;
+        height: 36px;
+        font-size: 15px;
+    }
+
+    .checkout-step p {
+        font-size: 13px;
+    }
+
+    .checkout-step:after {
+        top: 18px;
+        left: calc(50% + 25px);
+        width: calc(100% - 50px);
+    }
+
     .checkout-content {
         flex-direction: column;
     }
@@ -1077,16 +1144,29 @@ textarea.form-control {
 
 @media (max-width: 576px) {
     .checkout-steps {
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
         gap: 15px;
+        margin: 10px auto 25px;
     }
     
     .checkout-step {
-        width: calc(50% - 10px);
+        width: 100%;
     }
     
     .checkout-step:after {
         display: none;
+    }
+    
+    .checkout-step span {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+    
+    .checkout-step p {
+        font-size: 11px;
+        margin-top: 5px;
     }
     
     .modal-actions {
