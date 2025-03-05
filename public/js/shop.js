@@ -4,8 +4,15 @@
  */
 
 // API URL
-// const API_URL = 'http://localhost:8080/api';
-const API_URL = window.CONFIG ? window.CONFIG.API_URL : 'http://localhost:8080/api';
+// Make sure we're using the API URL from config.js
+let API_URL;
+if (window.CONFIG && window.CONFIG.API_URL) {
+    API_URL = window.CONFIG.API_URL;
+    console.log('Using API URL from config.js:', API_URL);
+} else {
+    API_URL = 'https://dndbrand-server.onrender.com/api';
+    console.log('Config not found, using fallback API URL:', API_URL);
+}
 
 // Add these variables at the top of the file, after the existing variables
 let autoRefreshInterval = null;
@@ -115,12 +122,22 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Add a timestamp to prevent caching
             const timestamp = new Date().getTime();
-            const response = await fetch(`${API_URL}/products?_t=${timestamp}`);
+            
+            // Add more debugging for CORS issues
+            console.log('Making fetch request to:', `${API_URL}/products?_t=${timestamp}`);
+            
+            const response = await fetch(`${API_URL}/products?_t=${timestamp}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
             
             console.log('Response status:', response.status);
             console.log('Response headers:', [...response.headers.entries()]);
             
             if (!response.ok) {
+                console.error('Error response:', response);
                 throw new Error(`Ürünler yüklenirken bir hata oluştu. Status: ${response.status}`);
             }
             
@@ -151,52 +168,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 return data.results;
             }
             
-            // Check if the response has a 'items' property
-            if (data && data.items && Array.isArray(data.items)) {
-                console.log(`Found ${data.items.length} products in the response (items property)`);
-                return data.items;
-            }
-            
-            // If it's already an array, return it directly
+            // If the response is an array directly
             if (Array.isArray(data)) {
-                console.log(`Found ${data.length} products in the response (array)`);
-                
-                // Log each product for debugging
-                data.forEach((product, index) => {
-                    console.log(`Product ${index + 1}:`, product);
-                });
-                
+                console.log(`Found ${data.length} products in the response (direct array)`);
                 return data;
             }
             
-            // Check if the response has a 'products' property
-            if (data && data.products && Array.isArray(data.products)) {
-                console.log(`Found ${data.products.length} products in the response (products property)`);
-                return data.products;
-            }
-            
-            // If we can't determine the format but data has properties, try to extract products
-            if (data && typeof data === 'object') {
-                console.log('Trying to extract products from object properties');
-                
-                // Look for the first array property that might contain products
-                for (const key in data) {
-                    if (Array.isArray(data[key]) && data[key].length > 0 && data[key][0] && 
-                        (data[key][0].name || data[key][0].title || data[key][0].product)) {
-                        console.log(`Found potential products array in property "${key}" with ${data[key].length} items`);
-                        return data[key];
-                    }
-                }
-            }
-            
-            // If we can't determine the format, log an error and return an empty array
-            console.error('Unexpected API response format:', data);
-            console.log('Falling back to mock products');
-            return getMockProducts();
+            console.error('Could not find products in the response:', data);
+            return [];
         } catch (error) {
-            console.error('Ürünler yüklenirken hata:', error);
-            // For demo purposes, return mock data if API fails
-            console.log('Falling back to mock products due to error');
+            console.error('Error fetching products:', error);
+            
+            // Log more details about the error for debugging
+            if (error instanceof TypeError && error.message.includes('fetch')) {
+                console.error('This might be a CORS issue. Check that your API server allows requests from this origin.');
+                console.error('Current origin:', window.location.origin);
+            }
+            
+            // Return mock products for development/fallback
+            console.log('Returning mock products as fallback');
             return getMockProducts();
         }
     }
