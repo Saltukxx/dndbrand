@@ -35,42 +35,70 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Helper function to get the correct image path
 function getProductImage(imagePath, useOriginal = false) {
-    if (!imagePath) return '/img/no-image.jpg';
+    console.log('Getting product image for path:', imagePath);
+    
+    if (!imagePath) {
+        console.log('No image path provided, using default');
+        return '/img/no-image.jpg';
+    }
     
     // If it's already a full URL, return it as is
-    if (imagePath.startsWith('http')) return imagePath;
+    if (typeof imagePath === 'string' && (imagePath.startsWith('http') || imagePath.startsWith('https'))) {
+        console.log('Using full URL image path:', imagePath);
+        return imagePath;
+    }
     
     // If it's an object with thumbnail and original properties (new format)
     if (typeof imagePath === 'object') {
+        console.log('Image path is an object:', imagePath);
         if (useOriginal && imagePath.original) {
+            console.log('Using original image:', imagePath.original);
             imagePath = imagePath.original;
         } else if (imagePath.thumbnail) {
+            console.log('Using thumbnail image:', imagePath.thumbnail);
             imagePath = imagePath.thumbnail;
         } else if (imagePath.original) {
+            console.log('Falling back to original image:', imagePath.original);
             imagePath = imagePath.original;
+        } else if (imagePath.url) {
+            console.log('Using URL property from image object:', imagePath.url);
+            imagePath = imagePath.url;
         } else {
+            console.log('No valid image property found in object, using default');
             return '/img/no-image.jpg';
         }
     }
     
     // If it's an upload path, use it directly from the server root
-    if (imagePath.includes('/uploads/')) {
+    if (typeof imagePath === 'string' && imagePath.includes('/uploads/')) {
         // Make sure we don't duplicate the /uploads/ part
         if (imagePath.startsWith('/api/uploads/')) {
-            return imagePath.replace('/api/uploads/', '/uploads/');
+            const fixedPath = imagePath.replace('/api/uploads/', '/uploads/');
+            console.log('Fixed API uploads path:', fixedPath);
+            return fixedPath;
         }
         // Make sure the path starts with a slash
         if (!imagePath.startsWith('/')) {
-            return '/' + imagePath;
+            const fixedPath = '/' + imagePath;
+            console.log('Added leading slash to path:', fixedPath);
+            return fixedPath;
         }
+        console.log('Using uploads path as is:', imagePath);
         return imagePath;
     } 
     
     // For other API paths, add the API_URL
-    if (!imagePath.startsWith('/')) {
-        imagePath = '/' + imagePath;
+    if (typeof imagePath === 'string') {
+        if (!imagePath.startsWith('/')) {
+            imagePath = '/' + imagePath;
+        }
+        const fullPath = `${API_URL}${imagePath}`;
+        console.log('Created full API path:', fullPath);
+        return fullPath;
     }
-    return `${API_URL}${imagePath}`;
+    
+    console.log('Fallback to default image');
+    return '/img/no-image.jpg';
 }
 
 // Fetch product details from API
@@ -101,11 +129,19 @@ async function fetchProductDetails(productId) {
         const data = await response.json();
         console.log('Response data:', data);
         
-        if (data.success) {
-            console.log('Product data retrieved successfully:', data.data);
+        // Check for different response formats
+        if (data.success && data.data) {
+            console.log('Standard API format detected with success flag');
             return data.data;
+        } else if (data._id) {
+            console.log('Direct product object detected');
+            return data;
+        } else if (data.product) {
+            console.log('Product wrapper format detected');
+            return data.product;
         } else {
-            throw new Error(data.message || 'Failed to fetch product details');
+            console.error('Unknown response format:', data);
+            throw new Error('Unknown response format');
         }
     } catch (error) {
         console.error('Error fetching product details:', error);
@@ -176,9 +212,14 @@ async function loadProductDetails(productId) {
 
 // Update product details in the DOM
 function updateProductDetails(product) {
+    console.log('Updating product details in DOM:', product);
+    
     // Get product container
     const productContainer = document.querySelector('.product-detail');
-    if (!productContainer) return;
+    if (!productContainer) {
+        console.error('Product container not found in DOM');
+        return;
+    }
     
     // Format price
     const price = product.price.toLocaleString('tr-TR', {
@@ -206,11 +247,16 @@ function updateProductDetails(product) {
     let galleryHtml = '';
     let thumbnailsHtml = '';
     
+    console.log('Processing product images:', product.images);
+    
     if (product.images && product.images.length > 0) {
         // Main image - use original size for product detail
+        const mainImageSrc = getProductImage(product.images[0], true);
+        console.log('Main image src:', mainImageSrc);
+        
         galleryHtml = `
             <div class="product-main-image">
-                <img src="${getProductImage(product.images[0], true)}" alt="${product.name}">
+                <img src="${mainImageSrc}" alt="${product.name}">
                 ${saleBadge}
                 ${featuredBadge}
             </div>
@@ -219,14 +265,18 @@ function updateProductDetails(product) {
         // Thumbnails - use original size for gallery thumbnails too
         thumbnailsHtml = '<div class="product-thumbnails">';
         product.images.forEach((image, index) => {
+            const thumbSrc = getProductImage(image, true);
+            console.log(`Thumbnail ${index} src:`, thumbSrc);
+            
             thumbnailsHtml += `
                 <div class="thumbnail ${index === 0 ? 'active' : ''}">
-                    <img src="${getProductImage(image, true)}" alt="${product.name} - Image ${index + 1}">
+                    <img src="${thumbSrc}" alt="${product.name} - Image ${index + 1}">
                 </div>
             `;
         });
         thumbnailsHtml += '</div>';
     } else {
+        console.warn('No product images found, using default image');
         // Default image if no images
         galleryHtml = `
             <div class="product-main-image">
