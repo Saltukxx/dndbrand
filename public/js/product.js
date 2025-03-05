@@ -33,11 +33,24 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Helper function to get the correct image path
-function getProductImage(imagePath) {
+function getProductImage(imagePath, useOriginal = false) {
     if (!imagePath) return '/img/no-image.jpg';
     
     // If it's already a full URL, return it as is
     if (imagePath.startsWith('http')) return imagePath;
+    
+    // If it's an object with thumbnail and original properties (new format)
+    if (typeof imagePath === 'object') {
+        if (useOriginal && imagePath.original) {
+            imagePath = imagePath.original;
+        } else if (imagePath.thumbnail) {
+            imagePath = imagePath.thumbnail;
+        } else if (imagePath.original) {
+            imagePath = imagePath.original;
+        } else {
+            return '/img/no-image.jpg';
+        }
+    }
     
     // If it's an upload path, use it directly from the server root
     if (imagePath.includes('/uploads/')) {
@@ -138,21 +151,21 @@ function updateProductDetails(product) {
     let thumbnailsHtml = '';
     
     if (product.images && product.images.length > 0) {
-        // Main image
+        // Main image - use original size for product detail
         galleryHtml = `
             <div class="product-main-image">
-                <img src="${getProductImage(product.images[0])}" alt="${product.name}">
+                <img src="${getProductImage(product.images[0], true)}" alt="${product.name}">
                 ${saleBadge}
                 ${featuredBadge}
             </div>
         `;
         
-        // Thumbnails
+        // Thumbnails - use original size for gallery thumbnails too
         thumbnailsHtml = '<div class="product-thumbnails">';
         product.images.forEach((image, index) => {
             thumbnailsHtml += `
                 <div class="thumbnail ${index === 0 ? 'active' : ''}">
-                    <img src="${getProductImage(image)}" alt="${product.name} - Image ${index + 1}">
+                    <img src="${getProductImage(image, true)}" alt="${product.name} - Image ${index + 1}">
                 </div>
             `;
         });
@@ -257,7 +270,7 @@ function initializeAddToCart(product) {
             id: product._id,
             name: product.name,
             price: product.price,
-            image: product.images && product.images.length > 0 ? getProductImage(product.images[0]) : '/img/no-image.jpg',
+            image: product.images && product.images.length > 0 ? getProductImage(product.images[0], false) : '/img/no-image.jpg',
             quantity: quantity,
             variants: selectedVariants
         };
@@ -495,9 +508,9 @@ async function initializeRelatedProducts() {
                 maximumFractionDigits: 2
             });
             
-            // Get product image
+            // Get product image - use thumbnail for related products grid
             const productImage = product.images && product.images.length > 0 
-                ? getProductImage(product.images[0]) 
+                ? getProductImage(product.images[0], false) 
                 : '/img/no-image.jpg';
             
             html += `
@@ -531,7 +544,7 @@ async function initializeRelatedProducts() {
                         id: product._id,
                         name: product.name,
                         price: product.price,
-                        image: product.images && product.images.length > 0 ? getProductImage(product.images[0]) : '/img/no-image.jpg',
+                        image: product.images && product.images.length > 0 ? getProductImage(product.images[0], false) : '/img/no-image.jpg',
                         quantity: 1
                     };
                     

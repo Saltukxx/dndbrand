@@ -739,9 +739,18 @@ document.addEventListener('DOMContentLoaded', function() {
         let productImage = '/img/no-image.jpg';
         
         try {
-            // Check for images array
-            if (Array.isArray(product.images) && product.images.length > 0 && product.images[0]) {
-                productImage = product.images[0];
+            // Check for images array with new format (objects with original and thumbnail)
+            if (Array.isArray(product.images) && product.images.length > 0) {
+                const firstImage = product.images[0];
+                
+                // Check if image is in the new format (object with thumbnail property)
+                if (firstImage && typeof firstImage === 'object' && firstImage.thumbnail) {
+                    productImage = firstImage.thumbnail;
+                }
+                // Check if it's the old format (string URL)
+                else if (firstImage && typeof firstImage === 'string') {
+                    productImage = firstImage;
+                }
             } 
             // Check for single image string
             else if (typeof product.images === 'string' && product.images) {

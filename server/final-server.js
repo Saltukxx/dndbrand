@@ -3,11 +3,64 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const path = require('path');
 const cors = require('cors');
+const multer = require('multer');
+const fs = require('fs');
+const sharp = require('sharp');
+const crypto = require('crypto');
 
 // Load environment variables
 console.log('Loading environment variables...');
 dotenv.config({ path: path.join(__dirname, './config/.env') });
 console.log('Environment variables loaded.');
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadsDir = path.join(__dirname, '../uploads');
+    // Create uploads directory if it doesn't exist
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    
+    // Create thumbnails directory if it doesn't exist
+    const thumbnailsDir = path.join(__dirname, '../uploads/thumbnails');
+    if (!fs.existsSync(thumbnailsDir)) {
+      fs.mkdirSync(thumbnailsDir, { recursive: true });
+    }
+    
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    // Generate a unique filename with original extension
+    const uniqueSuffix = Date.now() + '-' + crypto.randomBytes(6).toString('hex');
+    cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
+  }
+});
+
+// Check file type
+function checkFileType(file, cb) {
+  // Allowed extensions
+  const filetypes = /jpeg|jpg|png|webp/;
+  // Check extension
+  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+  // Check mime type
+  const mimetype = filetypes.test(file.mimetype);
+
+  if (mimetype && extname) {
+    return cb(null, true);
+  } else {
+    cb('Error: Images Only!');
+  }
+}
+
+// Initialize upload
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5000000 }, // 5MB
+  fileFilter: function (req, file, cb) {
+    checkFileType(file, cb);
+  }
+});
 
 // Use a different port
 const PORT = 8080;
@@ -22,6 +75,7 @@ console.log('Express app initialized');
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json());
 app.use(express.static(__dirname)); // Serve static files from the server directory
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // API routes
 app.get('/', (req, res) => {
@@ -330,6 +384,62 @@ app.delete('/api/addresses/:id', async (req, res) => {
 // HTML test page route
 app.get('/test', (req, res) => {
   res.sendFile(path.join(__dirname, 'direct-test.html'));
+});
+
+// Add upload endpoint
+app.post('/api/upload', upload.array('images', 5), async (req, res) => {
+  console.log('Request received at upload endpoint from:', req.ip);
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload at least one image'
+      });
+    }
+
+    // Process each uploaded image
+    const processedImages = [];
+    
+    for (const file of req.files) {
+      const originalPath = file.path;
+      const filename = path.basename(file.path);
+      const thumbnailFilename = `thumb-${filename}`;
+      const thumbnailPath = path.join(__dirname, '../uploads/thumbnails', thumbnailFilename);
+      
+      // Create optimized version for product display
+      await sharp(originalPath)
+        .resize(800, 1000, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 80 })
+        .toFile(path.join(__dirname, '../uploads', filename));
+      
+      // Create thumbnail for product grid
+      await sharp(originalPath)
+        .resize(300, 400, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 70 })
+        .toFile(thumbnailPath);
+      
+      // Add image info to processed images array
+      processedImages.push({
+        original: `/uploads/${filename}`,
+        thumbnail: `/uploads/thumbnails/${thumbnailFilename}`,
+        filename: filename
+      });
+    }
+
+    console.log('Processed images:', processedImages);
+
+    res.status(200).json({
+      success: true,
+      data: processedImages
+    });
+  } catch (error) {
+    console.error('Error uploading images:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
 });
 
 // Connect to MongoDB and start server

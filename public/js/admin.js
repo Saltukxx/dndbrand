@@ -181,7 +181,7 @@ async function uploadProductImages(formData) {
         const data = await response.json();
 
         if (data.success) {
-            return data.data; // Array of image URLs
+            return data.data; // Array of image objects with original and thumbnail URLs
         } else {
             throw new Error(data.message || 'Failed to upload images');
         }
@@ -564,10 +564,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 try {
                     // Upload images
-                    const imageUrls = await uploadProductImages(imageFormData);
+                    const imageData = await uploadProductImages(imageFormData);
                     
-                    // Add image URLs to product data
-                    productData.images = imageUrls;
+                    // Add image data to product data
+                    productData.images = imageData;
                 } catch (error) {
                     showNotification('Görsel yükleme hatası: ' + error.message, 'error');
                     return;
