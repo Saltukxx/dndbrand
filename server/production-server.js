@@ -103,6 +103,11 @@ app.use('/api/users', userRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/uploads', uploadRoutes);
 
+// Health check endpoint for Render
+app.get('/healthz', (req, res) => {
+  res.status(200).send('OK');
+});
+
 // Handle HTML page requests
 app.get('/*.html', (req, res) => {
   // Extract the HTML file name from the URL
