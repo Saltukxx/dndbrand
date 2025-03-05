@@ -17,9 +17,58 @@ document.addEventListener('DOMContentLoaded', function() {
         // Load product details
         loadProductDetails(productId);
     } else {
-        // Redirect to shop page if no product ID
-        window.location.href = 'shop.html';
+        // Show error message
+        const productDetailContainer = document.getElementById('product-detail');
+        if (productDetailContainer) {
+            productDetailContainer.innerHTML = `
+                <div class="error-message">
+                    <h2>Ürün bulunamadı</h2>
+                    <p>Lütfen geçerli bir ürün seçin.</p>
+                    <a href="shop.html" class="btn">Mağazaya Dön</a>
+                </div>
+            `;
+        }
     }
+    
+    // Ensure cart icon navigates to cart page
+    const cartIcon = document.querySelector('.cart-icon');
+    if (cartIcon) {
+        cartIcon.addEventListener('click', function(e) {
+            // Only navigate if clicking on the icon or "Sepet" text, not the preview
+            if (e.target.classList.contains('fa-shopping-bag') || 
+                (e.target.tagName === 'SPAN' && e.target.textContent === 'Sepet')) {
+                window.location.href = 'cart.html';
+            }
+        });
+    }
+    
+    // Make sure "Sepeti Görüntüle" link works
+    const viewCartLink = document.querySelector('.view-cart');
+    if (viewCartLink) {
+        viewCartLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = 'cart.html';
+        });
+    }
+    
+    // Make sure "Ödeme" link works
+    const checkoutLink = document.querySelector('.checkout');
+    if (checkoutLink) {
+        checkoutLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = 'checkout.html';
+        });
+    }
+    
+    // Add event listeners for cart preview item removal
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('cart-preview-item-remove')) {
+            const itemId = e.target.dataset.id;
+            if (itemId) {
+                removeFromCart(itemId);
+            }
+        }
+    });
 });
 
 // Helper function to get the correct image path
@@ -685,11 +734,11 @@ function showNotification(message, type = 'success') {
 
 // Load related products
 async function loadRelatedProducts(category) {
-    const relatedProductsContainer = document.querySelector('.related-products-grid');
-    if (!relatedProductsContainer) return;
+    const relatedProductsGrid = document.querySelector('.related-products-grid');
+    if (!relatedProductsGrid) return;
     
     // Show loading
-    relatedProductsContainer.innerHTML = `
+    relatedProductsGrid.innerHTML = `
         <div class="loading-spinner">
             <div class="spinner"></div>
         </div>
@@ -708,7 +757,7 @@ async function loadRelatedProducts(category) {
         }
         
         if (!products.length) {
-            relatedProductsContainer.innerHTML = '<p>İlgili ürün bulunamadı.</p>';
+            relatedProductsGrid.innerHTML = '<p>İlgili ürün bulunamadı.</p>';
             return;
         }
         
@@ -734,26 +783,29 @@ async function loadRelatedProducts(category) {
         }
     } catch (error) {
         console.error('Error loading related products:', error);
-        relatedProductsContainer.innerHTML = '<p>İlgili ürünler yüklenirken bir hata oluştu.</p>';
+        relatedProductsGrid.innerHTML = '<p>İlgili ürünler yüklenirken bir hata oluştu.</p>';
     }
 }
 
 // Display related products
 function displayRelatedProducts(products) {
-    const relatedProductsContainer = document.querySelector('.related-products-grid');
-    if (!relatedProductsContainer) return;
+    const relatedProductsGrid = document.querySelector('.related-products-grid');
+    if (!relatedProductsGrid || !products || products.length === 0) return;
     
-    // Clear container
-    relatedProductsContainer.innerHTML = '';
+    // Clear existing content
+    relatedProductsGrid.innerHTML = '';
     
-    // Add each product
-    products.forEach(product => {
-            // Format price
-            const price = product.price.toLocaleString('tr-TR', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-            
+    // Display up to 4 related products
+    const displayProducts = products.slice(0, 4);
+    
+    // Create HTML for each product
+    displayProducts.forEach(product => {
+        // Format price
+        const price = product.price.toLocaleString('tr-TR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        
         // Create product card
         const productCard = document.createElement('div');
         productCard.className = 'product-card';
@@ -761,47 +813,67 @@ function displayRelatedProducts(products) {
         productCard.innerHTML = `
             <div class="product-card-image">
                 <img src="${getProductImage(product)}" alt="${product.name}">
-                        </div>
+            </div>
             <div class="product-card-info">
                 <h3 class="product-card-title">${product.name}</h3>
                 <div class="product-card-price">₺${price}</div>
                 <div class="product-card-actions">
-                    <button class="quick-view-btn" data-id="${product._id}">
+                    <button class="quick-view-btn" data-id="${product.id}">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="add-to-cart-quick-btn" data-id="${product._id}">
+                    <button class="add-to-cart-quick-btn" data-id="${product.id}">
                         <i class="fas fa-shopping-cart"></i>
                     </button>
-                        </div>
                 </div>
-            `;
+            </div>
+        `;
         
-        // Add click event to product card
-        productCard.addEventListener('click', function(e) {
-            // Prevent click if button was clicked
-            if (e.target.closest('.quick-view-btn') || e.target.closest('.add-to-cart-quick-btn')) {
-                return;
+        // Add to grid
+        relatedProductsGrid.appendChild(productCard);
+    });
+    
+    // Add event listeners for quick view buttons
+    document.querySelectorAll('.quick-view-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const productId = e.currentTarget.dataset.id;
+            if (productId) {
+                window.location.href = `product.html?id=${productId}`;
             }
-            
-            // Navigate to product page
-            window.location.href = `product.html?id=${product._id}`;
         });
-        
-        // Add click event to quick view button
-        const quickViewBtn = productCard.querySelector('.quick-view-btn');
-        quickViewBtn.addEventListener('click', function() {
-            // Open quick view modal
-            openQuickView(product._id);
+    });
+    
+    // Add event listeners for add to cart buttons
+    document.querySelectorAll('.add-to-cart-quick-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            const productId = e.currentTarget.dataset.id;
+            if (productId) {
+                try {
+                    // Show loading state
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    button.disabled = true;
+                    
+                    // Fetch product details
+                    const product = await fetchProductDetails(productId);
+                    if (product) {
+                        // Add to cart with default quantity of 1
+                        addToCart(product, 1);
+                        
+                        // Reset button
+                        button.innerHTML = '<i class="fas fa-shopping-cart"></i>';
+                        button.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Error adding product to cart:', error);
+                    
+                    // Reset button
+                    button.innerHTML = '<i class="fas fa-shopping-cart"></i>';
+                    button.disabled = false;
+                    
+                    // Show error notification
+                    showNotification('Ürün sepete eklenirken bir hata oluştu.', 'error');
+                }
+            }
         });
-        
-        // Add click event to add to cart button
-        const addToCartBtn = productCard.querySelector('.add-to-cart-quick-btn');
-        addToCartBtn.addEventListener('click', function() {
-            // Add to cart with quantity 1 and no variants
-            addToCart(product, 1, {});
-        });
-        
-        relatedProductsContainer.appendChild(productCard);
     });
 }
 
