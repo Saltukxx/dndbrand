@@ -103,9 +103,29 @@ app.use('/api/users', userRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/uploads', uploadRoutes);
 
-// Serve frontend for any other route
-app.get('*', (req, res) => {
+// Handle HTML page requests
+app.get('/*.html', (req, res) => {
+  // Extract the HTML file name from the URL
+  const htmlFile = req.path.substring(1); // Remove the leading slash
+  const htmlPath = path.join(__dirname, '../public', htmlFile);
+  
+  // Check if the file exists
+  if (fs.existsSync(htmlPath)) {
+    res.sendFile(htmlPath);
+  } else {
+    // If HTML file doesn't exist, send 404 page or redirect to home
+    res.status(404).sendFile(path.join(__dirname, '../public/html/404.html'));
+  }
+});
+
+// Redirect root to index.html
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/html/index.html'));
+});
+
+// Serve frontend for any other route (fallback)
+app.get('*', (req, res) => {
+  res.status(404).sendFile(path.join(__dirname, '../public/html/404.html'));
 });
 
 // Error handling middleware
