@@ -1,5 +1,15 @@
 /* Product Detail Page Styles */
 
+/* Fix for header overlapping content */
+.page-header {
+    padding-top: 150px !important; /* Increased padding to account for fixed header */
+    margin-top: 0;
+}
+
+.product-detail {
+    padding-top: 30px;
+}
+
 /* Product Layout */
 .product-layout {
     display: grid;

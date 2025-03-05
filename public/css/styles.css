@@ -1247,4 +1247,15 @@ input, select, textarea, button {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Fix for header overlapping content */
+.page-header {
+    padding-top: 150px !important;
+    padding-bottom: 80px;
+}
+
+main, section:not(.hero):not(.page-header) {
+    position: relative;
+    z-index: 1;
 } 
