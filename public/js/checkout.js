@@ -480,26 +480,37 @@ async function deleteAddressFromServer(addressId) {
         // Get user token
         const token = localStorage.getItem('token');
         
-        // Send request
-        const response = await fetch(url, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token ? `Bearer ${token}` : ''
+        try {
+            // Send request
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
+            });
+            
+            // Check response
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error deleting address');
             }
-        });
-        
-        // Check response
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Error deleting address');
+            
+            // Parse response
+            const data = await response.json();
+            console.log('Address deleted successfully:', data);
+            
+            return data;
+        } catch (fetchError) {
+            console.warn('Server connection failed, deleting from localStorage only:', fetchError);
+            
+            // Delete from localStorage as fallback
+            let savedAddresses = JSON.parse(localStorage.getItem('savedAddresses') || '[]');
+            savedAddresses = savedAddresses.filter(addr => addr.id !== addressId);
+            localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
+            
+            return { success: true, message: 'Address deleted from localStorage only' };
         }
-        
-        // Parse response
-        const data = await response.json();
-        console.log('Address deleted successfully:', data);
-        
-        return data;
     } catch (error) {
         console.error('Error deleting address from server:', error);
         throw error;
@@ -1365,27 +1376,45 @@ async function saveAddressToServer(address) {
         // Get user token
         const token = localStorage.getItem('token');
         
-        // Send request
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token ? `Bearer ${token}` : ''
-            },
-            body: JSON.stringify(address)
-        });
-        
-        // Check response
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Error saving address');
+        try {
+            // Send request
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                },
+                body: JSON.stringify(address)
+            });
+            
+            // Check response
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error saving address');
+            }
+            
+            // Parse response
+            const data = await response.json();
+            console.log('Address saved successfully:', data);
+            
+            return data;
+        } catch (fetchError) {
+            console.warn('Server connection failed, saving to localStorage only:', fetchError);
+            
+            // Save to localStorage as fallback
+            let savedAddresses = JSON.parse(localStorage.getItem('savedAddresses') || '[]');
+            
+            // Check if address already exists
+            const existingIndex = savedAddresses.findIndex(a => a.id === address.id);
+            if (existingIndex >= 0) {
+                savedAddresses[existingIndex] = address;
+            } else {
+                savedAddresses.push(address);
+            }
+            
+            localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
+            return address;
         }
-        
-        // Parse response
-        const data = await response.json();
-        console.log('Address saved successfully:', data);
-        
-        return data;
     } catch (error) {
         console.error('Error saving address to server:', error);
         throw error;
@@ -1403,29 +1432,41 @@ async function getAddressesFromServer() {
         // Get user token
         const token = localStorage.getItem('token');
         
-        // Send request
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token ? `Bearer ${token}` : ''
+        try {
+            // Send request
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
+            });
+            
+            // Check response
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error getting addresses');
             }
-        });
-        
-        // Check response
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Error getting addresses');
+            
+            // Parse response
+            const data = await response.json();
+            console.log('Addresses from server:', data);
+            
+            // Also save to localStorage for offline access
+            localStorage.setItem('savedAddresses', JSON.stringify(data));
+            
+            return data;
+        } catch (fetchError) {
+            console.warn('Server connection failed, using localStorage addresses:', fetchError);
+            
+            // Fallback to localStorage
+            const savedAddresses = JSON.parse(localStorage.getItem('savedAddresses') || '[]');
+            return savedAddresses;
         }
-        
-        // Parse response
-        const data = await response.json();
-        console.log('Addresses from server:', data);
-        
-        return data;
     } catch (error) {
         console.error('Error getting addresses from server:', error);
-        throw error;
+        // Return empty array instead of throwing to prevent cascading errors
+        return [];
     }
 }
 
@@ -1437,35 +1478,65 @@ async function updateAddressOnServer(addressData) {
         // Get user token for authentication
         const token = localStorage.getItem('token');
         if (!token) {
-            console.error('User not authenticated');
-            return false;
+            console.warn('User not authenticated, updating in localStorage only');
+            // Update in localStorage
+            updateAddressInLocalStorage(addressData);
+            return addressData;
         }
         
-        // API endpoint for updating address
-        const apiUrl = `/api/addresses/${addressData.id}`;
-        
-        // Make API request
-        const response = await fetch(apiUrl, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(addressData)
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Server responded with status: ${response.status}`);
+        try {
+            // API endpoint for updating address
+            const apiUrl = `http://localhost:8080/api/addresses/${addressData.id}`;
+            
+            // Make API request
+            const response = await fetch(apiUrl, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(addressData)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('Address updated on server:', result);
+            
+            // Also update in localStorage
+            updateAddressInLocalStorage(addressData);
+            
+            return result;
+        } catch (fetchError) {
+            console.warn('Server connection failed, updating in localStorage only:', fetchError);
+            // Update in localStorage as fallback
+            updateAddressInLocalStorage(addressData);
+            return addressData;
         }
-        
-        const result = await response.json();
-        console.log('Address updated on server:', result);
-        
-        return result;
     } catch (error) {
         console.error('Error updating address on server:', error);
         return false;
     }
+}
+
+// Helper function to update address in localStorage
+function updateAddressInLocalStorage(addressData) {
+    // Get saved addresses
+    let savedAddresses = JSON.parse(localStorage.getItem('savedAddresses') || '[]');
+    
+    // Find and update the address
+    const index = savedAddresses.findIndex(addr => addr.id === addressData.id);
+    if (index !== -1) {
+        savedAddresses[index] = addressData;
+    } else {
+        savedAddresses.push(addressData);
+    }
+    
+    // Save back to localStorage
+    localStorage.setItem('savedAddresses', JSON.stringify(savedAddresses));
+    console.log('Address updated in localStorage:', addressData);
 }
 
 // Update address
@@ -1812,18 +1883,46 @@ async function saveAddress() {
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Kaydediliyor...';
         }
         
-        // Get form data
+        // Get form data with null checks
+        const titleElement = document.getElementById('address-title');
+        const fullNameElement = document.getElementById('address-fullname');
+        const phoneElement = document.getElementById('address-phone');
+        const streetElement = document.getElementById('address-street');
+        const cityElement = document.getElementById('address-city');
+        const stateElement = document.getElementById('address-state');
+        const postalCodeElement = document.getElementById('address-postal-code');
+        const countryElement = document.getElementById('address-country');
+        const defaultElement = document.getElementById('address-default');
+        
+        // Check if all required elements exist
+        if (!titleElement || !fullNameElement || !phoneElement || !streetElement || 
+            !cityElement || !stateElement || !postalCodeElement || !countryElement) {
+            console.error('One or more form elements not found', {
+                titleElement, fullNameElement, phoneElement, streetElement,
+                cityElement, stateElement, postalCodeElement, countryElement
+            });
+            showError('Form alanları bulunamadı. Lütfen sayfayı yenileyin.');
+            
+            // Reset button
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Kaydet';
+            }
+            
+            return;
+        }
+        
         const addressData = {
             id: form.getAttribute('data-address-id') || 'addr_' + Date.now(),
-            title: document.getElementById('address-title').value || 'Adresim',
-            fullName: document.getElementById('address-fullname').value || '',
-            phone: document.getElementById('address-phone').value || '',
-            address: document.getElementById('address-street').value || '',
-            city: document.getElementById('address-city').value || '',
-            district: document.getElementById('address-state').value || '',
-            postalCode: document.getElementById('address-postal-code').value || '',
-            country: document.getElementById('address-country').value || 'Turkey',
-            isDefault: document.getElementById('address-default').checked
+            title: titleElement.value || 'Adresim',
+            fullName: fullNameElement.value || '',
+            phone: phoneElement.value || '',
+            address: streetElement.value || '',
+            city: cityElement.value || '',
+            district: stateElement.value || '',
+            postalCode: postalCodeElement.value || '',
+            country: countryElement.value || 'Turkey',
+            isDefault: defaultElement ? defaultElement.checked : false
         };
         
         console.log('Address data:', addressData);
