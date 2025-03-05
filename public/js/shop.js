@@ -752,13 +752,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 productImage = product.image;
             }
             
-            // Check if image is a relative path and add API_URL if needed
-            if (productImage && !productImage.startsWith('http') && !productImage.startsWith('/img/')) {
-                // Make sure the path starts with a slash
-                if (!productImage.startsWith('/')) {
-                    productImage = '/' + productImage;
+            // Check if image is a relative path and add base URL if needed
+            if (productImage && !productImage.startsWith('http')) {
+                // If it's an upload path, use it directly from the server root
+                if (productImage.includes('/uploads/')) {
+                    // Make sure we don't duplicate the /uploads/ part
+                    if (productImage.startsWith('/api/uploads/')) {
+                        productImage = productImage.replace('/api/uploads/', '/uploads/');
+                    }
+                    // Make sure the path starts with a slash
+                    if (!productImage.startsWith('/')) {
+                        productImage = '/' + productImage;
+                    }
+                } 
+                // For other API paths, add the API_URL
+                else if (!productImage.startsWith('/img/')) {
+                    // Make sure the path starts with a slash
+                    if (!productImage.startsWith('/')) {
+                        productImage = '/' + productImage;
+                    }
+                    productImage = `${API_URL}${productImage}`;
                 }
-                productImage = `${API_URL}${productImage}`;
             }
             
             // For demo/testing, use placeholder images if the image path doesn't exist
@@ -778,6 +792,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     productImage = 'https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';
                 }
             }
+            
+            // For debugging
+            console.log('Product image path:', productImage);
         } catch (error) {
             console.error(`Error processing image for product ${product.name}:`, error);
             productImage = 'https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';

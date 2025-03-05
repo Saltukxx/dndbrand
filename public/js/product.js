@@ -32,6 +32,33 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeRelatedProducts();
 });
 
+// Helper function to get the correct image path
+function getProductImage(imagePath) {
+    if (!imagePath) return '/img/no-image.jpg';
+    
+    // If it's already a full URL, return it as is
+    if (imagePath.startsWith('http')) return imagePath;
+    
+    // If it's an upload path, use it directly from the server root
+    if (imagePath.includes('/uploads/')) {
+        // Make sure we don't duplicate the /uploads/ part
+        if (imagePath.startsWith('/api/uploads/')) {
+            return imagePath.replace('/api/uploads/', '/uploads/');
+        }
+        // Make sure the path starts with a slash
+        if (!imagePath.startsWith('/')) {
+            return '/' + imagePath;
+        }
+        return imagePath;
+    } 
+    
+    // For other API paths, add the API_URL
+    if (!imagePath.startsWith('/')) {
+        imagePath = '/' + imagePath;
+    }
+    return `${API_URL}${imagePath}`;
+}
+
 // Fetch product details from API
 async function fetchProductDetails(productId) {
     try {
@@ -114,27 +141,27 @@ function updateProductDetails(product) {
         // Main image
         galleryHtml = `
             <div class="product-main-image">
-                <img src="${product.images[0]}" alt="${product.name}">
+                <img src="${getProductImage(product.images[0])}" alt="${product.name}">
                 ${saleBadge}
                 ${featuredBadge}
             </div>
         `;
         
         // Thumbnails
-        thumbnailsHtml = `
-            <div class="product-thumbnails">
-                ${product.images.map((image, index) => `
-                    <div class="thumbnail ${index === 0 ? 'active' : ''}" data-index="${index}">
-                        <img src="${image}" alt="${product.name} - Image ${index + 1}">
-                    </div>
-                `).join('')}
-            </div>
-        `;
+        thumbnailsHtml = '<div class="product-thumbnails">';
+        product.images.forEach((image, index) => {
+            thumbnailsHtml += `
+                <div class="thumbnail ${index === 0 ? 'active' : ''}">
+                    <img src="${getProductImage(image)}" alt="${product.name} - Image ${index + 1}">
+                </div>
+            `;
+        });
+        thumbnailsHtml += '</div>';
     } else {
-        // Placeholder image
+        // Default image if no images
         galleryHtml = `
             <div class="product-main-image">
-                <img src="https://via.placeholder.com/600x800" alt="${product.name}">
+                <img src="/img/no-image.jpg" alt="${product.name}">
                 ${saleBadge}
                 ${featuredBadge}
             </div>
@@ -230,7 +257,7 @@ function initializeAddToCart(product) {
             id: product._id,
             name: product.name,
             price: product.price,
-            image: product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/100',
+            image: product.images && product.images.length > 0 ? getProductImage(product.images[0]) : '/img/no-image.jpg',
             quantity: quantity,
             variants: selectedVariants
         };
@@ -424,4 +451,100 @@ function showNotification(message, type = 'info') {
             notification.remove();
         }, 300);
     });
+}
+
+// Initialize related products
+async function initializeRelatedProducts() {
+    const relatedProductsContainer = document.querySelector('.related-products-grid');
+    if (!relatedProductsContainer) return;
+    
+    try {
+        // Get current product category
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
+        
+        // Fetch all products
+        const response = await fetch(`${API_URL}/products`);
+        const products = await response.json();
+        
+        if (!Array.isArray(products)) {
+            console.error('Expected array of products but got:', products);
+            return;
+        }
+        
+        // Find current product
+        const currentProduct = products.find(p => p._id === productId);
+        if (!currentProduct) return;
+        
+        // Filter related products (same category, excluding current product)
+        const relatedProducts = products
+            .filter(p => p.category === currentProduct.category && p._id !== productId)
+            .slice(0, 4); // Limit to 4 related products
+        
+        if (relatedProducts.length === 0) {
+            relatedProductsContainer.innerHTML = '<p>No related products found.</p>';
+            return;
+        }
+        
+        // Create HTML for related products
+        let html = '';
+        relatedProducts.forEach(product => {
+            // Format price
+            const price = product.price.toLocaleString('tr-TR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            
+            // Get product image
+            const productImage = product.images && product.images.length > 0 
+                ? getProductImage(product.images[0]) 
+                : '/img/no-image.jpg';
+            
+            html += `
+                <div class="product-card">
+                    <a href="product.html?id=${product._id}" class="product-link">
+                        <div class="product-image">
+                            <img src="${productImage}" alt="${product.name}">
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name">${product.name}</h3>
+                            <div class="product-price">₺${price}</div>
+                        </div>
+                    </a>
+                    <button class="add-to-cart-btn" data-id="${product._id}">Sepete Ekle</button>
+                </div>
+            `;
+        });
+        
+        // Update container
+        relatedProductsContainer.innerHTML = html;
+        
+        // Add event listeners to add to cart buttons
+        relatedProductsContainer.querySelectorAll('.add-to-cart-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.dataset.id;
+                const product = relatedProducts.find(p => p._id === productId);
+                
+                if (product) {
+                    // Create cart item
+                    const cartItem = {
+                        id: product._id,
+                        name: product.name,
+                        price: product.price,
+                        image: product.images && product.images.length > 0 ? getProductImage(product.images[0]) : '/img/no-image.jpg',
+                        quantity: 1
+                    };
+                    
+                    // Add to cart
+                    addToCart(cartItem);
+                    
+                    // Show success message
+                    showNotification('Ürün sepete eklendi!', 'success');
+                }
+            });
+        });
+    } catch (error) {
+        console.error('Error initializing related products:', error);
+        relatedProductsContainer.innerHTML = '<p>Failed to load related products.</p>';
+    }
 } 
