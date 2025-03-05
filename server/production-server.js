@@ -36,6 +36,9 @@ const uploadRoutes = require('./routes/uploadRoutes');
 // Initialize express app
 const app = express();
 
+// Trust proxy - needed for Render and other cloud platforms
+app.set('trust proxy', 1);
+
 // Connect to database
 connectDB();
 
@@ -108,6 +111,11 @@ app.get('/healthz', (req, res) => {
   res.status(200).send('OK');
 });
 
+// Redirect root to GitHub Pages
+app.get('/', (req, res) => {
+  res.redirect('https://saltukxx.github.io/dndbrand/');
+});
+
 // Handle HTML page requests
 app.get('/*.html', (req, res) => {
   // Extract the HTML file name from the URL
@@ -121,11 +129,6 @@ app.get('/*.html', (req, res) => {
     // If HTML file doesn't exist, send 404 page or redirect to home
     res.status(404).sendFile(path.join(__dirname, '../public/html/404.html'));
   }
-});
-
-// Redirect root to index.html
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/index.html'));
 });
 
 // Serve frontend for any other route (fallback)
