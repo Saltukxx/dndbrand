@@ -130,21 +130,23 @@ const useDirectHttps = process.env.USE_DIRECT_HTTPS === 'true' &&
                        fs.existsSync(process.env.SSL_CERT_PATH);
 
 // Get ports from environment or use defaults
-const HTTP_PORT = process.env.HTTP_PORT || 80;
-const HTTPS_PORT = process.env.PORT || 443;
+const HTTP_PORT = process.env.PORT || process.env.HTTP_PORT || 80;
+const HTTPS_PORT = process.env.HTTPS_PORT || 443;
 
 // Create HTTP server - always needed for redirects or as main server
-const httpServer = http.createServer((req, res) => {
-  // If we're using direct HTTPS, redirect HTTP to HTTPS
-  if (useDirectHttps) {
+let httpServer;
+
+if (useDirectHttps) {
+  // If using direct HTTPS, create a redirect server
+  httpServer = http.createServer((req, res) => {
     const host = req.headers.host?.split(':')[0] || 'localhost';
     res.writeHead(301, { Location: `https://${host}${req.url}` });
     res.end();
-  } else {
-    // Otherwise, let the Express app handle it (for Cloudflare setup)
-    app(req, res);
-  }
-});
+  });
+} else {
+  // Otherwise, use Express app directly
+  httpServer = http.createServer(app);
+}
 
 // Start the servers
 httpServer.listen(HTTP_PORT, () => {
