@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ödeme - DND Brand</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/checkout.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-container"></div>
+
+    <main class="container">
+        <div class="page-title">
+            <h1>Ödeme</h1>
+        </div>
+
+        <div class="checkout-steps">
+            <div class="checkout-step active">
+                <span>1</span>
+                <p>Sepet</p>
+            </div>
+            <div class="checkout-step active">
+                <span>2</span>
+                <p>Teslimat</p>
+            </div>
+            <div class="checkout-step active">
+                <span>3</span>
+                <p>Ödeme</p>
+            </div>
+            <div class="checkout-step">
+                <span>4</span>
+                <p>Onay</p>
+            </div>
+        </div>
+
+        <div class="checkout-content">
+            <div class="checkout-form">
+                <div class="form-section">
+                    <h2>Teslimat Bilgileri</h2>
+                    <div id="shipping-address-container">
+                        <!-- Shipping addresses will be loaded here -->
+                        <div class="address-loading">
+                            <i class="fas fa-spinner fa-spin"></i> Adresler yükleniyor...
+                        </div>
+                    </div>
+                    <button id="add-address-btn" class="btn btn-secondary" onclick="document.getElementById('address-modal').style.display = 'block';">
+                        <i class="fas fa-plus"></i> Yeni Adres Ekle
+                    </button>
+                </div>
+
+                <div class="form-section">
+                    <h2>Ödeme Yöntemi</h2>
+                    <div class="payment-methods">
+                        <div class="payment-method active" data-method="credit_card" id="credit-card-method">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Kredi Kartı</span>
+                        </div>
+                        <div class="payment-method" data-method="bank_transfer" id="bank-transfer-method">
+                            <i class="fas fa-university"></i>
+                            <span>Banka Havalesi</span>
+                        </div>
+                        <div class="payment-method" data-method="cash_on_delivery" id="cash-on-delivery-method">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Kapıda Ödeme</span>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        function setActivePaymentMethod(method) {
+                            console.log('Setting payment method:', method);
+                            
+                            // Remove active class from all methods
+                            document.querySelectorAll('.payment-method').forEach(m => {
+                                m.classList.remove('active');
+                            });
+                            
+                            // Add active class to selected method
+                            const selectedMethod = document.querySelector(`.payment-method[data-method="${method}"]`);
+                            if (selectedMethod) {
+                                selectedMethod.classList.add('active');
+                            }
+                            
+                            // Hide all payment forms first
+                            document.querySelectorAll('.payment-form').forEach(form => {
+                                form.classList.remove('active');
+                                form.style.display = 'none';
+                            });
+                            
+                            // Show selected payment form
+                            const selectedForm = document.getElementById(`${method}-form`);
+                            if (selectedForm) {
+                                console.log('Showing form:', method + '-form');
+                                selectedForm.classList.add('active');
+                                selectedForm.style.display = 'block';
+                            } else {
+                                console.error('Form not found:', method + '-form');
+                            }
+                        }
+                    </script>
+
+                    <!-- Credit Card Form -->
+                    <div id="credit-card-form" class="payment-form active" style="display: block;">
+                        <div class="form-group">
+                            <label for="card-holder-name">Kart Sahibinin Adı</label>
+                            <input type="text" id="card-holder-name" class="form-control" placeholder="Kart üzerindeki isim">
+                            <div class="error-message" id="card-holder-name-error"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="card-number">Kart Numarası</label>
+                            <div class="card-number-input">
+                                <input type="text" id="card-number" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19">
+                                <div class="card-icons">
+                                    <i class="fab fa-cc-visa"></i>
+                                    <i class="fab fa-cc-mastercard"></i>
+                                    <i class="fab fa-cc-amex"></i>
+                                </div>
+                            </div>
+                            <div class="error-message" id="card-number-error"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-6">
+                                <label for="expiry-date">Son Kullanma Tarihi</label>
+                                <div class="expiry-inputs">
+                                    <input type="text" id="expiry-month" class="form-control" placeholder="AA" maxlength="2">
+                                    <span>/</span>
+                                    <input type="text" id="expiry-year" class="form-control" placeholder="YY" maxlength="2">
+                                </div>
+                                <div class="error-message" id="expiry-date-error"></div>
+                            </div>
+                            <div class="form-group col-6">
+                                <label for="cvv">CVV/CVC</label>
+                                <div class="cvv-input">
+                                    <input type="text" id="cvv" class="form-control" placeholder="123" maxlength="4">
+                                    <i class="fas fa-question-circle cvv-info" title="Kartınızın arkasındaki 3 veya 4 haneli güvenlik kodu"></i>
+                                </div>
+                                <div class="error-message" id="cvv-error"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="checkbox-container">
+                                <input type="checkbox" id="save-card" class="form-checkbox">
+                                <label for="save-card">Kartımı güvenli bir şekilde kaydet</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="checkbox-container">
+                                <input type="checkbox" id="use-3d-secure" class="form-checkbox" checked>
+                                <label for="use-3d-secure">3D Secure ile öde (Önerilen)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bank Transfer Form -->
+                    <div id="bank-transfer-form" class="payment-form">
+                        <div class="bank-accounts">
+                            <div class="bank-account">
+                                <div class="bank-logo">
+                                    <img src="../images/banks/garanti.png" alt="Garanti Bankası">
+                                </div>
+                                <div class="bank-details">
+                                    <h4>Garanti Bankası</h4>
+                                    <p>Hesap Sahibi: DND Brand</p>
+                                    <p>IBAN: TR12 3456 7890 1234 5678 9012 34</p>
+                                </div>
+                                <div class="bank-copy">
+                                    <button class="btn btn-sm btn-secondary copy-iban" data-iban="TR12 3456 7890 1234 5678 9012 34">
+                                        <i class="fas fa-copy"></i> IBAN Kopyala
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="bank-account">
+                                <div class="bank-logo">
+                                    <img src="../images/banks/isbank.png" alt="İş Bankası">
+                                </div>
+                                <div class="bank-details">
+                                    <h4>İş Bankası</h4>
+                                    <p>Hesap Sahibi: DND Brand</p>
+                                    <p>IBAN: TR98 7654 3210 9876 5432 1098 76</p>
+                                </div>
+                                <div class="bank-copy">
+                                    <button class="btn btn-sm btn-secondary copy-iban" data-iban="TR98 7654 3210 9876 5432 1098 76">
+                                        <i class="fas fa-copy"></i> IBAN Kopyala
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bank-transfer-note">
+                            <p><i class="fas fa-info-circle"></i> Havale/EFT yaparken açıklama kısmına sipariş numaranızı yazmayı unutmayınız.</p>
+                        </div>
+                    </div>
+
+                    <!-- Cash on Delivery Form -->
+                    <div id="cash-on-delivery-form" class="payment-form">
+                        <div class="cod-info">
+                            <p><i class="fas fa-info-circle"></i> Kapıda ödeme seçeneğinde +25 TL hizmet bedeli uygulanmaktadır.</p>
+                            <p>Siparişiniz hazırlandıktan sonra kargoya verilecek ve teslimat sırasında ödeme yapabileceksiniz.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="checkout-summary">
+                <h2>Sipariş Özeti</h2>
+                <div id="order-items">
+                    <!-- Order items will be loaded here -->
+                    <div class="order-loading">
+                        <i class="fas fa-spinner fa-spin"></i> Sipariş yükleniyor...
+                    </div>
+                </div>
+                <div class="order-totals">
+                    <div class="order-total-row">
+                        <span>Ara Toplam</span>
+                        <span id="subtotal">0.00 TL</span>
+                    </div>
+                    <div class="order-total-row">
+                        <span>KDV (%18)</span>
+                        <span id="tax">0.00 TL</span>
+                    </div>
+                    <div class="order-total-row">
+                        <span>Kargo</span>
+                        <span id="shipping">25.00 TL</span>
+                    </div>
+                    <div class="order-total-row total">
+                        <span>Toplam</span>
+                        <span id="total">0.00 TL</span>
+                    </div>
+                </div>
+                <div class="checkout-actions">
+                    <button id="place-order-btn" class="btn btn-primary btn-block">
+                        <i class="fas fa-lock"></i> Siparişi Tamamla
+                    </button>
+                    <a href="cart.html" class="btn btn-outline btn-block">
+                        <i class="fas fa-arrow-left"></i> Sepete Dön
+                    </a>
+                </div>
+                <div class="secure-checkout">
+                    <p><i class="fas fa-shield-alt"></i> Güvenli Ödeme</p>
+                    <div class="payment-icons">
+                        <i class="fab fa-cc-visa"></i>
+                        <i class="fab fa-cc-mastercard"></i>
+                        <i class="fab fa-cc-amex"></i>
+                        <img src="../images/troy-logo.png" alt="Troy" class="troy-logo">
+                        <img src="../images/iyzico-logo.png" alt="iyzico" class="iyzico-logo">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 3D Secure Modal -->
+    <div id="secure-payment-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>3D Secure Doğrulama</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="threeds-container">
+                    <!-- 3D Secure iframe will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Address Modal -->
+    <div id="address-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Adres Ekle</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="address-form">
+                    <div class="form-group">
+                        <label for="address-title">Adres Başlığı</label>
+                        <input type="text" id="address-title" class="form-control" placeholder="Ev, İş, vb." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="address-street">Sokak Adresi</label>
+                        <textarea id="address-street" class="form-control" rows="3" placeholder="Sokak, Mahalle, Bina No, Daire No" required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-6">
+                            <label for="address-city">Şehir</label>
+                            <input type="text" id="address-city" class="form-control" placeholder="Şehir" required>
+                        </div>
+                        <div class="form-group col-6">
+                            <label for="address-state">İlçe</label>
+                            <input type="text" id="address-state" class="form-control" placeholder="İlçe" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-6">
+                            <label for="address-postal-code">Posta Kodu</label>
+                            <input type="text" id="address-postal-code" class="form-control" placeholder="Posta Kodu" required>
+                        </div>
+                        <div class="form-group col-6">
+                            <label for="address-country">Ülke</label>
+                            <select id="address-country" class="form-control">
+                                <option value="Turkey" selected>Türkiye</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="address-default" class="form-checkbox">
+                            <label for="address-default">Varsayılan adres olarak ayarla</label>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Kaydet</button>
+                        <button type="button" class="btn btn-secondary close-modal" onclick="document.getElementById('address-modal').style.display = 'none';">İptal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Success Modal -->
+    <div id="payment-success-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Ödeme Başarılı</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3>Siparişiniz Alındı!</h3>
+                <p>Sipariş numaranız: <strong id="success-order-number"></strong></p>
+                <p>Siparişinizin detayları e-posta adresinize gönderildi.</p>
+                <div class="modal-actions">
+                    <a href="account.html?tab=orders" class="btn btn-primary">Siparişlerim</a>
+                    <a href="index.html" class="btn btn-secondary">Alışverişe Devam Et</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Error Modal -->
+    <div id="payment-error-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Ödeme Hatası</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="error-icon">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <h3>Ödeme İşlemi Başarısız</h3>
+                <p id="payment-error-message">Ödeme işlemi sırasında bir hata oluştu.</p>
+                <div class="modal-actions">
+                    <button id="try-again-btn" class="btn btn-primary">Tekrar Dene</button>
+                    <a href="cart.html" class="btn btn-secondary">Sepete Dön</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-container"></div>
+
+    <script src="../js/components.js"></script>
+    <script src="../js/script.js"></script>
+    <script src="../js/checkout.js"></script>
+    
+    <!-- Direct script for payment method selection -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Payment method script loaded');
+            
+            // Get payment method elements
+            const creditCardMethod = document.getElementById('credit-card-method');
+            const bankTransferMethod = document.getElementById('bank-transfer-method');
+            const cashOnDeliveryMethod = document.getElementById('cash-on-delivery-method');
+            
+            // Get payment form elements
+            const creditCardForm = document.getElementById('credit-card-form');
+            const bankTransferForm = document.getElementById('bank-transfer-form');
+            const cashOnDeliveryForm = document.getElementById('cash-on-delivery-form');
+            
+            // Function to handle payment method selection
+            function handlePaymentMethodSelection(methodElement, formElement) {
+                // First, remove active class from all methods
+                creditCardMethod.classList.remove('active');
+                bankTransferMethod.classList.remove('active');
+                cashOnDeliveryMethod.classList.remove('active');
+                
+                // Add active class to selected method
+                methodElement.classList.add('active');
+                
+                // Hide all forms
+                if (creditCardForm) {
+                    creditCardForm.classList.remove('active');
+                    creditCardForm.style.display = 'none';
+                }
+                if (bankTransferForm) {
+                    bankTransferForm.classList.remove('active');
+                    bankTransferForm.style.display = 'none';
+                }
+                if (cashOnDeliveryForm) {
+                    cashOnDeliveryForm.classList.remove('active');
+                    cashOnDeliveryForm.style.display = 'none';
+                }
+                
+                // Show selected form
+                if (formElement) {
+                    formElement.classList.add('active');
+                    formElement.style.display = 'block';
+                    console.log('Showing form:', formElement.id);
+                }
+            }
+            
+            // Add click event listeners
+            if (creditCardMethod) {
+                creditCardMethod.addEventListener('click', function() {
+                    console.log('Credit card method clicked');
+                    handlePaymentMethodSelection(creditCardMethod, creditCardForm);
+                });
+            }
+            
+            if (bankTransferMethod) {
+                bankTransferMethod.addEventListener('click', function() {
+                    console.log('Bank transfer method clicked');
+                    handlePaymentMethodSelection(bankTransferMethod, bankTransferForm);
+                });
+            }
+            
+            if (cashOnDeliveryMethod) {
+                cashOnDeliveryMethod.addEventListener('click', function() {
+                    console.log('Cash on delivery method clicked');
+                    handlePaymentMethodSelection(cashOnDeliveryMethod, cashOnDeliveryForm);
+                });
+            }
+            
+            // Initialize - make sure the default payment form is visible
+            if (creditCardMethod.classList.contains('active')) {
+                console.log('Credit card is active by default');
+                if (creditCardForm) {
+                    creditCardForm.classList.add('active');
+                    creditCardForm.style.display = 'block';
+                }
+            }
+            
+            // Add address functionality
+            const addAddressBtn = document.getElementById('add-address-btn');
+            const addressModal = document.getElementById('address-modal');
+            const closeModalBtns = document.querySelectorAll('.close-modal');
+            
+            if (addAddressBtn) {
+                addAddressBtn.addEventListener('click', function() {
+                    console.log('Add address button clicked');
+                    if (addressModal) {
+                        addressModal.style.display = 'block';
+                    }
+                });
+            }
+            
+            // Close modal buttons
+            closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const modals = document.querySelectorAll('.modal');
+                    modals.forEach(modal => {
+                        modal.style.display = 'none';
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

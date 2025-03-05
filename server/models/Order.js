@@ -96,7 +96,7 @@ const OrderSchema = new mongoose.Schema(
     paymentStatus: {
       type: String,
       required: true,
-      enum: ['pending', 'paid', 'failed'],
+      enum: ['pending', 'paid', 'failed', 'refunded'],
       default: 'pending'
     },
     orderStatus: {
@@ -130,6 +130,46 @@ const OrderSchema = new mongoose.Schema(
     },
     trackingNumber: {
       type: String
+    },
+    // Payment details from payment provider
+    paymentDetails: {
+      paymentId: {
+        type: String
+      },
+      conversationId: {
+        type: String
+      },
+      paymentMethod: {
+        type: String
+      },
+      paymentProvider: {
+        type: String,
+        default: 'iyzico'
+      },
+      paymentDate: {
+        type: Date
+      },
+      lastFourDigits: {
+        type: String
+      },
+      cardType: {
+        type: String
+      }
+    },
+    // Refund details if order is refunded
+    refundDetails: {
+      refundId: {
+        type: String
+      },
+      refundAmount: {
+        type: Number
+      },
+      refundReason: {
+        type: String
+      },
+      refundDate: {
+        type: Date
+      }
     }
   },
   {

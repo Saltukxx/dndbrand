@@ -5,7 +5,9 @@ const {
   getCustomers,
   getCustomer,
   updateCustomer,
-  addAddress
+  addAddress,
+  updateAddress,
+  deleteAddress
 } = require('../controllers/customerController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -23,5 +25,9 @@ router.route('/:id')
 
 router.route('/:id/addresses')
   .post(protect, addAddress);
+
+router.route('/:id/addresses/:addressId')
+  .put(protect, updateAddress)
+  .delete(protect, deleteAddress);
 
 module.exports = router; 

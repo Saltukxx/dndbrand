@@ -1,85 +1,81 @@
-# DnD Brand E-commerce Backend
+# DnD Brand Server
 
-This is the backend API for the DnD Brand E-commerce website. It provides endpoints for managing products, customers, orders, and user authentication.
+This is the backend server for the DnD Brand e-commerce application.
 
-## Features
+## Prerequisites
 
-- User authentication (admin)
-- Customer registration and authentication
-- Product management
-- Order processing
-- File uploads for product images
+- Node.js (v14 or higher)
+- MongoDB (v4.4 or higher) or MongoDB Atlas account
 
-## Tech Stack
+## Setup
 
-- Node.js
-- Express
-- MongoDB
-- JWT Authentication
-- Multer for file uploads
+1. Make sure you have Node.js installed on your system
+2. Configure your MongoDB connection in the `.env` file
+3. Install dependencies by running `npm install` in the server directory
 
-## Installation
+## Running the Server
 
-1. Install dependencies:
-   ```
-   npm install
-   ```
+### Using the Batch File (Windows)
 
-2. Create a `.env` file in the `config` directory with the following variables:
-   ```
-   PORT=5000
-   MONGO_URI=mongodb://localhost:27017/dndbrand
-   JWT_SECRET=your_jwt_secret_key
-   JWT_EXPIRE=30d
-   ```
+The easiest way to start the server on Windows is to double-click the `start-server.bat` file.
 
-3. Start the server:
-   ```
-   npm run dev
-   ```
+### Using Command Line
+
+Navigate to the server directory and run:
+
+```bash
+node api-server.js
+```
+
+## Available Servers
+
+The project includes several server scripts for different purposes:
+
+- `api-server.js`: Main API server with CORS support and test page
+- `server.js`: Original server with all features
+- `debug-server.js`: Server with additional logging for debugging
+- `diagnose-server.js`: Diagnostic tool to check system and server configuration
+- `test-local-request.js`: Script to test server connectivity
+- `test-connection.js`: Script to test MongoDB connectivity
+
+## Testing the API
+
+Once the server is running, you can test the API using the built-in test page:
+
+1. Start the server using one of the methods above
+2. Open a web browser and navigate to `http://localhost:5000/test`
+3. Use the buttons on the test page to make requests to different endpoints
+
+## Troubleshooting
+
+If you encounter issues:
+
+### Connection Issues
+
+- Make sure MongoDB is running and accessible
+- Check that the MongoDB connection string in your `.env` file is correct
+- Verify that port 5000 is not being used by another application
+- Check if your firewall is blocking connections to port 5000
+
+### Database Issues
+
+- Run `node test-connection.js` to test the MongoDB connection
+- Check MongoDB Atlas IP whitelist if using Atlas
+- Verify that your database user has the correct permissions
+
+### Server Issues
+
+- Run `node diagnose-server.js` for a comprehensive diagnostic report
+- Check the console for error messages
+- Make sure all required dependencies are installed
 
 ## API Endpoints
 
-### Authentication
+- `GET /`: Root endpoint, returns a simple message
+- `GET /api/products`: Returns all products
+- `GET /api/customers`: Returns all customers
+- `GET /api/users`: Returns all users
 
-- `POST /api/users/register` - Register a new admin user
-- `POST /api/users/login` - Login admin user
-- `GET /api/users/me` - Get current user
+## License
 
-### Products
-
-- `GET /api/products` - Get all products
-- `GET /api/products/:id` - Get single product
-- `POST /api/products` - Create new product (admin only)
-- `PUT /api/products/:id` - Update product (admin only)
-- `DELETE /api/products/:id` - Delete product (admin only)
-
-### Customers
-
-- `POST /api/customers/register` - Register a new customer
-- `POST /api/customers/login` - Login customer
-- `GET /api/customers` - Get all customers (admin only)
-- `GET /api/customers/:id` - Get single customer
-- `PUT /api/customers/:id` - Update customer
-- `POST /api/customers/:id/addresses` - Add customer address
-
-### Orders
-
-- `POST /api/orders` - Create new order
-- `GET /api/orders` - Get all orders (admin only)
-- `GET /api/orders/:id` - Get single order
-- `PUT /api/orders/:id/status` - Update order status (admin only)
-- `GET /api/orders/customer/:customerId` - Get customer orders
-
-### Uploads
-
-- `POST /api/upload` - Upload product images (admin only)
-
-## Default Admin User
-
-A default admin user is created when the server starts:
-
-- Email: admin@dndbrand.com
-- Password: admin123
-
-Please change these credentials in production. 
+This project is proprietary and confidential. Unauthorized copying, distribution, or use is strictly prohibited. 

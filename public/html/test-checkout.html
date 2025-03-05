@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Checkout - DND Brand</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/checkout.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .test-container {
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 800px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .test-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .test-button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-weight: 500;
+        }
+        .test-button:hover {
+            background-color: var(--secondary-color);
+        }
+        .test-result {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-container"></div>
+
+    <main class="container">
+        <div class="page-title">
+            <h1>Test Checkout Page</h1>
+            <p>This page is used to test the checkout functionality</p>
+        </div>
+
+        <div class="test-container">
+            <div class="test-section">
+                <h2>Header Test</h2>
+                <p>Check if the header is loaded correctly:</p>
+                <div id="header-test-result" class="test-result">Waiting for test...</div>
+                <button id="test-header-btn" class="test-button">Test Header</button>
+            </div>
+
+            <div class="test-section">
+                <h2>Cart Data Test</h2>
+                <p>Check if cart data is available:</p>
+                <div id="cart-test-result" class="test-result">Waiting for test...</div>
+                <button id="test-cart-btn" class="test-button">Test Cart</button>
+                <button id="create-cart-btn" class="test-button">Create Sample Cart</button>
+                <button id="clear-cart-btn" class="test-button">Clear Cart</button>
+            </div>
+
+            <div class="test-section">
+                <h2>Checkout Page Test</h2>
+                <p>Test navigation to checkout page:</p>
+                <a href="checkout.html" class="btn btn-primary">Go to Checkout Page</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-container"></div>
+
+    <script src="../js/components.js"></script>
+    <script src="../js/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Test header
+            document.getElementById('test-header-btn').addEventListener('click', function() {
+                const headerContainer = document.getElementById('header-container');
+                const result = document.getElementById('header-test-result');
+                
+                if (headerContainer) {
+                    result.textContent = 'Header container found.\n';
+                    result.textContent += `Content: ${headerContainer.innerHTML.substring(0, 100)}...`;
+                } else {
+                    result.textContent = 'Header container not found!';
+                }
+            });
+            
+            // Test cart
+            document.getElementById('test-cart-btn').addEventListener('click', function() {
+                const result = document.getElementById('cart-test-result');
+                const cartData = localStorage.getItem('cart');
+                
+                if (cartData) {
+                    try {
+                        const cart = JSON.parse(cartData);
+                        result.textContent = `Cart found with ${cart.length} items:\n`;
+                        result.textContent += JSON.stringify(cart, null, 2);
+                    } catch (e) {
+                        result.textContent = `Error parsing cart data: ${e.message}\nRaw data: ${cartData}`;
+                    }
+                } else {
+                    result.textContent = 'No cart data found in localStorage.';
+                }
+            });
+            
+            // Create sample cart
+            document.getElementById('create-cart-btn').addEventListener('click', function() {
+                const result = document.getElementById('cart-test-result');
+                
+                // Sample cart data
+                const sampleCart = [
+                    {
+                        id: 1,
+                        name: 'Premium Sweatshirt',
+                        price: 299.99,
+                        quantity: 1,
+                        color: 'Siyah',
+                        size: 'M',
+                        image: '../images/products/sweatshirt-1.jpg'
+                    },
+                    {
+                        id: 2,
+                        name: 'Basic T-Shirt',
+                        price: 149.99,
+                        quantity: 2,
+                        color: 'Beyaz',
+                        size: 'L',
+                        image: '../images/products/tshirt-1.jpg'
+                    }
+                ];
+                
+                // Save to localStorage
+                localStorage.setItem('cart', JSON.stringify(sampleCart));
+                
+                result.textContent = 'Sample cart created:\n';
+                result.textContent += JSON.stringify(sampleCart, null, 2);
+            });
+            
+            // Clear cart
+            document.getElementById('clear-cart-btn').addEventListener('click', function() {
+                localStorage.removeItem('cart');
+                document.getElementById('cart-test-result').textContent = 'Cart data cleared from localStorage.';
+            });
+        });
+    </script>
+</body>
+</html> 

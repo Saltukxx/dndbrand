@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DnD Brand Direct Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>DnD Brand Direct Test</h1>
+    <p>This file can be opened directly in your browser without a server.</p>
+    
+    <div>
+        <button id="testPort3000">Test Port 3000</button>
+        <button id="testPort5000">Test Port 5000</button>
+        <button id="testPort8080">Test Port 8080</button>
+    </div>
+    
+    <h2>Response:</h2>
+    <pre id="response">Click a button to test a port...</pre>
+    
+    <script>
+        document.getElementById('testPort3000').addEventListener('click', () => {
+            testPort(3000);
+        });
+        
+        document.getElementById('testPort5000').addEventListener('click', () => {
+            testPort(5000);
+        });
+        
+        document.getElementById('testPort8080').addEventListener('click', () => {
+            testPort(8080);
+        });
+        
+        function testPort(port) {
+            const responseElement = document.getElementById('response');
+            responseElement.textContent = `Testing connection to port ${port}...`;
+            responseElement.className = '';
+            
+            fetch(`http://localhost:${port}/`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    responseElement.textContent = `Successfully connected to port ${port}!\nResponse: ${data}`;
+                    responseElement.className = 'success';
+                })
+                .catch(error => {
+                    responseElement.textContent = `Error connecting to port ${port}: ${error.message}`;
+                    responseElement.className = 'error';
+                    console.error('Fetch error:', error);
+                });
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sipariş Onayı - DND Brand</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/checkout.css">
+    <link rel="stylesheet" href="../css/order-confirmation.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-container"></div>
+
+    <main class="container">
+        <div class="page-title">
+            <h1>Sipariş Onayı</h1>
+        </div>
+
+        <div class="checkout-steps">
+            <div class="checkout-step completed">
+                <span>1</span>
+                <p>Sepet</p>
+            </div>
+            <div class="checkout-step completed">
+                <span>2</span>
+                <p>Teslimat</p>
+            </div>
+            <div class="checkout-step completed">
+                <span>3</span>
+                <p>Ödeme</p>
+            </div>
+            <div class="checkout-step completed">
+                <span>4</span>
+                <p>Onay</p>
+            </div>
+        </div>
+
+        <div class="confirmation-content">
+            <div class="confirmation-message">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2>Siparişiniz Başarıyla Alındı!</h2>
+                <p>Siparişiniz için teşekkür ederiz. Siparişiniz işleme alındı ve en kısa sürede hazırlanacaktır.</p>
+                <div class="order-number">
+                    <p>Sipariş Numaranız: <span id="order-number">Loading...</span></p>
+                </div>
+            </div>
+
+            <div class="order-details">
+                <h3>Sipariş Detayları</h3>
+                <div class="order-info">
+                    <div class="order-date">
+                        <p><strong>Sipariş Tarihi:</strong> <span id="order-date">Loading...</span></p>
+                    </div>
+                    <div class="payment-method">
+                        <p><strong>Ödeme Yöntemi:</strong> <span id="payment-method">Loading...</span></p>
+                    </div>
+                    <div class="order-status">
+                        <p><strong>Sipariş Durumu:</strong> <span id="order-status">Loading...</span></p>
+                    </div>
+                </div>
+
+                <div class="addresses">
+                    <div class="shipping-address">
+                        <h4>Teslimat Adresi</h4>
+                        <div id="shipping-address">Loading...</div>
+                    </div>
+                    <div class="billing-address">
+                        <h4>Fatura Adresi</h4>
+                        <div id="billing-address">Loading...</div>
+                    </div>
+                </div>
+
+                <div class="order-items">
+                    <h4>Sipariş Edilen Ürünler</h4>
+                    <div id="order-items-container">
+                        <!-- Order items will be loaded here -->
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i> Yükleniyor...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-summary">
+                    <h4>Sipariş Özeti</h4>
+                    <div class="summary-row">
+                        <span>Ara Toplam:</span>
+                        <span id="subtotal">Loading...</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>KDV (18%):</span>
+                        <span id="tax">Loading...</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Kargo:</span>
+                        <span id="shipping">Loading...</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Toplam:</span>
+                        <span id="total">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="next-steps">
+                <h3>Sonraki Adımlar</h3>
+                <p>Siparişinizin durumu hakkında e-posta ile bilgilendirileceksiniz. Ayrıca hesabınızdan da sipariş durumunu takip edebilirsiniz.</p>
+                <div class="action-buttons">
+                    <a href="shop.html" class="btn btn-secondary">Alışverişe Devam Et</a>
+                    <a href="account.html" class="btn btn-primary">Siparişlerimi Görüntüle</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-container"></div>
+
+    <!-- Scripts -->
+    <script src="../js/components.js"></script>
+    <script src="../js/order-confirmation.js"></script>
+</body>
+</html> 

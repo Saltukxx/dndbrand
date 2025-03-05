@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hesabım | DnD Brand</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/account.css">
+    <link rel="stylesheet" href="../css/shop.css">
+    <link rel="stylesheet" href="../css/contact.css">
+    <link rel="stylesheet" href="../css/account-debug.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* Emergency fix for header overlay issues */
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+            z-index: 0;
+        }
+        
+        #header-container {
+            position: relative !important;
+            z-index: 10 !important;
+        }
+        
+        #header-container header {
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
+            width: 100% !important;
+            z-index: 10 !important;
+            background-color: rgba(15, 15, 15, 0.9) !important;
+        }
+        
+        .page-header {
+            position: relative !important;
+            z-index: 5 !important;
+            margin-top: 0 !important;
+        }
+        
+        .account-section {
+            position: relative !important;
+            z-index: 20 !important;
+            flex: 1 !important;
+        }
+        
+        #debug-buttons {
+            position: fixed !important;
+            bottom: 20px !important;
+            right: 20px !important;
+            z-index: 9999 !important;
+        }
+        
+        /* Hide any background images that might be causing issues */
+        body::before,
+        body::after,
+        .page-header::before,
+        .page-header::after {
+            display: none !important;
+            content: none !important;
+        }
+        
+        /* Fix for any absolute positioned elements */
+        .mobile-menu,
+        .mobile-menu-overlay,
+        .whatsapp-float {
+            z-index: 1000 !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be loaded dynamically -->
+    <div id="header-container"></div>
+
+    <div class="mobile-menu">
+        <div class="close-menu">
+            <i class="fas fa-times"></i>
+        </div>
+        <ul>
+            <li><a href="index.html">Ana Sayfa</a></li>
+            <li><a href="shop.html">Koleksiyon</a></li>
+            <li><a href="about.html">Hakkımızda</a></li>
+            <li><a href="contact.html">İletişim</a></li>
+            <li><a href="account.html" class="active">Hesabım</a></li>
+            <li><a href="cart.html">Sepetim</a></li>
+        </ul>
+    </div>
+    <div class="mobile-menu-overlay"></div>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1>Hesabım</h1>
+            <div class="breadcrumb">
+                <a href="index.html">Ana Sayfa</a> / <span>Hesabım</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Account Section -->
+    <section class="account-section">
+        <div class="container">
+            <!-- Not Logged In State -->
+            <div class="account-not-logged" id="auth-forms">
+                <div class="auth-container">
+                    <div class="auth-tabs">
+                        <button class="auth-tab active" data-tab="login">Giriş Yap</button>
+                        <button class="auth-tab" data-tab="register">Üye Ol</button>
+                    </div>
+                    
+                    <div class="auth-content">
+                        <!-- Login Tab -->
+                        <div class="auth-tab-content active" id="login-tab-content">
+                            <form class="auth-form" id="login-form">
+                                <input type="hidden" class="return-url-field" name="returnUrl" value="">
+                                
+                                <div class="form-group">
+                                    <label for="login-email">E-posta Adresiniz</label>
+                                    <input type="text" id="login-email" name="email" placeholder="E-posta adresinizi girin">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="login-password">Şifreniz</label>
+                                    <div class="password-input">
+                                        <input type="password" id="login-password" name="password" placeholder="Şifrenizi girin">
+                                        <button type="button" class="toggle-password"><i class="far fa-eye"></i></button>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group form-checkbox">
+                                    <input type="checkbox" id="remember-me" name="remember">
+                                    <label for="remember-me">Beni Hatırla</label>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary btn-block">Giriş Yap</button>
+                                
+                                <div class="form-footer">
+                                    <a href="#" class="forgot-password">Şifremi Unuttum</a>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Register Tab -->
+                        <div class="auth-tab-content" id="register-tab-content">
+                            <form class="auth-form" id="register-form">
+                                <input type="hidden" class="return-url-field" name="returnUrl" value="">
+                                
+                                <div class="form-group">
+                                    <label for="register-name">Adınız Soyadınız</label>
+                                    <input type="text" id="register-name" name="name" placeholder="Adınızı ve soyadınızı girin">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="register-email">E-posta Adresiniz</label>
+                                    <input type="text" id="register-email" name="email" placeholder="E-posta adresinizi girin">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="register-password">Şifreniz</label>
+                                    <div class="password-input">
+                                        <input type="password" id="register-password" name="password" placeholder="Şifrenizi girin">
+                                        <button type="button" class="toggle-password"><i class="far fa-eye"></i></button>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="register-password-confirm">Şifre Tekrar</label>
+                                    <div class="password-input">
+                                        <input type="password" id="register-password-confirm" name="password_confirm" placeholder="Şifrenizi tekrar girin">
+                                        <button type="button" class="toggle-password"><i class="far fa-eye"></i></button>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group form-checkbox">
+                                    <input type="checkbox" id="terms" name="terms">
+                                    <label for="terms">Üyelik sözleşmesini okudum ve kabul ediyorum</label>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary btn-block">Üye Ol</button>
+                            </form>
+                        </div>
+                        
+                        <!-- Forgot Password Form -->
+                        <form class="auth-form" id="forgot-password-form">
+                            <div class="form-group">
+                                <label for="forgot-email">E-posta Adresiniz</label>
+                                <input type="text" id="forgot-email" name="email" placeholder="E-posta adresinizi girin">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-block">Şifre Sıfırlama Linki Gönder</button>
+                            
+                            <div class="form-footer">
+                                <a href="#" class="back-to-login">Giriş Ekranına Dön</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Logged In State -->
+            <div class="account-logged" style="display: none;">
+                <div class="account-grid">
+                    <!-- Sidebar -->
+                    <div class="account-sidebar">
+                        <div class="user-profile">
+                            <div class="user-avatar">
+                                <img src="../images/avatar-placeholder.jpg" alt="User Avatar" id="user-avatar">
+                            </div>
+                            <div class="user-info">
+                                <h3 id="user-name">Kullanıcı Adı</h3>
+                                <p id="user-email">kullanici@email.com</p>
+                            </div>
+                        </div>
+                        
+                        <ul class="account-menu">
+                            <li class="active" data-tab="dashboard"><i class="fas fa-tachometer-alt"></i> Kontrol Paneli</li>
+                            <li data-tab="orders"><i class="fas fa-shopping-bag"></i> Siparişlerim</li>
+                            <li data-tab="addresses"><i class="fas fa-map-marker-alt"></i> Adreslerim</li>
+                            <li data-tab="wishlist"><i class="fas fa-heart"></i> Favorilerim</li>
+                            <li data-tab="profile"><i class="fas fa-user"></i> Hesap Bilgilerim</li>
+                            <li id="logout-button"><i class="fas fa-sign-out-alt"></i> Çıkış Yap</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="account-content">
+                        <!-- Dashboard Tab -->
+                        <div class="account-tab" id="dashboard-tab">
+                            <div class="tab-header">
+                                <h2>Kontrol Paneli</h2>
+                            </div>
+                            
+                            <div class="welcome-message">
+                                <h3>Hoş Geldiniz, <span id="welcome-name">Kullanıcı</span>!</h3>
+                                <p>Hesabınızı buradan yönetebilirsiniz.</p>
+                            </div>
+                            
+                            <div class="dashboard-stats">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-shopping-bag"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <h4>Siparişler</h4>
+                                        <p id="orders-count">0</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <h4>Adresler</h4>
+                                        <p id="addresses-count">0</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-heart"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <h4>Favoriler</h4>
+                                        <p id="wishlist-count">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="recent-orders">
+                                <div class="section-header">
+                                    <h3>Son Siparişleriniz</h3>
+                                    <a href="#" class="view-all" data-tab="orders">Tümünü Görüntüle</a>
+                                </div>
+                                
+                                <div id="recent-orders-list">
+                                    <!-- Recent orders will be loaded here -->
+                                    <div class="empty-state">
+                                        <div class="empty-icon">
+                                            <i class="fas fa-shopping-bag"></i>
+                                        </div>
+                                        <p>Henüz bir sipariş vermediniz.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Orders Tab -->
+                        <div class="account-tab" id="orders-tab">
+                            <div class="tab-header">
+                                <h2>Siparişlerim</h2>
+                            </div>
+                            
+                            <div id="orders-list" class="orders-list">
+                                <!-- Orders will be loaded here -->
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="fas fa-shopping-bag"></i>
+                                    </div>
+                                    <p>Henüz bir sipariş vermediniz.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Addresses Tab -->
+                        <div class="account-tab" id="addresses-tab">
+                            <div class="tab-header">
+                                <h2>Adreslerim</h2>
+                                <button id="add-address-button" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Yeni Adres Ekle
+                                </button>
+                            </div>
+                            
+                            <div id="addresses-grid" class="addresses-grid">
+                                <!-- Addresses will be loaded here -->
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                    </div>
+                                    <p>Henüz bir adres eklemediniz.</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Address Form -->
+                            <div id="address-form-container" style="display: none;">
+                                <form id="address-form" class="auth-form">
+                                    <div class="form-group">
+                                        <label for="address-title">Adres Başlığı</label>
+                                        <input type="text" id="address-title" name="title" placeholder="Ev, İş, vb.">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="address-name">Ad Soyad</label>
+                                        <input type="text" id="address-name" name="name" placeholder="Ad Soyad">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="address-phone">Telefon</label>
+                                        <input type="text" id="address-phone" name="phone" placeholder="Telefon Numarası">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="address-city">Şehir</label>
+                                        <input type="text" id="address-city" name="city" placeholder="Şehir">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="address-line">Adres</label>
+                                        <textarea id="address-line" name="line" placeholder="Adres Detayı"></textarea>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="address-postal">Posta Kodu</label>
+                                        <input type="text" id="address-postal" name="postal" placeholder="Posta Kodu">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="address-country">Ülke</label>
+                                        <input type="text" id="address-country" name="country" value="Türkiye">
+                                    </div>
+                                    
+                                    <div class="form-group form-checkbox">
+                                        <input type="checkbox" id="address-default" name="default">
+                                        <label for="address-default">Varsayılan Adres Olarak Ayarla</label>
+                                    </div>
+                                    
+                                    <div class="form-buttons">
+                                        <button type="button" id="cancel-address-button" class="btn btn-secondary">İptal</button>
+                                        <button type="submit" class="btn btn-primary">Kaydet</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- Wishlist Tab -->
+                        <div class="account-tab" id="wishlist-tab">
+                            <div class="tab-header">
+                                <h2>Favorilerim</h2>
+                            </div>
+                            
+                            <div id="wishlist-grid" class="wishlist-grid">
+                                <!-- Wishlist items will be loaded here -->
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="fas fa-heart"></i>
+                                    </div>
+                                    <p>Henüz bir ürünü favorilere eklemediniz.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Profile Tab -->
+                        <div class="account-tab" id="profile-tab">
+                            <div class="tab-header">
+                                <h2>Hesap Bilgilerim</h2>
+                            </div>
+                            
+                            <form id="profile-form" class="profile-form">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="profile-name">Ad Soyad</label>
+                                        <input type="text" id="profile-name" name="name" placeholder="Ad Soyad">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="profile-email">E-posta</label>
+                                        <input type="text" id="profile-email" name="email" placeholder="E-posta" readonly>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="profile-phone">Telefon</label>
+                                        <input type="text" id="profile-phone" name="phone" placeholder="Telefon">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="profile-birth">Doğum Tarihi</label>
+                                        <input type="text" id="profile-birth" name="birth" placeholder="GG/AA/YYYY">
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">Bilgilerimi Güncelle</button>
+                            </form>
+                            
+                            <div class="section-header">
+                                <h3>Şifre Değiştir</h3>
+                            </div>
+                            
+                            <form id="password-form" class="profile-form">
+                                <div class="form-group">
+                                    <label for="current-password">Mevcut Şifre</label>
+                                    <div class="password-input">
+                                        <input type="password" id="current-password" name="current_password" placeholder="Mevcut şifrenizi girin">
+                                        <button type="button" class="toggle-password"><i class="far fa-eye"></i></button>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="new-password">Yeni Şifre</label>
+                                        <div class="password-input">
+                                            <input type="password" id="new-password" name="new_password" placeholder="Yeni şifrenizi girin">
+                                            <button type="button" class="toggle-password"><i class="far fa-eye"></i></button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="confirm-password">Şifre Tekrar</label>
+                                        <div class="password-input">
+                                            <input type="password" id="confirm-password" name="confirm_password" placeholder="Yeni şifrenizi tekrar girin">
+                                            <button type="button" class="toggle-password"><i class="far fa-eye"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">Şifremi Değiştir</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer will be loaded dynamically -->
+    <div id="footer-container"></div>
+
+    <!-- WhatsApp Float Button -->
+    <a href="https://wa.me/905373058528?text=Merhaba%20DnD%20Brand,%20" class="whatsapp-float pulse" target="_blank">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+
+    <!-- Scripts -->
+    <script src="../js/components.js"></script>
+    <script src="../js/storage-manager.js"></script>
+    <script src="../js/script.js"></script>
+    <script src="../js/account-debug.js"></script>
+    <script src="../js/account-api.js"></script>
+    <script src="../js/account.js"></script>
+</body>
+</html> 

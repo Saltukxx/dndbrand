@@ -10,9 +10,14 @@ const ProductSchema = new mongoose.Schema(
     },
     sku: {
       type: String,
-      required: [true, 'Please add a SKU'],
       unique: true,
-      trim: true
+      trim: true,
+      default: function() {
+        // Generate a SKU with format DND-XX-NNN where XX is category code and NNN is random number
+        const categoryCode = this.category ? this.category.substring(0, 2).toUpperCase() : 'PR';
+        const randomNum = Math.floor(100 + Math.random() * 900); // 3-digit number between 100-999
+        return `DND-${categoryCode}-${randomNum}`;
+      }
     },
     description: {
       type: String,
