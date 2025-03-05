@@ -56,4 +56,9 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-module.exports = { connectDB, closeDBConnection }; 
+// Export both ways to support different import patterns:
+// 1. For production-server.js: const connectDB = require('./config/db');
+// 2. For server.js and test-server.js: const { connectDB } = require('./config/db');
+module.exports = connectDB;
+module.exports.connectDB = connectDB;
+module.exports.closeDBConnection = closeDBConnection; 

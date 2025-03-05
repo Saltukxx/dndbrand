@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const fs = require('fs');
 const seedAdmin = require('./config/seedAdmin');
-const { connectDB } = require('./config/database');
+const { connectDB } = require('./config/db');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
@@ -16,6 +16,7 @@ const {
   detectSuspiciousActivity,
   validateRequestParams 
 } = require('./middleware/security');
+const multer = require('multer');
 
 // Import routes
 const productRoutes = require('./routes/productRoutes');
