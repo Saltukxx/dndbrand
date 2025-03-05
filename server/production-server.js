@@ -25,14 +25,13 @@ const compression = require('compression');
 const connectDB = require('./config/db');
 
 // Route files
-const authRoutes = require('./routes/authRoutes');
+// Only import routes that actually exist
 const productRoutes = require('./routes/productRoutes');
-const categoryRoutes = require('./routes/categoryRoutes');
-const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const userRoutes = require('./routes/userRoutes');
-const addressRoutes = require('./routes/addressRoutes');
+const customerRoutes = require('./routes/customerRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 
 // Initialize express app
 const app = express();
@@ -97,14 +96,12 @@ app.use(compression());
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Mount routes
-app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/addresses', addressRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 // Serve frontend for any other route
 app.get('*', (req, res) => {
