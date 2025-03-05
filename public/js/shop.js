@@ -925,6 +925,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 productCard.className = 'product-card';
                 productCard.setAttribute('data-id', productId);
                 
+                // Make the entire product card clickable
+                productCard.addEventListener('click', function(e) {
+                    // Only navigate if the click wasn't on a specific action button
+                    if (!e.target.closest('.quick-view') && 
+                        !e.target.closest('.add-to-cart') && 
+                        !e.target.closest('.add-to-wishlist')) {
+                        window.location.href = `product.html?id=${productId}`;
+                    }
+                });
+                productCard.style.cursor = 'pointer';
+                
                 // Product HTML
                 productCard.innerHTML = `
                     <div class="product-image">
@@ -932,7 +943,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <img src="${productImage}" alt="${product.name}" 
                              onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';">
                         <div class="product-overlay">
-                            <a href="#" class="quick-view" data-id="${productId}">
+                            <a href="product.html?id=${productId}" class="quick-view" data-id="${productId}">
                                 <i class="fas fa-eye"></i>
                             </a>
                             <a href="#" class="add-to-cart" data-id="${productId}">
@@ -1134,11 +1145,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const quickViewButtons = document.querySelectorAll('.quick-view');
         quickViewButtons.forEach(button => {
             button.addEventListener('click', function(e) {
-                e.preventDefault();
+                // Don't prevent default - let the link navigate to the product page
                 const productId = this.getAttribute('data-id');
-                // Open quick view modal
-                // This would typically call a function to show a modal with product details
-                console.log('Quick view for product ID:', productId);
+                console.log('Navigating to product page for ID:', productId);
+                // The href is already set to product.html?id=${productId} in the HTML
             });
         });
         
