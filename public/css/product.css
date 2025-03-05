@@ -2,7 +2,7 @@
 
 /* Fix for header overlapping content */
 .page-header {
-    padding-top: 180px !important; /* Increased padding to account for fixed header */
+    padding-top: 200px !important; /* Increased padding to account for fixed header */
     margin-top: 0;
     position: relative;
     z-index: 1;

@@ -15,11 +15,11 @@
 
 /* Page Header */
 .page-header {
-    background: var(--premium-gradient);
-    padding: 150px 0 80px; /* Increased top padding to account for fixed header */
-    text-align: center;
-    color: #fff;
+    background-color: var(--secondary-color);
+    padding-top: 200px !important; /* Increased padding to account for fixed header */
+    padding-bottom: 50px;
     position: relative;
+    z-index: 1;
 }
 
 .page-header::after {
