@@ -75,17 +75,46 @@ function getProductImage(imagePath, useOriginal = false) {
 
 // Fetch product details from API
 async function fetchProductDetails(productId) {
+    console.log(`Fetching product details from: ${API_URL}/products/${productId}`);
+    
     try {
-        const response = await fetch(`${API_URL}/products/${productId}`);
+        // Add timestamp to prevent caching
+        const timestamp = new Date().getTime();
+        const url = `${API_URL}/products/${productId}?_=${timestamp}`;
+        
+        console.log(`Making request to: ${url}`);
+        const response = await fetch(url);
+        
+        console.log(`Response status: ${response.status}`);
+        
+        // Log headers for debugging
+        const headers = {};
+        response.headers.forEach((value, key) => {
+            headers[key] = value;
+        });
+        console.log('Response headers:', headers);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log('Response data:', data);
         
         if (data.success) {
+            console.log('Product data retrieved successfully:', data.data);
             return data.data;
         } else {
             throw new Error(data.message || 'Failed to fetch product details');
         }
     } catch (error) {
         console.error('Error fetching product details:', error);
+        
+        // Check if it's a CORS error
+        if (error.message.includes('CORS') || error.message.includes('Cross-Origin')) {
+            console.error('CORS error detected. Make sure the server has proper CORS headers.');
+        }
+        
         return null;
     }
 }
@@ -98,13 +127,39 @@ async function loadProductDetails(productId) {
         productContainer.innerHTML = '<div class="loading-product"><p>Loading product details...</p></div>';
     }
     
+    console.log(`Loading product details for ID: ${productId}`);
+    console.log(`API URL being used: ${API_URL}`);
+    
     // Fetch product details from API
-    const product = await fetchProductDetails(productId);
+    let product = await fetchProductDetails(productId);
+    
+    // If product fetch failed, try again with a different approach
+    if (!product) {
+        console.log('First attempt failed, trying alternative approach...');
+        
+        // Try direct API call without parameters
+        try {
+            const response = await fetch(`${API_URL}/products/${productId}`);
+            const data = await response.json();
+            if (data.success && data.data) {
+                product = data.data;
+                console.log('Alternative approach succeeded:', product);
+            }
+        } catch (error) {
+            console.error('Alternative approach also failed:', error);
+        }
+    }
     
     if (!product) {
         // Show error message
         if (productContainer) {
-            productContainer.innerHTML = '<div class="error-message"><p>Product not found</p><a href="shop.html" class="btn">Back to Shop</a></div>';
+            productContainer.innerHTML = `
+                <div class="error-message">
+                    <p>Product not found or could not be loaded</p>
+                    <p>Error details: Failed to fetch product with ID ${productId}</p>
+                    <p>API URL: ${API_URL}</p>
+                    <a href="shop.html" class="btn">Back to Shop</a>
+                </div>`;
         }
         return;
     }
