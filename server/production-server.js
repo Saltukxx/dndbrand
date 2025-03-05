@@ -81,7 +81,7 @@ app.use('/api/', limiter);
 
 // Enable CORS - Configure for your specific domains
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['https://dndbrand.com', 'https://www.dndbrand.com'],
+  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['https://dndbrand.com', 'https://www.dndbrand.com', 'https://saltukxx.github.io', 'https://saltukxx.github.io/dndbrand'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true,
