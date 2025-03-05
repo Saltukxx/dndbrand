@@ -37,6 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Only navigate if clicking on the icon or "Sepet" text, not the preview
             if (e.target.classList.contains('fa-shopping-bag') || 
                 (e.target.tagName === 'SPAN' && e.target.textContent === 'Sepet')) {
+                e.preventDefault();
+                e.stopPropagation();
                 window.location.href = 'cart.html';
             }
         });
@@ -59,6 +61,10 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = 'checkout.html';
         });
     }
+    
+    // Initialize cart preview
+    updateCartCount();
+    updateCartPreview();
     
     // Add event listeners for cart preview item removal
     document.addEventListener('click', function(e) {
@@ -849,6 +855,7 @@ function displayRelatedProducts(products) {
             if (productId) {
                 try {
                     // Show loading state
+                    const originalContent = button.innerHTML;
                     button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                     button.disabled = true;
                     
@@ -858,9 +865,14 @@ function displayRelatedProducts(products) {
                         // Add to cart with default quantity of 1
                         addToCart(product, 1);
                         
-                        // Reset button
-                        button.innerHTML = '<i class="fas fa-shopping-cart"></i>';
-                        button.disabled = false;
+                        // Reset button with success indicator
+                        button.innerHTML = '<i class="fas fa-check"></i>';
+                        setTimeout(() => {
+                            button.innerHTML = originalContent;
+                            button.disabled = false;
+                        }, 1500);
+                    } else {
+                        throw new Error('Product not found');
                     }
                 } catch (error) {
                     console.error('Error adding product to cart:', error);
@@ -959,7 +971,13 @@ function updateCartPreview() {
     
     // Update cart count
     const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
-    cartPreviewCount.textContent = `${cartCount} Ürün`;
+    cartPreviewCount.textContent = cartCount;
+    
+    // Update cart preview count text
+    const cartPreviewCountText = document.querySelector('.cart-preview-count');
+    if (cartPreviewCountText) {
+        cartPreviewCountText.textContent = `${cartCount} Ürün`;
+    }
     
     // Show/hide empty cart message
     if (cart.length === 0) {
@@ -1035,9 +1053,13 @@ function updateCartPreview() {
     
     // Add event listeners to remove buttons
     document.querySelectorAll('.cart-preview-item-remove').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             const itemId = this.dataset.id;
-            removeFromCart(itemId);
+            if (itemId) {
+                removeFromCart(itemId);
+            }
         });
     });
 }
