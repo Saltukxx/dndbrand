@@ -4,7 +4,8 @@
  */
 
 // API URL
-const API_URL = 'http://localhost:8080/api';
+// const API_URL = 'http://localhost:8080/api';
+const API_URL = window.CONFIG ? window.CONFIG.API_URL : 'http://localhost:8080/api';
 
 // Add these variables at the top of the file, after the existing variables
 let autoRefreshInterval = null;

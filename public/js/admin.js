@@ -4,8 +4,13 @@
  */
 
 // API URL
-const API_URL = 'http://localhost:8080/api';
+// Replace this with the centralized config
+// const API_URL = 'http://localhost:8080/api';
+const API_URL = window.CONFIG ? window.CONFIG.API_URL : 'http://localhost:8080/api';
+
+// Add these variables at the top of the file, after the API_URL declaration
 let authToken = sessionStorage.getItem('adminToken');
+let adminAuthenticated = sessionStorage.getItem('adminAuthenticated') === 'true';
 
 // Add these variables at the top of the file, after the API_URL declaration
 let adminAutoRefreshInterval = null;

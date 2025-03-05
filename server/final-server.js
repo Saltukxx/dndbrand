@@ -62,20 +62,26 @@ const upload = multer({
   }
 });
 
-// Use a different port
-const PORT = 8080;
-console.log('Using port:', PORT);
-
-// Initialize Express app
-console.log('Initializing Express app...');
+// Create Express app
 const app = express();
 console.log('Express app initialized');
 
+// Configure CORS to allow requests from GitHub Pages and localhost
+app.use(cors({
+  origin: ['https://saltukxx.github.io', 'http://localhost:8080', 'http://localhost:3000', '*'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 // Apply middleware
-app.use(cors()); // Enable CORS for all routes
 app.use(express.json());
 app.use(express.static(__dirname)); // Serve static files from the server directory
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // Serve uploaded files
+
+// Define port - updated for cloud hosting compatibility
+const PORT = process.env.PORT || 8080;
+console.log('Using port:', PORT);
 
 // API routes
 app.get('/', (req, res) => {

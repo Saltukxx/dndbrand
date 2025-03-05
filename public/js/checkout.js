@@ -1,16 +1,16 @@
 // DOM Elements
-const cardHolderNameInput = document.getElementById('card-holder-name');
-const cardNumberInput = document.getElementById('card-number');
-const expiryMonthInput = document.getElementById('expiry-month');
-const expiryYearInput = document.getElementById('expiry-year');
-const cvvInput = document.getElementById('cvv');
-const saveCardCheckbox = document.getElementById('save-card');
-const use3DSecureCheckbox = document.getElementById('use-3d-secure');
-const placeOrderBtn = document.getElementById('place-order-btn');
-const paymentMethods = document.querySelectorAll('.payment-method');
-const paymentForms = document.querySelectorAll('.payment-form');
-const addressCards = document.querySelectorAll('.address-card');
-const addAddressBtn = document.getElementById('add-address-btn');
+let cardHolderNameInput = document.getElementById('card-holder-name');
+let cardNumberInput = document.getElementById('card-number');
+let expiryMonthInput = document.getElementById('expiry-month');
+let expiryYearInput = document.getElementById('expiry-year');
+let cvvInput = document.getElementById('cvv');
+let saveCardCheckbox = document.getElementById('save-card');
+let use3DSecureCheckbox = document.getElementById('use-3d-secure');
+let placeOrderBtn = document.getElementById('place-order-btn');
+let paymentMethods = document.querySelectorAll('.payment-method');
+let paymentForms = document.querySelectorAll('.payment-form');
+let addressCards = document.querySelectorAll('.address-card');
+let addAddressBtn = document.getElementById('add-address-btn');
 
 // Modals
 const securePaymentModal = document.getElementById('secure-payment-modal');

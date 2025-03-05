@@ -4,7 +4,8 @@
  */
 
 // API URL
-const API_URL = 'http://localhost:8080/api';
+// const API_URL = 'http://localhost:8080/api';
+const API_URL = window.CONFIG ? window.CONFIG.API_URL : 'http://localhost:8080/api';
 
 document.addEventListener('DOMContentLoaded', function() {
     // Get product ID from URL
