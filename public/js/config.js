@@ -1,7 +1,7 @@
 // Configuration settings for DnD Brand
 const CONFIG = {
     // API URL - Production (HTTPS)
-    API_URL: 'https://dndbrand-server.onrender.com/api',
+    API_URL: '/api',
     
     // Development API URL - uncomment this line when developing locally
     // API_URL: 'http://localhost:8080/api',
