@@ -12,6 +12,23 @@ let paymentForms = document.querySelectorAll('.payment-form');
 let addressCards = document.querySelectorAll('.address-card');
 let addAddressBtn = document.getElementById('add-address-btn');
 
+// Make sure CONFIG is available
+if (!window.CONFIG) {
+    console.warn('CONFIG not found, using default values');
+    window.CONFIG = {
+        API_URL: 'https://your-deployed-backend-url.com/api',
+        FEATURES: {
+            ENABLE_CACHE: true,
+            DEBUG_MODE: false,
+            FORCE_HTTPS: true
+        },
+        SECURITY: {
+            REQUIRE_HTTPS: true,
+            HSTS_ENABLED: true
+        }
+    };
+}
+
 // Modals
 const securePaymentModal = document.getElementById('secure-payment-modal');
 const addressModal = document.getElementById('address-modal');
@@ -93,9 +110,9 @@ function initializeElements() {
 }
 
 // Load user's saved addresses
-async function loadUserAddresses() {
+async function loadUserAddresses(options = {}) {
     try {
-        console.log('Loading user addresses');
+        console.log('Loading user addresses', options);
         
         // Show loading indicator
         const container = document.getElementById('shipping-address-container');
@@ -127,8 +144,8 @@ async function loadUserAddresses() {
             }
         }
         
-        // If still no addresses, create a sample address
-        if (!addresses || addresses.length === 0) {
+        // If still no addresses and not after a deletion, create a sample address
+        if ((!addresses || addresses.length === 0) && !options.afterDeletion) {
             console.log('No addresses found, creating sample address');
             addresses = createSampleAddress();
             
@@ -138,16 +155,16 @@ async function loadUserAddresses() {
             // Try to save to server
             try {
                 await saveAddressToServer(addresses[0]);
-            } catch (error) {
-                console.error('Error saving sample address to server:', error);
-                // Continue with local address
+            } catch (serverError) {
+                console.error('Error saving sample address to server:', serverError);
+                // Continue with local sample address
             }
         }
         
         // Render addresses
         renderAddresses(addresses);
         
-        // Setup address card listeners
+        // Setup address card listeners (renderAddresses already calls this, but call it again to be safe)
         setupAddressCardListeners();
         
         // Hide loading indicator
@@ -275,8 +292,8 @@ function renderAddresses(addresses) {
                 ${address.isDefault ? '<span class="default-badge">Varsayılan</span>' : ''}
             </div>
             <div class="address-card-body">
-                <p>${address.street || ''}</p>
-                <p>${address.state || ''}, ${address.city || ''}, ${address.postalCode || ''}</p>
+                <p>${address.street || address.address || ''}</p>
+                <p>${address.state || address.district || ''}, ${address.city || ''}, ${address.postalCode || ''}</p>
                 <p>${address.country || 'Turkey'}</p>
             </div>
             <div class="address-card-actions">
@@ -330,13 +347,47 @@ function setupAddressCardListeners() {
         // Delete address button
         const deleteBtn = card.querySelector('.delete-address');
         if (deleteBtn) {
-            deleteBtn.addEventListener('click', function(e) {
+            deleteBtn.addEventListener('click', async function(e) {
                 e.stopPropagation(); // Prevent card selection
+                e.preventDefault(); // Prevent any default behavior
+                
                 const addressId = this.dataset.id;
                 console.log('Delete address clicked:', addressId);
+                
                 // Confirm before deleting
                 if (confirm('Bu adresi silmek istediğinizden emin misiniz?')) {
-                    deleteAddress(addressId);
+                    // Disable the button to prevent multiple clicks
+                    this.disabled = true;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Siliniyor...';
+                    
+                    try {
+                        // Delete the address
+                        const success = await deleteAddress(addressId);
+                        
+                        if (success) {
+                            // Remove the card from the DOM directly for immediate feedback
+                            card.style.opacity = '0';
+                            setTimeout(() => {
+                                card.remove();
+                                
+                                // If no addresses left, show message
+                                const container = document.getElementById('shipping-address-container');
+                                if (container && container.querySelectorAll('.address-card').length === 0) {
+                                    container.innerHTML = '<p>Kayıtlı adresiniz bulunmamaktadır.</p>';
+                                }
+                            }, 300);
+                        } else {
+                            // Re-enable the button if deletion failed
+                            this.disabled = false;
+                            this.innerHTML = '<i class="fas fa-trash"></i> Sil';
+                        }
+                    } catch (error) {
+                        console.error('Error in delete button handler:', error);
+                        // Re-enable the button
+                        this.disabled = false;
+                        this.innerHTML = '<i class="fas fa-trash"></i> Sil';
+                        showError('Adres silinirken bir hata oluştu');
+                    }
                 }
             });
         }
@@ -474,8 +525,8 @@ async function deleteAddressFromServer(addressId) {
     try {
         console.log('Deleting address from server:', addressId);
         
-        // API endpoint
-        const url = `http://localhost:8080/api/addresses/${addressId}`;
+        // API endpoint - Use CONFIG.API_URL instead of hardcoded URL
+        const url = `${CONFIG.API_URL}/addresses/${addressId}`;
         
         // Get user token
         const token = localStorage.getItem('token');
@@ -549,9 +600,21 @@ async function deleteAddress(addressId) {
         // Try to delete from server
         await deleteAddressFromServer(addressId);
         
-        // Update UI
-        renderAddresses(addresses);
-        setupAddressCardListeners();
+        // Update UI - Force a complete refresh of the address container
+        const container = document.getElementById('shipping-address-container');
+        if (container) {
+            // Clear the container first
+            container.innerHTML = '';
+            
+            if (addresses.length === 0) {
+                // If no addresses left, show a message
+                container.innerHTML = '<p>Kayıtlı adresiniz bulunmamaktadır.</p>';
+            } else {
+                // Render the updated addresses
+                renderAddresses(addresses);
+                setupAddressCardListeners();
+            }
+        }
         
         // Show success message
         showSuccess('Adres başarıyla silindi');
@@ -561,8 +624,8 @@ async function deleteAddress(addressId) {
         console.error('Error deleting address:', error);
         showError('Adres silinirken bir hata oluştu');
         
-        // Reload addresses to ensure UI is in sync with data
-        loadUserAddresses();
+        // Reload addresses to ensure UI is in sync with data, but don't create sample address
+        await loadUserAddresses({ afterDeletion: true });
         
         return false;
     }
@@ -1370,8 +1433,8 @@ async function saveAddressToServer(address) {
     try {
         console.log('Saving address to server:', address);
         
-        // API endpoint
-        const url = 'http://localhost:8080/api/addresses';
+        // API endpoint - Use CONFIG.API_URL instead of hardcoded URL
+        const url = `${CONFIG.API_URL}/addresses`;
         
         // Get user token
         const token = localStorage.getItem('token');
@@ -1426,8 +1489,8 @@ async function getAddressesFromServer() {
     try {
         console.log('Getting addresses from server');
         
-        // API endpoint
-        const url = 'http://localhost:8080/api/addresses';
+        // API endpoint - Use CONFIG.API_URL instead of hardcoded URL
+        const url = `${CONFIG.API_URL}/addresses`;
         
         // Get user token
         const token = localStorage.getItem('token');
@@ -1486,7 +1549,7 @@ async function updateAddressOnServer(addressData) {
         
         try {
             // API endpoint for updating address
-            const apiUrl = `http://localhost:8080/api/addresses/${addressData.id}`;
+            const apiUrl = `${CONFIG.API_URL}/addresses/${addressData.id}`;
             
             // Make API request
             const response = await fetch(apiUrl, {
@@ -1780,8 +1843,8 @@ async function saveOrderToServer(order) {
         // Get user token
         const token = localStorage.getItem('token');
         
-        // API endpoint
-        const url = 'http://localhost:8080/api/orders';
+        // API endpoint - Use CONFIG.API_URL instead of hardcoded URL
+        const url = `${CONFIG.API_URL}/orders`;
         
         // Send request
         const response = await fetch(url, {
@@ -1917,9 +1980,9 @@ async function saveAddress() {
             title: titleElement.value || 'Adresim',
             fullName: fullNameElement.value || '',
             phone: phoneElement.value || '',
-            address: streetElement.value || '',
+            street: streetElement.value || '',
             city: cityElement.value || '',
-            district: stateElement.value || '',
+            state: stateElement.value || '',
             postalCode: postalCodeElement.value || '',
             country: countryElement.value || 'Turkey',
             isDefault: defaultElement ? defaultElement.checked : false
@@ -1928,7 +1991,7 @@ async function saveAddress() {
         console.log('Address data:', addressData);
         
         // Validate required fields
-        if (!addressData.fullName || !addressData.phone || !addressData.address || !addressData.city) {
+        if (!addressData.fullName || !addressData.phone || !addressData.street || !addressData.city) {
             showError('Lütfen gerekli alanları doldurun');
             
             // Reset button
@@ -1974,10 +2037,27 @@ async function saveAddress() {
         
         // Try to save to server
         try {
-            await saveAddressToServer(addressData);
+            const serverResponse = await saveAddressToServer(addressData);
+            console.log('Server response for address save:', serverResponse);
+            
+            // If server returned an updated address (with server-generated ID), update local storage
+            if (serverResponse && serverResponse.id && serverResponse.id !== addressData.id) {
+                // Update the ID in our addresses array
+                const updatedAddresses = addresses.map(addr => 
+                    addr.id === addressData.id ? {...addr, id: serverResponse.id} : addr
+                );
+                localStorage.setItem('savedAddresses', JSON.stringify(updatedAddresses));
+                addresses = updatedAddresses;
+            }
         } catch (error) {
             console.error('Error saving address to server:', error);
             // Continue with local address
+        }
+        
+        // Clear the shipping address container before rendering
+        const container = document.getElementById('shipping-address-container');
+        if (container) {
+            container.innerHTML = '';
         }
         
         // Render addresses
@@ -2010,5 +2090,7 @@ async function saveAddress() {
             submitBtn.disabled = false;
             submitBtn.innerHTML = 'Kaydet';
         }
+        
+        return null;
     }
 } 

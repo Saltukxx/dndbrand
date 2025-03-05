@@ -174,6 +174,108 @@ For file uploads to work properly, you may need to configure your cloud provider
 - Cloudinary
 - Firebase Storage
 
+## HTTPS Configuration for Production
+
+Ensuring your application uses HTTPS is critical for security, especially for e-commerce sites handling payment information. Here's how to properly configure HTTPS:
+
+### Option 1: Using a Cloud Provider (Recommended)
+
+Most cloud providers like Render, Heroku, and Railway automatically provide HTTPS:
+
+1. They issue and manage SSL certificates for you
+2. They handle certificate renewal automatically
+3. They redirect HTTP to HTTPS by default
+
+**No additional configuration is needed** when using these platforms - HTTPS works out of the box.
+
+### Option 2: Manual HTTPS Configuration
+
+If you're hosting on a VPS or dedicated server:
+
+1. **Install an SSL Certificate**:
+   - Use [Let's Encrypt](https://letsencrypt.org/) for free SSL certificates
+   - Install Certbot: `sudo apt-get install certbot`
+   - Generate a certificate: `sudo certbot --nginx -d yourdomain.com`
+
+2. **Update Your Node.js Server**:
+   ```javascript
+   const https = require('https');
+   const fs = require('fs');
+   const express = require('express');
+   const app = express();
+
+   // Your existing Express configuration...
+
+   // HTTPS configuration
+   const httpsOptions = {
+     key: fs.readFileSync('/path/to/privkey.pem'),
+     cert: fs.readFileSync('/path/to/fullchain.pem')
+   };
+
+   // Create HTTPS server
+   https.createServer(httpsOptions, app).listen(443, () => {
+     console.log('HTTPS Server running on port 443');
+   });
+
+   // Redirect HTTP to HTTPS
+   const http = require('http');
+   http.createServer((req, res) => {
+     res.writeHead(301, { Location: `https://${req.headers.host}${req.url}` });
+     res.end();
+   }).listen(80);
+   ```
+
+3. **Update Your Config File**:
+   - Open `public/js/config.js`
+   - Ensure API_URL uses HTTPS: `API_URL: 'https://yourdomain.com/api'`
+
+### Option 3: Using a Reverse Proxy
+
+If you're using Nginx or Apache as a reverse proxy:
+
+1. **Configure Nginx for HTTPS**:
+   ```nginx
+   server {
+     listen 80;
+     server_name yourdomain.com;
+     return 301 https://$host$request_uri;
+   }
+
+   server {
+     listen 443 ssl;
+     server_name yourdomain.com;
+
+     ssl_certificate /path/to/fullchain.pem;
+     ssl_certificate_key /path/to/privkey.pem;
+
+     location / {
+       proxy_pass http://localhost:8080;
+       proxy_http_version 1.1;
+       proxy_set_header Upgrade $http_upgrade;
+       proxy_set_header Connection 'upgrade';
+       proxy_set_header Host $host;
+       proxy_cache_bypass $http_upgrade;
+     }
+   }
+   ```
+
+### HTTPS Checklist for Production
+
+✅ Ensure all API endpoints use HTTPS  
+✅ Update all frontend API calls to use HTTPS  
+✅ Configure CORS to only allow HTTPS origins  
+✅ Test payment processing over HTTPS  
+✅ Implement HTTP to HTTPS redirects  
+✅ Use Strict-Transport-Security header  
+✅ Check for mixed content warnings  
+
+### Testing HTTPS Configuration
+
+1. Use [SSL Labs](https://www.ssllabs.com/ssltest/) to test your SSL configuration
+2. Check browser console for mixed content warnings
+3. Verify all API calls are made over HTTPS
+4. Test the complete payment flow over HTTPS
+
 ## Need Help?
 
 If you're still having issues, feel free to reach out for support:

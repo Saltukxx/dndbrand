@@ -67,12 +67,37 @@ const app = express();
 console.log('Express app initialized');
 
 // Configure CORS to allow requests from GitHub Pages and localhost
-app.use(cors({
-  origin: ['https://saltukxx.github.io', 'http://localhost:8080', 'http://localhost:3000', '*'],
+const corsOptions = {
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    // List of allowed origins
+    const allowedOrigins = [
+      'https://saltukxx.github.io',      // GitHub Pages
+      'https://dndbrand.com',            // Production domain
+      'https://www.dndbrand.com'         // Production www subdomain
+    ];
+    
+    // Allow localhost in development
+    if (process.env.NODE_ENV !== 'production') {
+      allowedOrigins.push('http://localhost:8080', 'http://localhost:3000');
+    }
+    
+    // Check if the origin is allowed
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.match(/^https:\/\/.*\.dndbrand\.com$/)) {
+      callback(null, true);
+    } else {
+      console.warn(`Origin ${origin} not allowed by CORS`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Apply middleware
 app.use(express.json());

@@ -1,6 +1,6 @@
 // Configuration settings for DnD Brand
 const CONFIG = {
-    // API URL - Change this when deploying to production
+    // API URL - Production (HTTPS)
     API_URL: 'https://your-deployed-backend-url.com/api',
     
     // Development API URL - uncomment this line when developing locally
@@ -16,9 +16,28 @@ const CONFIG = {
     // Feature flags
     FEATURES: {
         ENABLE_CACHE: true,
-        DEBUG_MODE: false
+        DEBUG_MODE: false,
+        FORCE_HTTPS: true // Force HTTPS for all API calls in production
+    },
+    
+    // Security settings
+    SECURITY: {
+        REQUIRE_HTTPS: true, // Enforce HTTPS for sensitive operations
+        HSTS_ENABLED: true   // HTTP Strict Transport Security
     }
 };
+
+// Enforce HTTPS in production environments
+(function() {
+    // Check if we're in a browser environment
+    if (typeof window !== 'undefined' && window.location && 
+        CONFIG.SECURITY.REQUIRE_HTTPS && 
+        window.location.protocol === 'http:' && 
+        !window.location.hostname.includes('localhost')) {
+        // Redirect to HTTPS
+        window.location.href = window.location.href.replace('http:', 'https:');
+    }
+})();
 
 // Don't modify below this line
 // This makes the config available to other scripts
