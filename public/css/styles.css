@@ -162,11 +162,13 @@ header .container {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: nowrap;
 }
 
 .logo {
     display: flex;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .logo h1 {
@@ -189,21 +191,21 @@ header .container {
 
 nav ul {
     display: flex;
-    list-style: none;
-    margin: 0;
+    align-items: center;
+    gap: 30px;
 }
 
 nav ul li {
-    margin: 0 15px;
+    position: relative;
 }
 
 nav ul li a {
-    color: #fff;
-    text-decoration: none;
+    color: var(--text-color);
     font-size: 0.95rem;
     font-weight: 500;
-    position: relative;
-    padding: 5px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color 0.3s ease;
 }
 
 nav ul li a::after {
@@ -225,13 +227,16 @@ nav ul li a.active::after {
 .nav-icons {
     display: flex;
     align-items: center;
+    gap: 25px;
 }
 
 .nav-icon {
-    margin-left: 20px;
     cursor: pointer;
     color: #fff;
     position: relative;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
 }
 
 .nav-icon:hover {
@@ -239,10 +244,12 @@ nav ul li a.active::after {
 }
 
 .cart-icon {
-    margin-left: 20px;
     cursor: pointer;
     color: #fff;
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .cart-icon:hover {
@@ -251,12 +258,12 @@ nav ul li a.active::after {
 
 .cart-icon i {
     font-size: 1.1rem;
+    position: relative;
 }
 
-.cart-icon span {
-    position: absolute;
-    top: -8px;
-    right: -8px;
+.cart-icon span.cart-text {
+    font-size: 0.9rem;
+    font-weight: 500;
 }
 
 .cart-count {
@@ -280,6 +287,7 @@ nav ul li a.active::after {
     color: #fff;
     font-size: 1.2rem;
     cursor: pointer;
+    margin-left: 15px;
 }
 
 /* Mobile Menu */
@@ -362,10 +370,8 @@ nav ul li a.active::after {
     nav ul {
         display: none;
     }
-    
     .mobile-menu-btn {
         display: block;
-        margin-left: 20px;
     }
 }
 
@@ -987,22 +993,24 @@ footer {
         font-size: 2rem;
     }
     .product-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(1, 1fr);
     }
     .footer-content {
-        gap: 25px;
+        grid-template-columns: 1fr;
     }
     .section-title {
         font-size: 1.8rem;
     }
     .container {
-        width: 95%;
         padding: 0 10px;
     }
     .hero-content {
         padding: 0 15px;
     }
     .cart-icon span {
+        font-size: 0.8rem;
+    }
+    .cart-count {
         top: -5px;
         right: -5px;
         width: 16px;
@@ -1013,14 +1021,14 @@ footer {
         gap: 15px;
     }
     .nav-icon, .cart-icon {
-        margin-left: 10px;
+        font-size: 1rem;
     }
     .logo h1 {
         font-size: 1.5rem;
     }
-    .btn {
-        padding: 10px 20px;
-        font-size: 14px;
+    .logo-image {
+        height: 40px;
+        margin-right: 10px;
     }
 }
 
