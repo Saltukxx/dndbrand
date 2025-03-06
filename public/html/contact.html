@@ -22,22 +22,42 @@
             </div>
             <nav>
                 <ul>
-                    <li><a href="/public/html/index.html">Ana Sayfa</a></li>
-                    <li><a href="/public/html/shop.html">Koleksiyon</a></li>
-                    <li><a href="/public/html/about.html">Hakkımızda</a></li>
-                    <li><a href="/public/html/contact.html" class="active">İletişim</a></li>
+                    <li><a href="/">Ana Sayfa</a></li>
+                    <li><a href="/shop">Koleksiyon</a></li>
+                    <li><a href="/about">Hakkımızda</a></li>
+                    <li><a href="/contact">İletişim</a></li>
+                    <li><a href="/cart">Sepet</a></li>
+                    <li><a href="/account">Hesabım</a></li>
                 </ul>
             </nav>
             <div class="nav-icons">
-                <div class="nav-icon">
-                    <i class="fas fa-search"></i>
-                </div>
-                <div class="nav-icon">
-                    <a href="/public/html/account.html"><i class="fas fa-user"></i></a>
-                </div>
+                <a href="/search" class="search-icon"><i class="fas fa-search"></i></a>
+                <a href="/account" class="account-icon"><i class="fas fa-user"></i></a>
                 <div class="cart-icon">
-                    <a href="/public/html/cart.html"><i class="fas fa-shopping-bag"></i></a>
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>Sepet</span>
                     <span class="cart-count">0</span>
+                    
+                    <div class="cart-preview">
+                        <div class="cart-preview-header">
+                            <h3>Sepetiniz</h3>
+                            <span class="cart-preview-count">0 Ürün</span>
+                        </div>
+                        <div class="cart-preview-items">
+                            <!-- Cart items will be added here by JavaScript -->
+                            <div class="empty-cart-message">Sepetiniz boş</div>
+                        </div>
+                        <div class="cart-preview-footer">
+                            <div class="cart-preview-total">
+                                <span>Toplam:</span>
+                                <span class="cart-preview-total-price">₺0.00</span>
+                            </div>
+                            <div class="cart-preview-actions">
+                                <a href="/cart" class="view-cart">Sepeti Görüntüle</a>
+                                <a href="/checkout" class="checkout">Ödeme</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="mobile-menu-btn">
                     <i class="fas fa-bars"></i>
@@ -47,16 +67,17 @@
     </header>
 
     <div class="mobile-menu">
-        <div class="close-menu">
-            <i class="fas fa-times"></i>
+        <div class="mobile-menu-header">
+            <div class="logo">DnD Brand</div>
+            <div class="close-btn"><i class="fas fa-times"></i></div>
         </div>
         <ul>
-            <li><a href="/public/html/index.html">Ana Sayfa</a></li>
-            <li><a href="/public/html/shop.html">Koleksiyon</a></li>
-            <li><a href="/public/html/about.html">Hakkımızda</a></li>
-            <li><a href="/public/html/contact.html" class="active">İletişim</a></li>
-            <li><a href="/public/html/account.html">Hesabım</a></li>
-            <li><a href="/public/html/cart.html">Sepet</a></li>
+            <li><a href="/">Ana Sayfa</a></li>
+            <li><a href="/shop">Koleksiyon</a></li>
+            <li><a href="/about">Hakkımızda</a></li>
+            <li><a href="/contact">İletişim</a></li>
+            <li><a href="/account">Hesabım</a></li>
+            <li><a href="/cart">Sepet</a></li>
         </ul>
     </div>
     
@@ -223,28 +244,28 @@
                 <div class="footer-column">
                     <h3>Alışveriş</h3>
                     <ul>
-                        <li><a href="collections.html?type=men">Erkek Koleksiyonu</a></li>
-                        <li><a href="collections.html?type=women">Kadın Koleksiyonu</a></li>
-                        <li><a href="collections.html?type=accessories">Aksesuarlar</a></li>
-                        <li><a href="shop.html?sale=true">İndirim</a></li>
+                        <li><a href="/collections?type=men">Erkek Koleksiyonu</a></li>
+                        <li><a href="/collections?type=women">Kadın Koleksiyonu</a></li>
+                        <li><a href="/collections?type=accessories">Aksesuarlar</a></li>
+                        <li><a href="/shop?sale=true">İndirim</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
                     <h3>Yardım</h3>
                     <ul>
-                        <li><a href="contact.html">Bize Ulaşın</a></li>
-                        <li><a href="shipping.html">Kargo Bilgileri</a></li>
-                        <li><a href="returns.html">İade ve Değişim</a></li>
-                        <li><a href="faq.html">Sıkça Sorulan Sorular</a></li>
+                        <li><a href="/contact">Bize Ulaşın</a></li>
+                        <li><a href="/shipping">Kargo Bilgileri</a></li>
+                        <li><a href="/returns">İade ve Değişim</a></li>
+                        <li><a href="/faq">Sıkça Sorulan Sorular</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
                     <h3>Hakkımızda</h3>
                     <ul>
-                        <li><a href="about.html">Hikayemiz</a></li>
-                        <li><a href="sustainability.html">Sürdürülebilirlik</a></li>
-                        <li><a href="careers.html">Kariyer</a></li>
-                        <li><a href="privacy.html">Gizlilik Politikası</a></li>
+                        <li><a href="/about">Hikayemiz</a></li>
+                        <li><a href="/sustainability">Sürdürülebilirlik</a></li>
+                        <li><a href="/careers">Kariyer</a></li>
+                        <li><a href="/privacy">Gizlilik Politikası</a></li>
                     </ul>
                 </div>
             </div>

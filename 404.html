@@ -16,7 +16,15 @@
             '/account': '/public/html/account.html',
             '/admin': '/public/html/admin.html',
             '/admin-login': '/public/html/admin-login.html',
-            '/product': '/public/html/product.html'
+            '/product': '/public/html/product.html',
+            '/search': '/public/html/search.html',
+            '/collections': '/public/html/collections.html',
+            '/shipping': '/public/html/shipping.html',
+            '/returns': '/public/html/returns.html',
+            '/faq': '/public/html/faq.html',
+            '/sustainability': '/public/html/sustainability.html',
+            '/careers': '/public/html/careers.html',
+            '/privacy': '/public/html/privacy.html'
         };
 
         // Get the path from the URL
@@ -27,6 +35,9 @@
             path = path.slice(0, -1);
         }
 
+        // Extract the base path without query parameters
+        const basePath = path.split('?')[0];
+
         // Check if we're already on the target page to prevent redirect loops
         const currentUrl = window.location.href;
         const isAlreadyOnTargetPage = Object.values(urlMap).some(targetPath => 
@@ -36,8 +47,10 @@
         // Only redirect if we're not already on the target page
         if (!isAlreadyOnTargetPage) {
             // Check if we have a mapping for this path
-            if (urlMap[path]) {
-                window.location.href = urlMap[path];
+            if (urlMap[basePath]) {
+                // Preserve query parameters when redirecting
+                const queryParams = window.location.search;
+                window.location.href = urlMap[basePath] + queryParams;
             } else if (path.includes('.')) {
                 // If it's a file request, don't redirect
             } else {
