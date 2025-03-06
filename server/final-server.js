@@ -66,38 +66,27 @@ const upload = multer({
 const app = express();
 console.log('Express app initialized');
 
-// Configure CORS to allow requests from GitHub Pages and localhost
+// Configure CORS to allow all origins temporarily
 const corsOptions = {
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    
-    // List of allowed origins
-    const allowedOrigins = [
-      'https://saltukxx.github.io',      // GitHub Pages
-      'https://dndbrand.com',            // Production domain
-      'https://www.dndbrand.com'         // Production www subdomain
-    ];
-    
-    // Allow localhost in development
-    if (process.env.NODE_ENV !== 'production') {
-      allowedOrigins.push('http://localhost:8080', 'http://localhost:3000');
-    }
-    
-    // Check if the origin is allowed
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.match(/^https:\/\/.*\.dndbrand\.com$/)) {
-      callback(null, true);
-    } else {
-      console.warn(`Origin ${origin} not allowed by CORS`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: '*', // Allow all origins temporarily
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 };
 
 app.use(cors(corsOptions));
+
+// Add OPTIONS pre-flight handler
+app.options('*', cors(corsOptions));
+
+// Add additional CORS headers middleware for extra compatibility
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
 
 // Apply middleware
 app.use(express.json());

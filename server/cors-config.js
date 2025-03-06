@@ -8,41 +8,9 @@
 // Import the cors package (make sure to install it first: npm install cors)
 const cors = require('cors');
 
-// List of allowed domains
-const allowedDomains = [
-    'https://dndbrand.com',
-    'https://www.dndbrand.com',
-    'http://localhost:3000',
-    'http://localhost:8080',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:8080',
-    'https://saltukxx.github.io'
-];
-
-// CORS options
+// CORS options - TEMPORARILY ALLOWING ALL ORIGINS
 const corsOptions = {
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps, curl, Postman)
-        if (!origin) {
-            return callback(null, true);
-        }
-        
-        // Check if the origin starts with any of the allowed domains
-        const isAllowed = allowedDomains.some(domain => 
-            origin === domain || origin.startsWith(`${domain}/`)
-        );
-        
-        if (isAllowed) {
-            return callback(null, true);
-        } else {
-            console.log('CORS blocked origin:', origin);
-            // For development, uncomment the next line to allow all origins
-            // return callback(null, true);
-            
-            // For production, block disallowed origins
-            return callback(new Error('CORS policy: Origin not allowed'), false);
-        }
-    },
+    origin: '*', // Allow all origins temporarily
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true,
@@ -51,6 +19,12 @@ const corsOptions = {
 
 // Export the CORS middleware
 module.exports = cors(corsOptions);
+
+/**
+ * WARNING: This configuration allows requests from ANY origin.
+ * This should only be used for development and testing.
+ * For production, use a more restrictive configuration.
+ */
 
 /**
  * How to use this in your server:

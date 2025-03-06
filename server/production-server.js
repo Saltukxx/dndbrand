@@ -82,43 +82,9 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Enable CORS - Configure for your specific domains
+// Enable CORS - TEMPORARILY ALLOWING ALL ORIGINS
 const corsOptions = {
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, Postman)
-    if (!origin) {
-      return callback(null, true);
-    }
-    
-    const allowedDomains = process.env.CORS_ORIGIN ? 
-      process.env.CORS_ORIGIN.split(',') : 
-      [
-        'https://dndbrand.com',
-        'https://www.dndbrand.com',
-        'http://dndbrand.com',
-        'http://www.dndbrand.com',
-        'https://saltukxx.github.io',
-        'http://localhost:3000',
-        'http://localhost:8080',
-        'http://localhost:5000'
-      ];
-    
-    // Check if the origin starts with any of the allowed domains
-    const isAllowed = allowedDomains.some(domain => 
-      origin === domain || origin.startsWith(`${domain}/`)
-    );
-    
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      console.log('CORS blocked origin:', origin);
-      // For development purposes, uncomment the next line to allow all origins
-      // callback(null, true);
-      
-      // For production, block disallowed origins
-      callback(new Error('Not allowed by CORS'), false);
-    }
-  },
+  origin: '*', // Allow all origins temporarily
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   credentials: true,
@@ -131,7 +97,7 @@ app.options('*', cors(corsOptions));
 
 // Add additional CORS headers middleware for extra compatibility
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
   res.header('Access-Control-Allow-Credentials', 'true');
