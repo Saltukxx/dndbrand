@@ -8,6 +8,8 @@ const CONFIG = {
     
     // CORS Proxy URLs - multiple options for redundancy
     CORS_PROXIES: [
+        // Local proxy first (most reliable)
+        window.location.origin + '/api-proxy/',
         'https://corsproxy.io/?',
         'https://api.allorigins.win/raw?url=',
         'https://thingproxy.freeboard.io/fetch/',

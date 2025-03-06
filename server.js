@@ -31,6 +31,8 @@ app.use('/api-proxy', async (req, res) => {
           'User-Agent': 'DnDBrand-LocalServer',
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Origin': 'https://dndbrand.com',
+          'Referer': 'https://dndbrand.com/'
         },
       },
       (proxyRes) => {
@@ -43,7 +45,8 @@ app.use('/api-proxy', async (req, res) => {
         // Set CORS headers
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
         
         // Pipe the response data
         proxyRes.pipe(res);
@@ -63,6 +66,15 @@ app.use('/api-proxy', async (req, res) => {
     console.error('Proxy error:', error);
     res.status(500).send('Proxy error');
   }
+});
+
+// Add OPTIONS pre-flight handler for the proxy
+app.options('/api-proxy/*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.status(200).end();
 });
 
 // Handle all routes by sending the index.html file

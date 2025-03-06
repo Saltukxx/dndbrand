@@ -84,13 +84,54 @@ app.use('/api/', limiter);
 
 // Enable CORS - Configure for your specific domains
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['https://dndbrand.com', 'https://www.dndbrand.com', 'https://saltukxx.github.io', 'https://saltukxx.github.io/dndbrand'],
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    const allowedOrigins = process.env.CORS_ORIGIN ? 
+      process.env.CORS_ORIGIN.split(',') : 
+      [
+        'https://dndbrand.com',
+        'https://www.dndbrand.com',
+        'http://dndbrand.com',
+        'http://www.dndbrand.com',
+        'https://saltukxx.github.io',
+        'http://localhost:3000',
+        'http://localhost:8080',
+        'http://localhost:5000'
+      ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      // For development purposes, you might want to allow all origins
+      // callback(null, true);
+      
+      // For production, you can block disallowed origins
+      callback(new Error('Not allowed by CORS'), false);
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   credentials: true,
   maxAge: 86400 // 24 hours
 };
 app.use(cors(corsOptions));
+
+// Add OPTIONS pre-flight handler
+app.options('*', cors(corsOptions));
+
+// Add additional CORS headers middleware for extra compatibility
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
 
 // Compression for faster response times
 app.use(compression());
