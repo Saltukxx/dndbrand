@@ -27,14 +27,23 @@
             path = path.slice(0, -1);
         }
 
-        // Check if we have a mapping for this path
-        if (urlMap[path]) {
-            window.location.href = urlMap[path];
-        } else if (path.includes('.')) {
-            // If it's a file request, don't redirect
-        } else {
-            // If no mapping found and not a file request, redirect to homepage
-            window.location.href = '/public/html/index.html';
+        // Check if we're already on the target page to prevent redirect loops
+        const currentUrl = window.location.href;
+        const isAlreadyOnTargetPage = Object.values(urlMap).some(targetPath => 
+            currentUrl.includes(targetPath)
+        );
+
+        // Only redirect if we're not already on the target page
+        if (!isAlreadyOnTargetPage) {
+            // Check if we have a mapping for this path
+            if (urlMap[path]) {
+                window.location.href = urlMap[path];
+            } else if (path.includes('.')) {
+                // If it's a file request, don't redirect
+            } else {
+                // If no mapping found and not a file request, redirect to homepage
+                window.location.href = '/public/html/index.html';
+            }
         }
     </script>
 </head>
