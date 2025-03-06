@@ -423,22 +423,22 @@ async function loadFooter() {
                     <div class="footer-column">
                         <h3>Hızlı Linkler</h3>
                         <ul>
-                            <li><a href="/">Ana Sayfa</a></li>
-                            <li><a href="/shop">Koleksiyon</a></li>
-                            <li><a href="/about">Hakkımızda</a></li>
-                            <li><a href="/contact">İletişim</a></li>
-                            <li><a href="blog.html">Blog</a></li>
+                            <li><a href="/public/html/index.html">Ana Sayfa</a></li>
+                            <li><a href="/public/html/shop.html">Koleksiyon</a></li>
+                            <li><a href="/public/html/about.html">Hakkımızda</a></li>
+                            <li><a href="/public/html/contact.html">İletişim</a></li>
+                            <li><a href="/public/html/blog.html">Blog</a></li>
                         </ul>
                     </div>
                     
                     <div class="footer-column">
                         <h3>Yardım</h3>
                         <ul>
-                            <li><a href="faq.html">Sıkça Sorulan Sorular</a></li>
-                            <li><a href="shipping.html">Kargo ve Teslimat</a></li>
-                            <li><a href="returns.html">İade ve Değişim</a></li>
-                            <li><a href="size-guide.html">Beden Rehberi</a></li>
-                            <li><a href="privacy.html">Gizlilik Politikası</a></li>
+                            <li><a href="/public/html/faq.html">Sıkça Sorulan Sorular</a></li>
+                            <li><a href="/public/html/shipping.html">Kargo ve Teslimat</a></li>
+                            <li><a href="/public/html/returns.html">İade ve Değişim</a></li>
+                            <li><a href="/public/html/size-guide.html">Beden Rehberi</a></li>
+                            <li><a href="/public/html/privacy.html">Gizlilik Politikası</a></li>
                         </ul>
                     </div>
                     
