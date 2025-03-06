@@ -931,7 +931,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (!e.target.closest('.quick-view') && 
                         !e.target.closest('.add-to-cart') && 
                         !e.target.closest('.add-to-wishlist')) {
-                        window.location.href = `product.html?id=${productId}`;
+                        handleProductClick(productId);
                     }
                 });
                 productCard.style.cursor = 'pointer';
@@ -1139,36 +1139,57 @@ document.addEventListener('DOMContentLoaded', function() {
                'Diğer';
     }
 
+    // Function to handle product click and redirect to product page
+    function handleProductClick(productId) {
+        // Store the last click timestamp to prevent double clicks
+        const now = Date.now();
+        const lastClick = parseInt(sessionStorage.getItem('lastProductClick') || '0');
+        
+        // If less than 500ms since last click, ignore this click (debounce)
+        if (now - lastClick < 500) {
+            console.log('Ignoring rapid click');
+            return;
+        }
+        
+        // Store current timestamp
+        sessionStorage.setItem('lastProductClick', now.toString());
+        
+        // Navigate to product page
+        window.location.href = `product.html?id=${productId}`;
+    }
+
     // Add event listeners to product actions
     function addProductActionListeners() {
         // Quick view buttons
-        const quickViewButtons = document.querySelectorAll('.quick-view');
-        quickViewButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                // Don't prevent default - let the link navigate to the product page
-                const productId = this.getAttribute('data-id');
-                console.log('Navigating to product page for ID:', productId);
-                // The href is already set to product.html?id=${productId} in the HTML
+        document.querySelectorAll('.quick-view-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const productId = this.closest('.product-card').dataset.id;
+                openQuickView(productId);
             });
         });
         
         // Add to cart buttons
-        const addToCartButtons = document.querySelectorAll('.add-to-cart');
-        addToCartButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
+        document.querySelectorAll('.add-to-cart-quick-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
                 e.preventDefault();
-                const productId = this.getAttribute('data-id');
+                e.stopPropagation();
+                const productId = this.closest('.product-card').dataset.id;
                 addToCart(productId, 1);
             });
         });
         
-        // Add to wishlist buttons
-        const addToWishlistButtons = document.querySelectorAll('.add-to-wishlist');
-        addToWishlistButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const productId = this.getAttribute('data-id');
-                addToWishlist(productId);
+        // Product card clicks
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Only handle clicks on the card itself, not on buttons
+                if (e.target.closest('.quick-view-btn') || e.target.closest('.add-to-cart-quick-btn')) {
+                    return;
+                }
+                
+                const productId = this.dataset.id;
+                handleProductClick(productId);
             });
         });
     }
@@ -1599,10 +1620,24 @@ document.addEventListener('DOMContentLoaded', function() {
             clearInterval(autoRefreshInterval);
         }
         
-        // Set up new interval
+        // Set up new interval - only refresh when tab is visible
         autoRefreshInterval = setInterval(async () => {
-            await refreshProducts(false);
+            // Only refresh if the tab is visible
+            if (document.visibilityState === 'visible') {
+                await refreshProducts(false);
+            }
         }, REFRESH_INTERVAL);
+        
+        // Clear interval when page is hidden
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden' && autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            } else if (document.visibilityState === 'visible' && !autoRefreshInterval) {
+                autoRefreshInterval = setInterval(async () => {
+                    await refreshProducts(false);
+                }, REFRESH_INTERVAL);
+            }
+        });
     }
 
     // Function to add refresh button

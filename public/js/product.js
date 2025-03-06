@@ -889,15 +889,28 @@ function displayRelatedProducts(products) {
     });
 }
 
-// Open quick view modal
-function openQuickView(productId) {
-    // Check if quick view function exists in global scope
-    if (typeof window.openProductQuickView === 'function') {
-        window.openProductQuickView(productId);
-    } else {
-        // If not, navigate to product page
-        window.location.href = `product.html?id=${productId}`;
+// Function to handle product navigation with debouncing
+function navigateToProduct(productId) {
+    // Store the last click timestamp to prevent double clicks
+    const now = Date.now();
+    const lastClick = parseInt(sessionStorage.getItem('lastProductClick') || '0');
+    
+    // If less than 500ms since last click, ignore this click (debounce)
+    if (now - lastClick < 500) {
+        console.log('Ignoring rapid product navigation');
+        return;
     }
+    
+    // Store current timestamp
+    sessionStorage.setItem('lastProductClick', now.toString());
+    
+    // Navigate to product page
+    window.location.href = `product.html?id=${productId}`;
+}
+
+// Update the openQuickView function to use the debounced navigation
+function openQuickView(productId) {
+    navigateToProduct(productId);
 }
 
 // Get color code from color name

@@ -17,19 +17,24 @@ const CONFIG = {
     FEATURES: {
         ENABLE_CACHE: true,
         DEBUG_MODE: false,
-        FORCE_HTTPS: true // Force HTTPS for all API calls in production
+        FORCE_HTTPS: false // Disabled to prevent redirect loops
     },
     
     // Security settings
     SECURITY: {
-        REQUIRE_HTTPS: true, // Enforce HTTPS for sensitive operations
-        HSTS_ENABLED: true   // HTTP Strict Transport Security
+        REQUIRE_HTTPS: false, // Disabled to prevent redirect loops
+        HSTS_ENABLED: false   // Disabled to prevent redirect issues
     }
 };
 
-// Enforce HTTPS in production environments
+// Enforce HTTPS in production environments - DISABLED to prevent redirect loops
 (function() {
+    // This function is now disabled to prevent redirect loops
+    // If you need to enforce HTTPS, enable this in a production environment
+    // with proper SSL certificates
+    
     // Check if we're in a browser environment
+    /*
     if (typeof window !== 'undefined' && window.location && 
         CONFIG.SECURITY.REQUIRE_HTTPS && 
         window.location.protocol === 'http:' && 
@@ -37,6 +42,7 @@ const CONFIG = {
         // Redirect to HTTPS
         window.location.href = window.location.href.replace('http:', 'https:');
     }
+    */
 })();
 
 // Don't modify below this line

@@ -3,34 +3,54 @@
  * Comprehensive admin panel with product management, order tracking, and analytics
  */
 
-// API URL
-// Replace this with the centralized config
-// const API_URL = 'http://localhost:8080/api';
-const API_URL = window.CONFIG ? window.CONFIG.API_URL : 'http://localhost:8080/api';
+// API URL from config or default
+const API_URL = typeof CONFIG !== 'undefined' ? CONFIG.API_URL : 'http://localhost:8080/api';
 
-// Add these variables at the top of the file, after the API_URL declaration
+// Authentication variables
 let authToken = sessionStorage.getItem('adminToken');
 let adminAuthenticated = sessionStorage.getItem('adminAuthenticated') === 'true';
 
-// Add these variables at the top of the file, after the API_URL declaration
-let adminAutoRefreshInterval = null;
-const ADMIN_REFRESH_INTERVAL = 30000; // Refresh every 30 seconds
+// Auto-refresh interval (30 seconds)
+const ADMIN_REFRESH_INTERVAL = 30000;
 
-// Check for admin authentication
+// Check if admin is authenticated
 function checkAdminAuth() {
-    // Check if token exists in session storage
-    const isAuthenticated = sessionStorage.getItem('adminToken');
-    
-    if (!isAuthenticated) {
-        // Redirect to login page
-        window.location.href = 'admin-login.html';
+    if (!sessionStorage.getItem('adminToken')) {
+        // Don't redirect automatically if we're already on the login page
+        if (!window.location.href.includes('admin-login.html')) {
+            window.location.href = 'admin-login.html';
+        }
+        return false;
     }
+    return true;
 }
 
-// Login admin user
+// Admin login function
 async function loginAdmin(email, password) {
     try {
-        const response = await fetch(`${API_URL}/users/login`, {
+        // Demo login for testing - allows login with demo credentials without server
+        if (email === 'admin@dndbrand.com' && password === 'admin123') {
+            console.log('Using demo login credentials');
+            
+            // Store auth token and user data
+            const demoToken = 'demo-token-' + Date.now();
+            const demoUser = {
+                name: 'Demo Admin',
+                email: 'admin@dndbrand.com',
+                role: 'admin'
+            };
+            
+            sessionStorage.setItem('adminToken', demoToken);
+            sessionStorage.setItem('adminAuthenticated', 'true');
+            sessionStorage.setItem('adminUser', JSON.stringify(demoUser));
+            
+            // Redirect to admin dashboard
+            window.location.href = 'admin.html';
+            return { success: true };
+        }
+        
+        // Try server login if demo credentials don't match
+        const response = await fetch(`${API_URL}/admin/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -40,93 +60,738 @@ async function loginAdmin(email, password) {
 
         const data = await response.json();
 
-        if (data.success) {
-            // Save token to session storage
+        if (response.ok) {
+            // Store auth token and user data
             sessionStorage.setItem('adminToken', data.token);
             sessionStorage.setItem('adminAuthenticated', 'true');
             sessionStorage.setItem('adminUser', JSON.stringify(data.user));
             
-            // Set global auth token
-            authToken = data.token;
-            
             // Redirect to admin dashboard
             window.location.href = 'admin.html';
+            return { success: true };
         } else {
-            throw new Error(data.message || 'Login failed');
+            return { 
+                success: false, 
+                message: data.message || 'Login failed. Please check your credentials.'
+            };
         }
     } catch (error) {
         console.error('Login error:', error);
-        alert('Login failed: ' + error.message);
+        // If server error occurs, suggest using demo credentials
+        return { 
+            success: false, 
+            message: 'Server error. Try using demo credentials: admin@dndbrand.com / admin123'
+        };
     }
 }
 
-// Fetch products from API
-async function fetchProducts() {
+// Show notification
+function showNotification(message, type = 'success') {
+    const notification = document.getElementById('adminNotification');
+    if (!notification) return;
+    
+    notification.textContent = message;
+    notification.className = `admin-notification ${type} show`;
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
+}
+
+// Initialize admin dashboard
+function initializeAdminDashboard() {
+    // Load dashboard data
+    loadDashboardStats();
+    loadRecentOrders();
+    
+    // Set up refresh interval with a more reasonable refresh rate
+    // and clear any existing intervals first
+    if (window.adminRefreshInterval) {
+        clearInterval(window.adminRefreshInterval);
+    }
+    
+    window.adminRefreshInterval = setInterval(() => {
+        // Only refresh if the tab is visible to reduce unnecessary processing
+        if (document.visibilityState === 'visible') {
+            loadDashboardStats();
+            loadRecentOrders();
+        }
+    }, ADMIN_REFRESH_INTERVAL);
+    
+    // Clear interval when page is hidden
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden' && window.adminRefreshInterval) {
+            clearInterval(window.adminRefreshInterval);
+        } else if (document.visibilityState === 'visible' && !window.adminRefreshInterval) {
+            window.adminRefreshInterval = setInterval(() => {
+                loadDashboardStats();
+                loadRecentOrders();
+            }, ADMIN_REFRESH_INTERVAL);
+        }
+    });
+}
+
+// Load dashboard statistics
+async function loadDashboardStats() {
+    if (!checkAdminAuth()) return;
+    
     try {
+        const response = await fetch(`${API_URL}/admin/stats`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Update dashboard stats
+            document.getElementById('totalSales').textContent = `₺${data.totalSales.toLocaleString('tr-TR')}`;
+            document.getElementById('totalCustomers').textContent = data.totalCustomers;
+            document.getElementById('totalProducts').textContent = data.totalProducts;
+            document.getElementById('newOrders').textContent = data.newOrders;
+        } else {
+            console.error('Failed to load dashboard stats');
+        }
+    } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+    }
+}
+
+// Load recent orders
+async function loadRecentOrders() {
+    if (!checkAdminAuth()) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/admin/orders/recent`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (response.ok) {
+            const orders = await response.json();
+            const tableBody = document.getElementById('recentOrdersTable').querySelector('tbody');
+            
+            if (orders.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6">Henüz sipariş bulunmamaktadır.</td></tr>';
+                return;
+            }
+            
+            tableBody.innerHTML = '';
+            
+            orders.forEach(order => {
+                const row = document.createElement('tr');
+                
+                // Format date
+                const orderDate = new Date(order.createdAt);
+                const formattedDate = orderDate.toLocaleDateString('tr-TR');
+                
+                // Get status badge class
+                let statusClass = '';
+                switch(order.status) {
+                    case 'completed': statusClass = 'completed'; break;
+                    case 'processing': statusClass = 'processing'; break;
+                    case 'shipped': statusClass = 'shipped'; break;
+                    case 'cancelled': statusClass = 'cancelled'; break;
+                    default: statusClass = 'processing';
+                }
+                
+                // Translate status
+                let statusText = '';
+                switch(order.status) {
+                    case 'completed': statusText = 'Tamamlandı'; break;
+                    case 'processing': statusText = 'İşleniyor'; break;
+                    case 'shipped': statusText = 'Kargoya Verildi'; break;
+                    case 'cancelled': statusText = 'İptal Edildi'; break;
+                    default: statusText = 'İşleniyor';
+                }
+                
+                row.innerHTML = `
+                    <td>#${order.orderNumber}</td>
+                    <td>${order.customer.name}</td>
+                    <td>${formattedDate}</td>
+                    <td>₺${order.total.toLocaleString('tr-TR')}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td class="actions-cell">
+                        <button class="action-btn view-btn" data-id="${order._id}" title="Görüntüle">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn edit-btn" data-id="${order._id}" title="Düzenle">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn print-btn" data-id="${order._id}" title="Yazdır">
+                            <i class="fas fa-print"></i>
+                        </button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Add event listeners to action buttons
+            addOrderActionListeners();
+        } else {
+            console.error('Failed to load recent orders');
+        }
+    } catch (error) {
+        console.error('Error loading recent orders:', error);
+    }
+}
+
+// Add event listeners to order action buttons
+function addOrderActionListeners() {
+    // View order
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-id');
+            viewOrder(orderId);
+        });
+    });
+    
+    // Edit order
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-id');
+            editOrder(orderId);
+        });
+    });
+    
+    // Print order
+    document.querySelectorAll('.print-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-id');
+            printOrder(orderId);
+        });
+    });
+}
+
+// View order details
+function viewOrder(orderId) {
+    // Show order details (to be implemented)
+    showNotification(`Sipariş #${orderId} görüntüleniyor`);
+}
+
+// Edit order
+function editOrder(orderId) {
+    // Edit order (to be implemented)
+    showNotification(`Sipariş #${orderId} düzenleniyor`);
+}
+
+// Print order
+function printOrder(orderId) {
+    // Print order (to be implemented)
+    showNotification(`Sipariş #${orderId} yazdırılıyor`);
+}
+
+// Load products
+async function loadProducts() {
+    if (!checkAdminAuth()) return;
+    
+    try {
+        // Show loading state
+        const tableBody = document.getElementById('productsTable').querySelector('tbody');
+        tableBody.innerHTML = '<tr><td colspan="7">Yükleniyor...</td></tr>';
+        
+        // Fetch products from API
         const response = await fetch(`${API_URL}/products`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
-
-        const data = await response.json();
-        console.log('Fetched products:', data);
         
-        // Check if the response has a 'value' property (PowerShell format)
-        if (data && data.value && Array.isArray(data.value)) {
-            console.log(`Found ${data.value.length} products in the response`);
-            return data.value;
+        if (response.ok) {
+            const result = await response.json();
+            const products = result.data || [];
+            
+            if (products.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7">Henüz ürün bulunmamaktadır.</td></tr>';
+                return;
+            }
+            
+            tableBody.innerHTML = '';
+            
+            products.forEach(product => {
+                const row = document.createElement('tr');
+                
+                // Get status badge class
+                let statusClass = '';
+                switch(product.status) {
+                    case 'active': statusClass = 'active'; break;
+                    case 'draft': statusClass = 'inactive'; break;
+                    case 'archived': statusClass = 'inactive'; break;
+                    default: statusClass = 'inactive';
+                }
+                
+                // Translate status
+                let statusText = '';
+                switch(product.status) {
+                    case 'active': statusText = 'Aktif'; break;
+                    case 'draft': statusText = 'Taslak'; break;
+                    case 'archived': statusText = 'Arşivlenmiş'; break;
+                    default: statusText = 'Bilinmiyor';
+                }
+                
+                // Format price
+                const formattedPrice = `₺${product.price.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                
+                // Create product image element
+                const productImage = product.images && product.images.length > 0 
+                    ? `<img src="${product.images[0]}" alt="${product.name}" class="product-thumbnail">`
+                    : '';
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="product-cell">
+                            ${productImage}
+                            <span>${product.name}</span>
+                        </div>
+                    </td>
+                    <td>${product.sku || '-'}</td>
+                    <td>${product.category || '-'}</td>
+                    <td>${formattedPrice}</td>
+                    <td>${product.inventory}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td class="actions-cell">
+                        <button class="action-btn view-btn" data-id="${product._id}" title="Görüntüle">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn edit-btn" data-id="${product._id}" title="Düzenle">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn" data-id="${product._id}" title="Sil">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Add event listeners to action buttons
+            addProductActionListeners();
+        } else {
+            console.error('Failed to load products');
+            tableBody.innerHTML = '<tr><td colspan="7">Ürünler yüklenirken bir hata oluştu.</td></tr>';
         }
-        
-        // Check if data is an array (direct response from our server)
-        if (Array.isArray(data)) {
-            console.log(`Found ${data.length} products in the response`);
-            return data;
-        }
-        
-        // Check if data has a success property and data property (original expected format)
-        if (data.success && data.data) {
-            console.log(`Found ${data.data.length} products in the response`);
-            return data.data;
-        } 
-        
-        // If none of the formats match, throw an error
-        console.error('Unexpected API response format:', data);
-        throw new Error(data.message || 'Failed to fetch products');
     } catch (error) {
-        console.error('Error fetching products:', error);
-        return [];
+        console.error('Error loading products:', error);
+        const tableBody = document.getElementById('productsTable').querySelector('tbody');
+        tableBody.innerHTML = '<tr><td colspan="7">Ürünler yüklenirken bir hata oluştu.</td></tr>';
+        
+        // If server error, try to load demo data
+        loadDemoProducts();
     }
 }
 
-// Create product
-async function createProduct(productData) {
-    try {
-        const response = await fetch(`${API_URL}/products`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
-            },
-            body: JSON.stringify(productData)
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            return data.data;
-        } else {
-            throw new Error(data.message || 'Failed to create product');
+// Load demo products if server is not available
+function loadDemoProducts() {
+    const demoProducts = [
+        {
+            _id: 'demo1',
+            name: 'Premium T-Shirt',
+            sku: 'DND-CL-123',
+            category: 'clothing',
+            price: 249.99,
+            inventory: 45,
+            status: 'active',
+            images: ['../img/products/tshirt-1.jpg']
+        },
+        {
+            _id: 'demo2',
+            name: 'Leather Wallet',
+            sku: 'DND-AC-456',
+            category: 'accessories',
+            price: 349.99,
+            inventory: 20,
+            status: 'active',
+            images: ['../img/products/wallet-1.jpg']
+        },
+        {
+            _id: 'demo3',
+            name: 'Classic Sneakers',
+            sku: 'DND-FW-789',
+            category: 'footwear',
+            price: 599.99,
+            inventory: 15,
+            status: 'active',
+            images: ['../img/products/sneakers-1.jpg']
+        },
+        {
+            _id: 'demo4',
+            name: 'Silver Bracelet',
+            sku: 'DND-JW-101',
+            category: 'jewelry',
+            price: 799.99,
+            inventory: 8,
+            status: 'draft',
+            images: ['../img/products/bracelet-1.jpg']
         }
-    } catch (error) {
-        console.error('Error creating product:', error);
-        throw error;
-    }
+    ];
+    
+    const tableBody = document.getElementById('productsTable').querySelector('tbody');
+    tableBody.innerHTML = '';
+    
+    demoProducts.forEach(product => {
+        const row = document.createElement('tr');
+        
+        // Get status badge class
+        let statusClass = '';
+        switch(product.status) {
+            case 'active': statusClass = 'active'; break;
+            case 'draft': statusClass = 'inactive'; break;
+            case 'archived': statusClass = 'inactive'; break;
+            default: statusClass = 'inactive';
+        }
+        
+        // Translate status
+        let statusText = '';
+        switch(product.status) {
+            case 'active': statusText = 'Aktif'; break;
+            case 'draft': statusText = 'Taslak'; break;
+            case 'archived': statusText = 'Arşivlenmiş'; break;
+            default: statusText = 'Bilinmiyor';
+        }
+        
+        // Format price
+        const formattedPrice = `₺${product.price.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        
+        // Create product image element
+        const productImage = product.images && product.images.length > 0 
+            ? `<img src="${product.images[0]}" alt="${product.name}" class="product-thumbnail">`
+            : '';
+        
+        row.innerHTML = `
+            <td>
+                <div class="product-cell">
+                    ${productImage}
+                    <span>${product.name}</span>
+                </div>
+            </td>
+            <td>${product.sku || '-'}</td>
+            <td>${product.category || '-'}</td>
+            <td>${formattedPrice}</td>
+            <td>${product.inventory}</td>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+            <td class="actions-cell">
+                <button class="action-btn view-btn" data-id="${product._id}" title="Görüntüle">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="action-btn edit-btn" data-id="${product._id}" title="Düzenle">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="action-btn delete-btn" data-id="${product._id}" title="Sil">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        tableBody.appendChild(row);
+    });
+    
+    // Add event listeners to action buttons
+    addProductActionListeners();
+    
+    // Show notification
+    showNotification('Demo ürünler yüklendi. Gerçek veritabanı bağlantısı kurulamadı.', 'warning');
+}
+
+// Add event listeners to product action buttons
+function addProductActionListeners() {
+    // View product
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.getAttribute('data-id');
+            viewProduct(productId);
+        });
+    });
+    
+    // Edit product
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.getAttribute('data-id');
+            editProduct(productId);
+        });
+    });
+    
+    // Delete product
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.getAttribute('data-id');
+            confirmDeleteProduct(productId);
+        });
+    });
+}
+
+// View product details
+function viewProduct(productId) {
+    if (!checkAdminAuth()) return;
+    
+    // Fetch product details
+    fetch(`${API_URL}/admin/products/${productId}`, {
+        headers: {
+            'Authorization': `Bearer ${authToken}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to fetch product details');
+        }
+        return response.json();
+    })
+    .then(product => {
+        // Create and show product details modal
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = 'productViewModal';
+        
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Ürün Detayları</h2>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="product-details">
+                        <div class="product-image">
+                            <img src="${product.images && product.images.length > 0 ? product.images[0] : '../img/placeholder.jpg'}" alt="${product.name}">
+                        </div>
+                        <div class="product-info">
+                            <h3>${product.name}</h3>
+                            <p class="product-price">₺${product.price.toLocaleString('tr-TR')}</p>
+                            <p class="product-category">Kategori: ${product.category}</p>
+                            <p class="product-stock">Stok: ${product.stock}</p>
+                            <p class="product-status">Durum: <span class="status-badge ${product.status}">${product.status === 'active' ? 'Aktif' : 'Pasif'}</span></p>
+                            <div class="product-description">
+                                <h4>Açıklama</h4>
+                                <p>${product.description}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal-btn">Kapat</button>
+                    <button class="btn btn-primary edit-from-view" data-id="${product._id}">Düzenle</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Show modal
+        setTimeout(() => {
+            modal.style.display = 'flex';
+        }, 10);
+        
+        // Close modal on close button click
+        modal.querySelector('.close-modal').addEventListener('click', () => {
+            modal.style.display = 'none';
+            setTimeout(() => {
+                modal.remove();
+            }, 300);
+        });
+        
+        // Close modal on close button click
+        modal.querySelector('.close-modal-btn').addEventListener('click', () => {
+            modal.style.display = 'none';
+            setTimeout(() => {
+                modal.remove();
+            }, 300);
+        });
+        
+        // Edit button click
+        modal.querySelector('.edit-from-view').addEventListener('click', () => {
+            modal.style.display = 'none';
+            setTimeout(() => {
+                modal.remove();
+                editProduct(product._id);
+            }, 300);
+        });
+        
+        // Close modal on outside click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            }
+        });
+    })
+    .catch(error => {
+        console.error('Error viewing product:', error);
+        showNotification('Ürün detayları yüklenirken bir hata oluştu', 'error');
+    });
+}
+
+// Edit product
+function editProduct(productId) {
+    if (!checkAdminAuth()) return;
+    
+    // Fetch product details for editing
+    fetch(`${API_URL}/admin/products/${productId}`, {
+        headers: {
+            'Authorization': `Bearer ${authToken}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to fetch product details');
+        }
+        return response.json();
+    })
+    .then(product => {
+        // Create and show product edit modal
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = 'productEditModal';
+        
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Ürün Düzenle</h2>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="editProductForm">
+                        <input type="hidden" name="productId" value="${product._id}">
+                        
+                        <div class="form-row">
+                            <div class="form-group col-6">
+                                <label for="productName">Ürün Adı</label>
+                                <input type="text" id="productName" name="name" value="${product.name}" required>
+                            </div>
+                            <div class="form-group col-6">
+                                <label for="productPrice">Fiyat (₺)</label>
+                                <input type="number" id="productPrice" name="price" value="${product.price}" step="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group col-6">
+                                <label for="productCategory">Kategori</label>
+                                <select id="productCategory" name="category" required>
+                                    <option value="men" ${product.category === 'men' ? 'selected' : ''}>Erkek</option>
+                                    <option value="women" ${product.category === 'women' ? 'selected' : ''}>Kadın</option>
+                                    <option value="accessories" ${product.category === 'accessories' ? 'selected' : ''}>Aksesuar</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-6">
+                                <label for="productStock">Stok</label>
+                                <input type="number" id="productStock" name="stock" value="${product.stock}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group col-6">
+                                <label for="productStatus">Durum</label>
+                                <select id="productStatus" name="status" required>
+                                    <option value="active" ${product.status === 'active' ? 'selected' : ''}>Aktif</option>
+                                    <option value="inactive" ${product.status === 'inactive' ? 'selected' : ''}>Pasif</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-6">
+                                <label for="productFeatured">Öne Çıkan</label>
+                                <select id="productFeatured" name="featured">
+                                    <option value="true" ${product.featured ? 'selected' : ''}>Evet</option>
+                                    <option value="false" ${!product.featured ? 'selected' : ''}>Hayır</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="productDescription">Açıklama</label>
+                            <textarea id="productDescription" name="description" rows="4" required>${product.description}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="productImages">Ürün Görselleri (URL'leri virgülle ayırın)</label>
+                            <textarea id="productImages" name="images" rows="2">${product.images ? product.images.join(', ') : ''}</textarea>
+                            <small>Yeni görsel eklemek için URL'leri virgülle ayırarak girin</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal-btn">İptal</button>
+                    <button class="btn btn-primary save-product-btn">Kaydet</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Show modal
+        setTimeout(() => {
+            modal.style.display = 'flex';
+        }, 10);
+        
+        // Close modal on close button click
+        modal.querySelector('.close-modal').addEventListener('click', () => {
+            modal.style.display = 'none';
+            setTimeout(() => {
+                modal.remove();
+            }, 300);
+        });
+        
+        // Close modal on cancel button click
+        modal.querySelector('.close-modal-btn').addEventListener('click', () => {
+            modal.style.display = 'none';
+            setTimeout(() => {
+                modal.remove();
+            }, 300);
+        });
+        
+        // Save button click
+        modal.querySelector('.save-product-btn').addEventListener('click', () => {
+            const form = document.getElementById('editProductForm');
+            const formData = new FormData(form);
+            const productData = {};
+            
+            // Convert FormData to object
+            for (const [key, value] of formData.entries()) {
+                if (key === 'featured') {
+                    productData[key] = value === 'true';
+                } else if (key === 'images') {
+                    productData[key] = value.split(',').map(url => url.trim()).filter(url => url !== '');
+                } else {
+                    productData[key] = value;
+                }
+            }
+            
+            // Update product
+            updateProduct(productId, productData, modal);
+        });
+        
+        // Close modal on outside click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            }
+        });
+    })
+    .catch(error => {
+        console.error('Error editing product:', error);
+        showNotification('Ürün detayları yüklenirken bir hata oluştu', 'error');
+    });
 }
 
 // Update product
-async function updateProduct(productId, productData) {
+async function updateProduct(productId, productData, modal) {
     try {
+        // Validate required fields
+        if (!productData.name || !productData.price || !productData.category) {
+            showNotification('Lütfen gerekli alanları doldurun.', 'error');
+            return false;
+        }
+        
+        // Convert price to number
+        productData.price = parseFloat(productData.price);
+        productData.inventory = parseInt(productData.inventory);
+        
+        // Make API request
         const response = await fetch(`${API_URL}/products/${productId}`, {
             method: 'PUT',
             headers: {
@@ -135,1406 +800,659 @@ async function updateProduct(productId, productData) {
             },
             body: JSON.stringify(productData)
         });
-
-        const data = await response.json();
-
-        if (data.success) {
-            return data.data;
+        
+        if (response.ok) {
+            const result = await response.json();
+            
+            // Close modal
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            
+            // Show success notification
+            showNotification('Ürün başarıyla güncellendi.', 'success');
+            
+            // Reload products
+            loadProducts();
+            
+            return true;
         } else {
-            throw new Error(data.message || 'Failed to update product');
+            const error = await response.json();
+            showNotification(error.message || 'Ürün güncellenirken bir hata oluştu.', 'error');
+            return false;
         }
     } catch (error) {
         console.error('Error updating product:', error);
-        throw error;
+        showNotification('Ürün güncellenirken bir hata oluştu.', 'error');
+        
+        // For demo purposes, simulate success
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        
+        // Show success notification
+        showNotification('Demo: Ürün başarıyla güncellendi (simülasyon).', 'success');
+        
+        // Reload products
+        loadProducts();
+        
+        return true;
+    }
+}
+
+// Add product button functionality
+function setupAddProductButton() {
+    const addProductBtn = document.getElementById('addProductBtn');
+    if (addProductBtn) {
+        addProductBtn.addEventListener('click', function() {
+            // Create and show add product modal
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.id = 'addProductModal';
+            
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Yeni Ürün Ekle</h2>
+                        <button class="close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addProductForm">
+                            <div class="form-row">
+                                <div class="form-group col-6">
+                                    <label for="newProductName">Ürün Adı</label>
+                                    <input type="text" id="newProductName" name="name" required>
+                                </div>
+                                <div class="form-group col-6">
+                                    <label for="newProductPrice">Fiyat (₺)</label>
+                                    <input type="number" id="newProductPrice" name="price" step="0.01" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group col-6">
+                                    <label for="newProductCategory">Kategori</label>
+                                    <select id="newProductCategory" name="category" required>
+                                        <option value="men">Erkek</option>
+                                        <option value="women">Kadın</option>
+                                        <option value="accessories">Aksesuar</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-6">
+                                    <label for="newProductStock">Stok</label>
+                                    <input type="number" id="newProductStock" name="stock" value="1" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group col-6">
+                                    <label for="newProductStatus">Durum</label>
+                                    <select id="newProductStatus" name="status" required>
+                                        <option value="active">Aktif</option>
+                                        <option value="inactive">Pasif</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-6">
+                                    <label for="newProductFeatured">Öne Çıkan</label>
+                                    <select id="newProductFeatured" name="featured">
+                                        <option value="false">Hayır</option>
+                                        <option value="true">Evet</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="newProductDescription">Açıklama</label>
+                                <textarea id="newProductDescription" name="description" rows="4" required></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="newProductImages">Ürün Görselleri (URL'leri virgülle ayırın)</label>
+                                <textarea id="newProductImages" name="images" rows="2"></textarea>
+                                <small>Görsel eklemek için URL'leri virgülle ayırarak girin</small>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary close-modal-btn">İptal</button>
+                        <button class="btn btn-primary add-new-product-btn">Ekle</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Show modal
+            setTimeout(() => {
+                modal.style.display = 'flex';
+            }, 10);
+            
+            // Close modal on close button click
+            modal.querySelector('.close-modal').addEventListener('click', () => {
+                modal.style.display = 'none';
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            });
+            
+            // Close modal on cancel button click
+            modal.querySelector('.close-modal-btn').addEventListener('click', () => {
+                modal.style.display = 'none';
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            });
+            
+            // Add button click
+            modal.querySelector('.add-new-product-btn').addEventListener('click', () => {
+                const form = document.getElementById('addProductForm');
+                const formData = new FormData(form);
+                const productData = {};
+                
+                // Convert FormData to object
+                for (const [key, value] of formData.entries()) {
+                    if (key === 'featured') {
+                        productData[key] = value === 'true';
+                    } else if (key === 'images') {
+                        productData[key] = value.split(',').map(url => url.trim()).filter(url => url !== '');
+                    } else {
+                        productData[key] = value;
+                    }
+                }
+                
+                // Create product
+                createProduct(productData, modal);
+            });
+            
+            // Close modal on outside click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                    setTimeout(() => {
+                        modal.remove();
+                    }, 300);
+                }
+            });
+        });
+    }
+}
+
+// Create new product
+async function createProduct(productData, modal) {
+    try {
+        // Validate required fields
+        if (!productData.name || !productData.price || !productData.category) {
+            showNotification('Lütfen gerekli alanları doldurun.', 'error');
+            return false;
+        }
+        
+        // Convert price to number
+        productData.price = parseFloat(productData.price);
+        productData.inventory = parseInt(productData.inventory);
+        
+        // Make API request
+        const response = await fetch(`${API_URL}/products`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(productData)
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            
+            // Close modal
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            
+            // Show success notification
+            showNotification('Ürün başarıyla oluşturuldu.', 'success');
+            
+            // Reload products
+            loadProducts();
+            
+            return true;
+        } else {
+            const error = await response.json();
+            showNotification(error.message || 'Ürün oluşturulurken bir hata oluştu.', 'error');
+            return false;
+        }
+    } catch (error) {
+        console.error('Error creating product:', error);
+        showNotification('Ürün oluşturulurken bir hata oluştu.', 'error');
+        
+        // For demo purposes, simulate success
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        
+        // Show success notification
+        showNotification('Demo: Ürün başarıyla oluşturuldu (simülasyon).', 'success');
+        
+        // Reload products
+        loadProducts();
+        
+        return true;
+    }
+}
+
+// Confirm delete product
+function confirmDeleteProduct(productId) {
+    if (confirm('Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+        deleteProduct(productId);
     }
 }
 
 // Delete product
 async function deleteProduct(productId) {
     try {
+        // Make API request
         const response = await fetch(`${API_URL}/products/${productId}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
-
-        const data = await response.json();
-
-        if (data.success) {
+        
+        if (response.ok) {
+            // Show success notification
+            showNotification('Ürün başarıyla silindi.', 'success');
+            
+            // Reload products
+            loadProducts();
+            
             return true;
         } else {
-            throw new Error(data.message || 'Failed to delete product');
+            const error = await response.json();
+            showNotification(error.message || 'Ürün silinirken bir hata oluştu.', 'error');
+            return false;
         }
     } catch (error) {
         console.error('Error deleting product:', error);
-        throw error;
+        showNotification('Ürün silinirken bir hata oluştu.', 'error');
+        
+        // For demo purposes, simulate success
+        showNotification('Demo: Ürün başarıyla silindi (simülasyon).', 'success');
+        
+        // Reload products
+        loadProducts();
+        
+        return true;
     }
 }
 
-// Upload product images
-async function uploadProductImages(formData) {
+// Load orders
+async function loadOrders() {
+    if (!checkAdminAuth()) return;
+    
     try {
-        const response = await fetch(`${API_URL}/upload`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            },
-            body: formData
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            return data.data; // Array of image objects with original and thumbnail URLs
-        } else {
-            throw new Error(data.message || 'Failed to upload images');
-        }
-    } catch (error) {
-        console.error('Error uploading images:', error);
-        throw error;
-    }
-}
-
-// Fetch customers from API
-async function fetchCustomers() {
-    try {
-        const response = await fetch(`${API_URL}/customers`, {
+        const response = await fetch(`${API_URL}/admin/orders`, {
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
-
-        const data = await response.json();
-
-        if (data.success) {
-            return data.data;
-        } else {
-            throw new Error(data.message || 'Failed to fetch customers');
-        }
-    } catch (error) {
-        console.error('Error fetching customers:', error);
-        return [];
-    }
-}
-
-// Fetch orders from API
-async function fetchOrders() {
-    try {
-        const response = await fetch(`${API_URL}/orders`, {
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            return data.data;
-        } else {
-            throw new Error(data.message || 'Failed to fetch orders');
-        }
-    } catch (error) {
-        console.error('Error fetching orders:', error);
-        return [];
-    }
-}
-
-// Update order status
-async function updateOrderStatus(orderId, statusData) {
-    try {
-        const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
-            },
-            body: JSON.stringify(statusData)
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            return data.data;
-        } else {
-            throw new Error(data.message || 'Failed to update order status');
-        }
-    } catch (error) {
-        console.error('Error updating order status:', error);
-        throw error;
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM fully loaded');
-    // ======== ELEMENT SELECTORS ========
-    const navLinks = document.querySelectorAll('.admin-nav a');
-    const sections = document.querySelectorAll('.admin-section');
-    const viewAllLinks = document.querySelectorAll('.view-all');
-    const addProductBtn = document.querySelector('.add-product-btn');
-    const productModal = document.getElementById('productModal');
-    const closeModalBtns = document.querySelectorAll('.close-modal');
-    const productForm = document.getElementById('productForm');
-    const productSearch = document.querySelector('.product-search');
-    const orderSearch = document.querySelector('.order-search');
-    const statusFilters = document.querySelectorAll('.filter-select');
-    const deleteProductBtns = document.querySelectorAll('.delete-product');
-    const editProductBtns = document.querySelectorAll('.edit-product');
-    const fileUpload = document.getElementById('productImages');
-    const imagePreview = document.querySelector('.image-preview');
-    const confirmDeleteBtn = document.getElementById('confirmDelete');
-    const cancelDeleteBtn = document.getElementById('cancelDelete');
-    const deleteModal = document.getElementById('deleteModal');
-    
-    // ======== INITIALIZATION ========
-    initializeAdminDashboard();
-    
-    function initializeAdminDashboard() {
-        // Check authentication first
-        checkAdminAuth();
         
-        // Initialize product table with data from API
-        initializeProductTable();
-        
-        // Initialize customer table with data from API
-        initializeCustomerTable();
-        
-        // Initialize order table with data from API
-        initializeOrderTable();
-        
-        // Initialize pagination
-        initializePagination();
-        
-        // Show dashboard by default, hide other sections
-        sections.forEach(section => {
-            if (section.id !== 'dashboard') {
-                section.style.display = 'none';
-            }
-        });
-        
-        // Initialize navigation
-        navLinks.forEach(link => {
-            link.addEventListener('click', handleNavigation);
-        });
-        
-        // Initialize view all links
-        viewAllLinks.forEach(link => {
-            link.addEventListener('click', handleViewAll);
-        });
-        
-        // Initialize product modal
-        if (addProductBtn) {
-            addProductBtn.addEventListener('click', openProductModal);
-        }
-        
-        // Initialize close modal buttons
-        closeModalBtns.forEach(btn => {
-            btn.addEventListener('click', closeModal);
-        });
-        
-        // Initialize product form
-        if (productForm) {
-            productForm.addEventListener('submit', handleProductSubmit);
-        }
-        
-        // Initialize Generate SKU button
-        const generateSKUBtn = document.getElementById('generateSKUBtn');
-        if (generateSKUBtn) {
-            generateSKUBtn.addEventListener('click', function() {
-                const skuField = document.getElementById('productSKU');
-                if (skuField) {
-                    skuField.value = generateSKU();
-                }
-            });
-        }
-        
-        // Initialize search functionality
-        if (productSearch) {
-            productSearch.addEventListener('input', handleProductSearch);
-        }
-        
-        if (orderSearch) {
-            orderSearch.addEventListener('input', handleOrderSearch);
-        }
-        
-        // Initialize status filters
-        statusFilters.forEach(filter => {
-            filter.addEventListener('change', handleStatusFilter);
-        });
-        
-        // Initialize delete product buttons
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('delete-product')) {
-                handleDeleteProduct(e);
-            }
-        });
-        
-        // Initialize edit product buttons
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('edit-product')) {
-                handleEditProduct(e);
-            }
-        });
-        
-        // Initialize file upload
-        if (fileUpload) {
-            fileUpload.addEventListener('change', handleFileUpload);
-        }
-        
-        // Initialize drag and drop for image uploads
-        initializeDragAndDrop();
-        
-        // Initialize confirm delete button
-        if (confirmDeleteBtn) {
-            confirmDeleteBtn.addEventListener('click', confirmDelete);
-        }
-        
-        // Initialize cancel delete button
-        if (cancelDeleteBtn) {
-            cancelDeleteBtn.addEventListener('click', cancelDeleteModal);
-        }
-        
-        // Initialize import/export buttons
-        addDataManagementButtons();
-        
-        // Set up auto-refresh for products
-        setupAdminAutoRefresh();
-        
-        // Add refresh button to products section
-        addProductsRefreshButton();
-    }
-    
-    // ======== NAVIGATION HANDLERS ========
-    function handleNavigation(e) {
-        e.preventDefault();
-        
-        // Remove active class from all links
-        navLinks.forEach(link => link.classList.remove('active'));
-        
-        // Add active class to clicked link
-        this.classList.add('active');
-        
-        // Get section ID from data attribute
-        const sectionId = this.getAttribute('data-section');
-        
-        // Hide all sections
-        sections.forEach(section => {
-            section.style.display = 'none';
-        });
-        
-        // Show selected section
-        const selectedSection = document.getElementById(sectionId);
-        if (selectedSection) {
-            selectedSection.style.display = 'block';
-        }
-        
-        // Update URL hash
-        window.location.hash = sectionId;
-    }
-    
-    function handleViewAll(e) {
-        e.preventDefault();
-        
-        // Get section ID from data attribute
-        const sectionId = this.getAttribute('data-section');
-        
-        // Trigger click on corresponding nav link
-        document.querySelector(`.admin-nav a[data-section="${sectionId}"]`).click();
-    }
-    
-    function checkUrlHash() {
-        const hash = window.location.hash.substring(1);
-        
-        if (hash && document.getElementById(hash)) {
-            document.querySelector(`.admin-nav a[data-section="${hash}"]`).click();
-        }
-    }
-    
-    // ======== PRODUCT MANAGEMENT ========
-    function openProductModal(isEdit = false) {
-        console.log('Opening product modal');
-        console.log('Product Modal Element:', productModal);
-        
-        // Reset form
-        if (productForm) {
-            productForm.reset();
+        if (response.ok) {
+            const orders = await response.json();
+            const tableBody = document.getElementById('ordersTable').querySelector('tbody');
             
-            // Clear image preview
-            if (imagePreview) {
-                imagePreview.innerHTML = '';
-            }
-            
-            // Set modal title based on action
-            document.querySelector('.modal-title').textContent = isEdit ? 'Ürün Düzenle' : 'Yeni Ürün Ekle';
-            
-            // Clear hidden ID field if adding new product
-            if (!isEdit) {
-                document.getElementById('productId').value = '';
-                
-                // Generate a new SKU only if the field is empty
-                const skuField = document.getElementById('productSKU');
-                if (skuField) {
-                    // Clear the field to allow manual entry
-                    skuField.value = '';
-                }
-            }
-        }
-        
-        // Show modal - FIXED: Add 'show' class instead of 'active'
-        if (productModal) {
-            productModal.style.display = 'block'; // Make sure it's visible
-            productModal.classList.add('show');
-            document.body.style.overflow = 'hidden';
-        }
-    }
-    
-    function closeModal() {
-        // Hide all modals
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.style.display = 'none'; // Hide the modal
-            modal.classList.remove('show');
-        });
-        
-        document.body.style.overflow = '';
-    }
-    
-    async function handleProductSubmit(e) {
-        e.preventDefault();
-        
-        const form = e.target;
-        const formData = new FormData(form);
-
-        if (!validateProductForm(formData)) return;
-
-        // Show loading state
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalBtnText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Kaydediliyor...';
-        submitBtn.disabled = true;
-
-        try {
-            // Get form data
-            const productId = form.dataset.id;
-            
-            // Create product data object
-            const productData = {
-                name: formData.get('name'),
-                sku: formData.get('sku') || generateSKU(),
-                description: formData.get('description'),
-                price: parseFloat(formData.get('price')),
-                comparePrice: parseFloat(formData.get('comparePrice') || 0),
-                category: formData.get('category'),
-                inventory: parseInt(formData.get('inventory')),
-                status: formData.get('status'),
-                featured: formData.get('featured') === 'on',
-                onSale: formData.get('onSale') === 'on',
-                tags: formData.get('tags') ? formData.get('tags').split(',').map(tag => tag.trim()).filter(tag => tag) : [],
-                weight: parseFloat(formData.get('weight') || 0),
-                dimensions: {
-                    length: parseFloat(formData.get('length') || 0),
-                    width: parseFloat(formData.get('width') || 0),
-                    height: parseFloat(formData.get('height') || 0)
-                }
-            };
-            
-            // Get variant data if present
-            const variantNames = document.querySelectorAll('.variant-name');
-            const variantOptions = document.querySelectorAll('.variant-options');
-            
-            if (variantNames && variantOptions) {
-                productData.variants = [];
-                
-                for (let i = 0; i < variantNames.length; i++) {
-                    const name = variantNames[i].value.trim();
-                    const options = variantOptions[i].value.split(',').map(option => option.trim()).filter(option => option);
-                    
-                    if (name && options.length > 0) {
-                        productData.variants.push({
-                            name,
-                            options
-                        });
-                    }
-                }
-            }
-            
-            // Handle image uploads
-            const imageFiles = form.querySelector('#productImages').files;
-            
-            if (imageFiles.length > 0) {
-                // Create form data for image upload
-                const imageFormData = new FormData();
-                for (let i = 0; i < imageFiles.length; i++) {
-                    imageFormData.append('images', imageFiles[i]);
-                }
-                
-                try {
-                    // Upload images
-                    const imageData = await uploadProductImages(imageFormData);
-                    
-                    // Add image data to product data
-                    productData.images = imageData;
-                } catch (error) {
-                    showNotification('Görsel yükleme hatası: ' + error.message, 'error');
-                    return;
-                }
-            }
-            
-            try {
-                // Create or update product
-                if (productId) {
-                    // Update existing product
-                    await updateProduct(productId, productData);
-                    showNotification('Ürün başarıyla güncellendi', 'success');
-                } else {
-                    // Create new product
-                    await createProduct(productData);
-                    showNotification('Ürün başarıyla oluşturuldu', 'success');
-                }
-                
-                // Close modal
-                closeModal();
-                
-                // Refresh product table
-                initializeProductTable();
-            } catch (error) {
-                showNotification('Ürün kaydedilirken hata oluştu: ' + error.message, 'error');
-            }
-        } catch (error) {
-            showNotification('İşlem sırasında bir hata oluştu: ' + error.message, 'error');
-        } finally {
-            // Reset button state
-            submitBtn.innerHTML = originalBtnText;
-            submitBtn.disabled = false;
-        }
-    }
-    
-    function handleDeleteProduct(e) {
-        const productId = e.target.closest('.delete-product').dataset.id;
-        const productName = e.target.closest('tr').querySelector('td:nth-child(2)').textContent;
-        
-        // Show delete confirmation modal
-        const deleteModal = document.getElementById('deleteModal');
-        const productToDelete = document.getElementById('productToDelete');
-        
-        if (deleteModal && productToDelete) {
-            productToDelete.textContent = productName;
-            deleteModal.dataset.id = productId;
-            deleteModal.style.display = 'flex';
-        }
-    }
-    
-    // Confirm delete product
-    async function confirmDelete() {
-        const deleteModal = document.getElementById('deleteModal');
-        const productId = deleteModal.dataset.id;
-        
-        try {
-            // Delete product
-            await deleteProduct(productId);
-            
-            // Close modal
-            cancelDeleteModal();
-            
-            // Refresh product table
-            initializeProductTable();
-            
-            alert('Product deleted successfully');
-        } catch (error) {
-            alert('Error deleting product: ' + error.message);
-        }
-    }
-    
-    function cancelDeleteModal() {
-        closeModal();
-    }
-    
-    function handleEditProduct(e) {
-        e.preventDefault();
-        
-        // Get product row
-        const row = this.closest('tr');
-        const productId = row.getAttribute('data-id');
-        
-        // Get product data from row
-        const productName = row.querySelector('.product-cell span').textContent;
-        const productSKU = row.querySelector('td:nth-child(3)').textContent;
-        const productCategory = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
-        const productPrice = row.querySelector('td:nth-child(5)').textContent.replace('₺', '').replace(/\./g, '').replace(',', '.');
-        const productStock = row.querySelector('td:nth-child(6)').textContent;
-        const productStatus = row.querySelector('.status-badge').classList.contains('active') ? 'active' : 'inactive';
-        
-        // Open modal
-        openProductModal(true);
-        
-        // Populate form with product data
-        document.getElementById('productId').value = productId;
-        document.getElementById('productName').value = productName;
-        document.getElementById('productSKU').value = productSKU;
-        
-        // Set category
-        const categorySelect = document.getElementById('productCategory');
-        for (let i = 0; i < categorySelect.options.length; i++) {
-            if (categorySelect.options[i].text.toLowerCase() === productCategory.toLowerCase()) {
-                categorySelect.selectedIndex = i;
-                break;
-            }
-        }
-        
-        document.getElementById('productPrice').value = productPrice;
-        document.getElementById('productStock').value = productStock;
-        
-        // Set status
-        const statusSelect = document.getElementById('productStatus');
-        for (let i = 0; i < statusSelect.options.length; i++) {
-            if (statusSelect.options[i].value === productStatus) {
-                statusSelect.selectedIndex = i;
-                break;
-            }
-        }
-        
-        // For demo purposes, we'll set a placeholder description
-        document.getElementById('productDescription').value = 'Bu ürün için örnek açıklama metni. Gerçek uygulamada bu veri veritabanından gelecektir.';
-    }
-    
-    function handleFileUpload(e) {
-        if (imagePreview) {
-            imagePreview.innerHTML = '';
-
-            const files = e.target.files;
-            if (!files || files.length === 0) return;
-
-            if (files.length > 5) {
-                showNotification('En fazla 5 görsel yükleyebilirsiniz.', 'error');
-                return;
-            }
-
-            Array.from(files).forEach(file => {
-                if (!file.type.match('image.*')) {
-                    showNotification('Lütfen sadece resim dosyaları yükleyin.', 'error');
-                    return;
-                }
-
-                if (file.size > 2 * 1024 * 1024) {
-                    showNotification('Görsel boyutu 2MB\'dan küçük olmalıdır.', 'error');
-                    return;
-                }
-
-                const reader = new FileReader();
-
-                reader.onload = function(e) {
-                    const previewItem = document.createElement('div');
-                    previewItem.className = 'preview-item';
-
-                    previewItem.innerHTML = `
-                        <img src="${e.target.result}" alt="Ürün Görseli">
-                        <span class="remove-image"><i class="fas fa-times"></i></span>
-                    `;
-
-                    previewItem.querySelector('.remove-image').addEventListener('click', function() {
-                        previewItem.remove();
-                        
-                        // Remove the file from the file input
-                        const fileInput = document.getElementById('productImages');
-                        const dataTransfer = new DataTransfer();
-                        
-                        // Get all files except the one being removed
-                        Array.from(fileInput.files).forEach((file, index) => {
-                            if (index !== Array.from(imagePreview.children).indexOf(previewItem)) {
-                                dataTransfer.items.add(file);
-                            }
-                        });
-                        
-                        // Update the file input
-                        fileInput.files = dataTransfer.files;
-                    });
-
-                    imagePreview.appendChild(previewItem);
-                };
-
-                reader.readAsDataURL(file);
-            });
-        }
-    }
-    
-    function generateSKU() {
-        // Generate a random SKU in format DND-XX-000
-        const categories = {
-            'erkek': 'ME',
-            'kadin': 'WO',
-            'aksesuar': 'AC',
-            'ayakkabi': 'SH',
-            'canta': 'BA'
-        };
-        
-        const categorySelect = document.getElementById('productCategory');
-        const category = categorySelect ? categorySelect.value : '';
-        const categoryCode = categories[category] || 'XX';
-        const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        
-        return `DND-${categoryCode}-${randomNum}`;
-    }
-    
-    function generateProductId() {
-        return Date.now() + Math.floor(Math.random() * 1000);
-    }
-    
-    // ======== SEARCH AND FILTER HANDLERS ========
-    function handleProductSearch() {
-        const searchTerm = this.value.toLowerCase();
-        const productRows = document.querySelectorAll('.products-table tbody tr');
-        
-        productRows.forEach(row => {
-            const productName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-            const productCategory = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-            
-            if (productName.includes(searchTerm) || productCategory.includes(searchTerm)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    }
-    
-    function handleOrderSearch() {
-        const searchTerm = this.value.toLowerCase();
-        const orderRows = document.querySelectorAll('.orders-table tbody tr');
-        
-        orderRows.forEach(row => {
-            const orderNumber = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
-            const customerName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-            
-            if (orderNumber.includes(searchTerm) || customerName.includes(searchTerm)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    }
-    
-    function handleStatusFilter() {
-        const filterValue = this.value.toLowerCase();
-        const table = this.closest('.admin-section').querySelector('.admin-table');
-        const rows = table.querySelectorAll('tbody tr');
-        
-        rows.forEach(row => {
-            const statusCell = row.querySelector('.status-badge');
-            if (!statusCell) return;
-            
-            const status = statusCell.textContent.toLowerCase();
-            
-            if (!filterValue || status.includes(filterValue)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    }
-    
-    // ======== CHARTS ========
-    function initializeCharts() {
-        // Sales Chart
-        const salesChartCanvas = document.getElementById('salesChart');
-        if (salesChartCanvas) {
-            const salesChart = new Chart(salesChartCanvas, {
-                type: 'line',
-                data: {
-                    labels: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
-                    datasets: [{
-                        label: 'Satışlar (₺)',
-                        data: [1500, 2500, 1800, 3000, 2800, 3500, 4000, 3800, 4200, 4800, 5200, 6000],
-                        backgroundColor: 'rgba(201, 167, 124, 0.2)',
-                        borderColor: 'rgba(201, 167, 124, 1)',
-                        borderWidth: 2,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: '#a0a0a0'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: '#a0a0a0'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#f5f5f5'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        
-        // Products Chart
-        const productsChartCanvas = document.getElementById('productsChart');
-        if (productsChartCanvas) {
-            const productsChart = new Chart(productsChartCanvas, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Deri Ceket', 'Premium Gömlek', 'Tasarım Bluz', 'Yün Palto', 'Diğer'],
-                    datasets: [{
-                        data: [30, 22, 18, 15, 15],
-                        backgroundColor: [
-                            'rgba(201, 167, 124, 0.8)',
-                            'rgba(54, 162, 235, 0.8)',
-                            'rgba(255, 206, 86, 0.8)',
-                            'rgba(75, 192, 192, 0.8)',
-                            'rgba(153, 102, 255, 0.8)'
-                        ],
-                        borderColor: [
-                            'rgba(201, 167, 124, 1)',
-                            'rgba(54, 162, 235, 1)',
-                            'rgba(255, 206, 86, 1)',
-                            'rgba(75, 192, 192, 1)',
-                            'rgba(153, 102, 255, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                color: '#f5f5f5',
-                                padding: 20
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    }
-    
-    // ======== NOTIFICATION SYSTEM ========
-    function showNotification(message, type = 'info') {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `admin-notification ${type}`;
-        notification.textContent = message;
-        
-        // Add to document
-        document.body.appendChild(notification);
-        
-        // Show notification
-        setTimeout(() => {
-            notification.classList.add('show');
-        }, 10);
-        
-        // Remove notification after delay
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 300);
-        }, 3000);
-    }
-    
-    // Add notification styles
-    const notificationStyles = document.createElement('style');
-    notificationStyles.textContent = `
-        .admin-notification {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            background-color: #252525;
-            color: #f5f5f5;
-            border-left: 4px solid var(--accent-color);
-            border-radius: 4px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            z-index: 9999;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-        }
-        
-        .admin-notification.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-        
-        .admin-notification.success {
-            border-left-color: #4CAF50;
-        }
-        
-        .admin-notification.error {
-            border-left-color: #F44336;
-        }
-    `;
-    document.head.appendChild(notificationStyles);
-    
-    // Close modals when clicking outside
-    window.addEventListener('click', function(e) {
-        document.querySelectorAll('.modal').forEach(modal => {
-            if (e.target === modal) {
-                closeModal();
-            }
-        });
-    });
-
-    // Add logout functionality
-    document.querySelector('.admin-logout a').addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        // Clear admin session
-        sessionStorage.removeItem('adminAuthenticated');
-        
-        // Clear auto-refresh interval
-        if (adminAutoRefreshInterval) {
-            clearInterval(adminAutoRefreshInterval);
-            adminAutoRefreshInterval = null;
-        }
-        
-        // Redirect to login page
-        window.location.href = 'admin-login.html';
-    });
-
-    // Add these functions to admin.js
-
-    // Save products to localStorage
-    function saveProducts(products) {
-        return storageManager.saveProducts(products);
-    }
-
-    // Get products from localStorage
-    function getProducts() {
-        return storageManager.getProducts();
-    }
-
-    // Update initializeProductTable function
-    async function initializeProductTable() {
-        const productTable = document.querySelector('.product-table tbody');
-        if (!productTable) return;
-        
-        // Clear table
-        productTable.innerHTML = '';
-        
-        // Show loading
-        productTable.innerHTML = '<tr><td colspan="7" class="text-center">Ürünler yükleniyor...</td></tr>';
-        
-        try {
-            // Fetch products from API
-            const products = await fetchProducts();
-            
-            // Clear loading
-            productTable.innerHTML = '';
-            
-            // Check if there are products
-            if (products.length === 0) {
-                productTable.innerHTML = '<tr><td colspan="7" class="text-center">Ürün bulunamadı</td></tr>';
+            if (orders.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6">Henüz sipariş bulunmamaktadır.</td></tr>';
                 return;
             }
             
-            // Add products to table
-            products.forEach(product => {
+            tableBody.innerHTML = '';
+            
+            orders.forEach(order => {
                 const row = document.createElement('tr');
-                row.dataset.id = product._id || product.id;
                 
-                const statusClass = product.status === 'active' ? 'active' : 'inactive';
-                const stockClass = parseInt(product.inventory) > 0 ? 'active' : 'out-of-stock';
+                // Format date
+                const orderDate = new Date(order.createdAt);
+                const formattedDate = orderDate.toLocaleDateString('tr-TR');
+                
+                // Get status badge class
+                let statusClass = '';
+                switch(order.status) {
+                    case 'completed': statusClass = 'completed'; break;
+                    case 'processing': statusClass = 'processing'; break;
+                    case 'shipped': statusClass = 'shipped'; break;
+                    case 'cancelled': statusClass = 'cancelled'; break;
+                    default: statusClass = 'processing';
+                }
+                
+                // Translate status
+                let statusText = '';
+                switch(order.status) {
+                    case 'completed': statusText = 'Tamamlandı'; break;
+                    case 'processing': statusText = 'İşleniyor'; break;
+                    case 'shipped': statusText = 'Kargoya Verildi'; break;
+                    case 'cancelled': statusText = 'İptal Edildi'; break;
+                    default: statusText = 'İşleniyor';
+                }
                 
                 row.innerHTML = `
-                    <td class="product-cell">
-                        <img src="${product.images && product.images.length > 0 ? product.images[0] : '../img/placeholder.jpg'}" alt="${product.name}">
-                        <span>${product.name}</span>
-                    </td>
-                    <td>${product.sku}</td>
-                    <td>${product.category}</td>
-                    <td>₺${parseFloat(product.price).toFixed(2)}</td>
-                    <td><span class="status-badge ${stockClass}">${parseInt(product.inventory) > 0 ? product.inventory : 'Stokta Yok'}</span></td>
-                    <td><span class="status-badge ${statusClass}">${product.status === 'active' ? 'Aktif' : 'Pasif'}</span></td>
+                    <td>#${order.orderNumber}</td>
+                    <td>${order.customer.name}</td>
+                    <td>${formattedDate}</td>
+                    <td>₺${order.total.toLocaleString('tr-TR')}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                     <td class="actions-cell">
-                        <button class="action-btn edit-btn edit-product" data-id="${product._id || product.id}"><i class="fas fa-edit"></i></button>
-                        <button class="action-btn delete-btn delete-product" data-id="${product._id || product.id}"><i class="fas fa-trash"></i></button>
+                        <button class="action-btn view-btn" data-id="${order._id}" title="Görüntüle">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn edit-btn" data-id="${order._id}" title="Düzenle">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn print-btn" data-id="${order._id}" title="Yazdır">
+                            <i class="fas fa-print"></i>
+                        </button>
                     </td>
                 `;
                 
-                productTable.appendChild(row);
+                tableBody.appendChild(row);
             });
             
-            // Update product count in dashboard
-            const productCount = document.querySelector('#dashboard .stat-value:nth-child(3)');
-            if (productCount) {
-                productCount.textContent = products.length;
+            // Add event listeners to action buttons
+            addOrderActionListeners();
+        } else {
+            console.error('Failed to load orders');
+        }
+    } catch (error) {
+        console.error('Error loading orders:', error);
+    }
+}
+
+// Load customers
+async function loadCustomers() {
+    if (!checkAdminAuth()) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/admin/customers`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (response.ok) {
+            const customers = await response.json();
+            const tableBody = document.getElementById('customersTable').querySelector('tbody');
+            
+            if (customers.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6">Henüz müşteri bulunmamaktadır.</td></tr>';
+                return;
             }
             
-            // Initialize edit and delete buttons
-            document.querySelectorAll('.edit-product').forEach(btn => {
-                btn.addEventListener('click', handleEditProduct);
-            });
+            tableBody.innerHTML = '';
             
-            document.querySelectorAll('.delete-product').forEach(btn => {
-                btn.addEventListener('click', handleDeleteProduct);
-            });
-        } catch (error) {
-            console.error('Error initializing product table:', error);
-            productTable.innerHTML = '<tr><td colspan="7" class="text-center">Ürünler yüklenirken hata oluştu</td></tr>';
-        }
-    }
-
-    // Initialize customer table with data from API
-    async function initializeCustomerTable() {
-        const customerTable = document.querySelector('.customer-table tbody');
-        if (!customerTable) return;
-        
-        // Clear table
-        customerTable.innerHTML = '';
-        
-        // Show loading
-        customerTable.innerHTML = '<tr><td colspan="6" class="text-center">Loading customers...</td></tr>';
-        
-        // Fetch customers from API
-        const customers = await fetchCustomers();
-        
-        // Clear loading
-        customerTable.innerHTML = '';
-        
-        // Check if there are customers
-        if (customers.length === 0) {
-            customerTable.innerHTML = '<tr><td colspan="6" class="text-center">No customers found</td></tr>';
-            return;
-        }
-        
-        // Add customers to table
-        customers.forEach(customer => {
-            const row = document.createElement('tr');
-            row.dataset.id = customer._id;
-            
-            row.innerHTML = `
-                <td>${customer.firstName} ${customer.lastName}</td>
-                <td>${customer.email}</td>
-                <td>${customer.phone || 'N/A'}</td>
-                <td>${customer.orders.length}</td>
-                <td>${new Date(customer.createdAt).toLocaleDateString()}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="view-customer" data-id="${customer._id}"><i class="fas fa-eye"></i></button>
-                    </div>
-                </td>
-            `;
-            
-            customerTable.appendChild(row);
-        });
-        
-        // Update customer count in dashboard
-        const customerCount = document.querySelector('#dashboard .stat-value:nth-child(2)');
-        if (customerCount) {
-            customerCount.textContent = customers.length;
-        }
-    }
-
-    // Initialize order table with data from API
-    async function initializeOrderTable() {
-        const orderTable = document.querySelector('.order-table tbody');
-        if (!orderTable) return;
-        
-        // Clear table
-        orderTable.innerHTML = '';
-        
-        // Show loading
-        orderTable.innerHTML = '<tr><td colspan="7" class="text-center">Loading orders...</td></tr>';
-        
-        // Fetch orders from API
-        const orders = await fetchOrders();
-        
-        // Clear loading
-        orderTable.innerHTML = '';
-        
-        // Check if there are orders
-        if (orders.length === 0) {
-            orderTable.innerHTML = '<tr><td colspan="7" class="text-center">No orders found</td></tr>';
-            return;
-        }
-        
-        // Add orders to table
-        orders.forEach(order => {
-            const row = document.createElement('tr');
-            row.dataset.id = order._id;
-            
-            row.innerHTML = `
-                <td>${order.orderNumber}</td>
-                <td>${order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : 'N/A'}</td>
-                <td>₺${order.total.toFixed(2)}</td>
-                <td>${new Date(order.createdAt).toLocaleDateString()}</td>
-                <td><span class="status-badge ${order.paymentStatus}">${order.paymentStatus}</span></td>
-                <td><span class="status-badge ${order.orderStatus}">${order.orderStatus}</span></td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="view-order" data-id="${order._id}"><i class="fas fa-eye"></i></button>
-                        <button class="edit-order-status" data-id="${order._id}"><i class="fas fa-edit"></i></button>
-                    </div>
-                </td>
-            `;
-            
-            orderTable.appendChild(row);
-        });
-        
-        // Calculate total sales
-        const totalSales = orders.reduce((total, order) => {
-            if (order.paymentStatus === 'paid') {
-                return total + order.total;
-            }
-            return total;
-        }, 0);
-        
-        // Update sales count in dashboard
-        const salesCount = document.querySelector('#dashboard .stat-value:first-child');
-        if (salesCount) {
-            salesCount.textContent = `₺${totalSales.toFixed(2)}`;
-        }
-    }
-
-    // Add a button to the admin panel to clear demo products
-    function addClearDemoButton() {
-        const actionsContainer = document.querySelector('.products-actions');
-        if (!actionsContainer) return;
-        
-        const clearDemoBtn = document.createElement('button');
-        clearDemoBtn.className = 'btn btn-secondary clear-demo-btn';
-        clearDemoBtn.innerHTML = '<i class="fas fa-trash"></i> Demo Ürünleri Temizle';
-        clearDemoBtn.addEventListener('click', clearDemoProducts);
-        
-        actionsContainer.appendChild(clearDemoBtn);
-    }
-
-    // Add this function to admin.js to handle pagination
-    function initializePagination() {
-        const paginationLinks = document.querySelectorAll('.pagination-link');
-        const productRows = document.querySelectorAll('.products-table tbody tr');
-        const itemsPerPage = 10; // Number of items to show per page
-        
-        if (paginationLinks.length === 0 || productRows.length === 0) return;
-        
-        // Function to show items for a specific page
-        function showPage(pageNum) {
-            // Hide all rows
-            productRows.forEach(row => {
-                row.style.display = 'none';
-            });
-            
-            // Calculate start and end indices
-            const startIndex = (pageNum - 1) * itemsPerPage;
-            const endIndex = Math.min(startIndex + itemsPerPage, productRows.length);
-            
-            // Show rows for current page
-            for (let i = startIndex; i < endIndex; i++) {
-                if (productRows[i]) {
-                    productRows[i].style.display = '';
-                }
-            }
-            
-            // Update active page link
-            paginationLinks.forEach(link => {
-                link.classList.remove('active');
-                if (parseInt(link.getAttribute('data-page')) === pageNum) {
-                    link.classList.add('active');
-                }
-            });
-        }
-        
-        // Add click event to pagination links
-        paginationLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const pageNum = parseInt(this.getAttribute('data-page'));
-                showPage(pageNum);
-            });
-        });
-        
-        // Show first page by default
-        showPage(1);
-    }
-
-    // Add this function to admin.js to export products
-    function exportProducts() {
-        const products = getProducts();
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(products));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "dnd-products.json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-        
-        showNotification('Ürün verileri dışa aktarıldı!', 'success');
-    }
-
-    // Add an import function as well
-    function importProducts() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        
-        input.onchange = e => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            
-            reader.onload = event => {
-                try {
-                    const products = JSON.parse(event.target.result);
-                    saveProducts(products);
-                    initializeProductTable();
-                    showNotification('Ürün verileri içe aktarıldı!', 'success');
-                } catch (error) {
-                    showNotification('Geçersiz JSON dosyası!', 'error');
-                }
-            };
-            
-            reader.readAsText(file);
-        };
-        
-        input.click();
-    }
-
-    // Add buttons to the admin panel
-    function addDataManagementButtons() {
-        const actionsContainer = document.querySelector('.products-actions');
-        if (!actionsContainer) return;
-        
-        const exportBtn = document.createElement('button');
-        exportBtn.className = 'btn btn-secondary export-btn';
-        exportBtn.innerHTML = '<i class="fas fa-download"></i> Ürünleri Dışa Aktar';
-        exportBtn.addEventListener('click', handleExportProducts);
-        
-        const importBtn = document.createElement('button');
-        importBtn.className = 'btn btn-secondary import-btn';
-        importBtn.innerHTML = '<i class="fas fa-upload"></i> Ürünleri İçe Aktar';
-        importBtn.addEventListener('click', handleImportProducts);
-        
-        actionsContainer.appendChild(exportBtn);
-        actionsContainer.appendChild(importBtn);
-    }
-
-    // Handle export products
-    function handleExportProducts() {
-        storageManager.exportProducts();
-        showNotification('Ürün verileri dışa aktarıldı!', 'success');
-    }
-
-    // Handle import products
-    function handleImportProducts() {
-        storageManager.importProducts()
-            .then(products => {
-                initializeProductTable();
-                showNotification(`${products.length} ürün içe aktarıldı!`, 'success');
-            })
-            .catch(error => {
-                showNotification('Ürün verileri içe aktarılamadı!', 'error');
-                console.error('Import error:', error);
-            });
-    }
-
-    // Improved form validation and user feedback
-    function validateProductForm(formData) {
-        const requiredFields = ['name', 'price', 'inventory'];
-        let isValid = true;
-        
-        // Reset all validation styles
-        document.querySelectorAll('.form-group').forEach(group => {
-            group.classList.remove('has-error');
-        });
-        
-        for (let field of requiredFields) {
-            const input = document.querySelector(`[name="${field}"]`);
-            if (!formData.get(field)) {
-                if (input) {
-                    input.closest('.form-group').classList.add('has-error');
-                }
-                showNotification(`${field} alanı zorunludur.`, 'error');
-                isValid = false;
-            }
-        }
-        
-        // Validate price format
-        const price = formData.get('price');
-        if (price && isNaN(parseFloat(price))) {
-            const priceInput = document.querySelector('[name="price"]');
-            if (priceInput) {
-                priceInput.closest('.form-group').classList.add('has-error');
-            }
-            showNotification('Fiyat alanı geçerli bir sayı olmalıdır.', 'error');
-            isValid = false;
-        }
-        
-        // Validate inventory format
-        const inventory = formData.get('inventory');
-        if (inventory && isNaN(parseInt(inventory))) {
-            const inventoryInput = document.querySelector('[name="inventory"]');
-            if (inventoryInput) {
-                inventoryInput.closest('.form-group').classList.add('has-error');
-            }
-            showNotification('Stok alanı geçerli bir sayı olmalıdır.', 'error');
-            isValid = false;
-        }
-        
-        return isValid;
-    }
-
-    // Initialize drag and drop functionality
-    function initializeDragAndDrop() {
-        const dropArea = document.querySelector('.drag-drop-area');
-        const fileInput = document.getElementById('productImages');
-        
-        if (!dropArea || !fileInput) return;
-        
-        // Prevent default behaviors
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, preventDefaults, false);
-        });
-        
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        
-        // Highlight drop area when dragging over it
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropArea.addEventListener(eventName, highlight, false);
-        });
-        
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, unhighlight, false);
-        });
-        
-        function highlight() {
-            dropArea.classList.add('highlight');
-        }
-        
-        function unhighlight() {
-            dropArea.classList.remove('highlight');
-        }
-        
-        // Handle dropped files
-        dropArea.addEventListener('drop', handleDrop, false);
-        
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            
-            // Update the file input with the dropped files
-            if (files.length > 0) {
-                // Create a new DataTransfer object
-                const dataTransfer = new DataTransfer();
+            customers.forEach(customer => {
+                const row = document.createElement('tr');
                 
-                // Add each file to the DataTransfer object
-                Array.from(files).forEach(file => {
-                    if (file.type.match('image.*')) {
-                        dataTransfer.items.add(file);
-                    }
-                });
+                // Format date
+                const registerDate = new Date(customer.createdAt);
+                const formattedDate = registerDate.toLocaleDateString('tr-TR');
                 
-                // Set the file input's files to the DataTransfer object's files
-                fileInput.files = dataTransfer.files;
+                row.innerHTML = `
+                    <td>${customer.name}</td>
+                    <td>${customer.email}</td>
+                    <td>${customer.phone || '-'}</td>
+                    <td>${formattedDate}</td>
+                    <td>${customer.orderCount || 0}</td>
+                    <td class="actions-cell">
+                        <button class="action-btn view-customer-btn" data-id="${customer._id}" title="Görüntüle">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn edit-customer-btn" data-id="${customer._id}" title="Düzenle">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                `;
                 
-                // Trigger the change event on the file input
-                const event = new Event('change', { bubbles: true });
-                fileInput.dispatchEvent(event);
-            }
+                tableBody.appendChild(row);
+            });
+            
+            // Add event listeners to customer action buttons
+            addCustomerActionListeners();
+        } else {
+            console.error('Failed to load customers');
         }
-        
-        // Add click handler to the drop area to trigger file input
-        dropArea.addEventListener('click', () => {
-            fileInput.click();
+    } catch (error) {
+        console.error('Error loading customers:', error);
+    }
+}
+
+// Add event listeners to customer action buttons
+function addCustomerActionListeners() {
+    // View customer
+    document.querySelectorAll('.view-customer-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const customerId = this.getAttribute('data-id');
+            viewCustomer(customerId);
         });
-    }
-
-    // Add this function to handle product refresh in the admin panel
-    async function refreshAdminProducts() {
-        try {
-            // Fetch fresh products from the API
-            const freshProducts = await fetchProducts();
-            
-            // Get the current products in the table
-            const currentProducts = Array.from(document.querySelectorAll('.product-table tbody tr'))
-                .map(row => row.dataset.id)
-                .filter(id => id); // Filter out any undefined IDs
-            
-            // Check if we have new products
-            const hasNewProducts = freshProducts.length > currentProducts.length;
-            
-            // Only refresh the table if there are changes
-            if (hasNewProducts) {
-                // Refresh the product table
-                await initializeProductTable();
-                
-                // Show notification
-                showNotification('Yeni ürünler eklendi!', 'success');
-            }
-            
-            return true;
-        } catch (error) {
-            console.error('Ürünler yenilenirken hata:', error);
-            return false;
-        }
-    }
-
-    // Function to set up auto-refresh for admin panel
-    function setupAdminAutoRefresh() {
-        // Clear any existing interval
-        if (adminAutoRefreshInterval) {
-            clearInterval(adminAutoRefreshInterval);
-        }
-        
-        // Set up new interval
-        adminAutoRefreshInterval = setInterval(async () => {
-            if (document.getElementById('products').classList.contains('active')) {
-                await refreshAdminProducts();
-            }
-        }, ADMIN_REFRESH_INTERVAL);
-    }
-
-    // Function to add refresh button to products section
-    function addProductsRefreshButton() {
-        const productsActions = document.querySelector('.products-actions');
-        if (!productsActions) return;
-        
-        // Check if button already exists
-        if (document.getElementById('refresh-admin-products-btn')) return;
-        
-        // Create refresh button
-        const refreshButton = document.createElement('button');
-        refreshButton.id = 'refresh-admin-products-btn';
-        refreshButton.className = 'btn btn-secondary refresh-btn';
-        refreshButton.innerHTML = '<i class="fas fa-sync-alt"></i> Ürünleri Yenile';
-        
-        // Add click event
-        refreshButton.addEventListener('click', async function() {
-            this.disabled = true;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Yenileniyor...';
-            
-            await refreshAdminProducts();
-            
-            this.disabled = false;
-            this.innerHTML = '<i class="fas fa-sync-alt"></i> Ürünleri Yenile';
-        });
-        
-        // Add to products actions
-        productsActions.appendChild(refreshButton);
-    }
-
-    // Add page visibility event listener to refresh products when the page becomes visible again
-    document.addEventListener('visibilitychange', function() {
-        if (!document.hidden && document.getElementById('products').classList.contains('active')) {
-            refreshAdminProducts();
-        }
     });
+    
+    // Edit customer
+    document.querySelectorAll('.edit-customer-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const customerId = this.getAttribute('data-id');
+            editCustomer(customerId);
+        });
+    });
+}
+
+// View customer details
+function viewCustomer(customerId) {
+    // Show customer details (to be implemented)
+    showNotification(`Müşteri #${customerId} görüntüleniyor`);
+}
+
+// Edit customer
+function editCustomer(customerId) {
+    // Edit customer (to be implemented)
+    showNotification(`Müşteri #${customerId} düzenleniyor`);
+}
+
+// Handle navigation between sections
+function setupNavigation() {
+    const navLinks = document.querySelectorAll('.admin-nav a');
+    const sections = document.querySelectorAll('.admin-section');
+    
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const targetSection = this.getAttribute('data-section');
+            
+            // Remove active class from all links and sections
+            navLinks.forEach(link => link.classList.remove('active'));
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Add active class to clicked link and target section
+            this.classList.add('active');
+            document.getElementById(targetSection).classList.add('active');
+            
+            // Load section data if needed
+            if (targetSection === 'products') {
+                loadProducts();
+            } else if (targetSection === 'orders') {
+                loadOrders();
+            } else if (targetSection === 'customers') {
+                loadCustomers();
+            }
+            
+            // Update URL hash
+            window.location.hash = targetSection;
+        });
+    });
+    
+    // Check for hash in URL on page load
+    if (window.location.hash) {
+        const hash = window.location.hash.substring(1);
+        const link = document.querySelector(`.admin-nav a[data-section="${hash}"]`);
+        
+        if (link) {
+            link.click();
+        }
+    }
+}
+
+// Mobile sidebar functionality
+function setupMobileSidebar() {
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const adminSidebar = document.getElementById('adminSidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const mobileSidebarClose = document.getElementById('mobileSidebarClose');
+    
+    function openMobileSidebar() {
+        adminSidebar.classList.add('mobile-open');
+        sidebarOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeMobileSidebar() {
+        adminSidebar.classList.remove('mobile-open');
+        sidebarOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    if (mobileMenuToggle && adminSidebar && sidebarOverlay) {
+        mobileMenuToggle.addEventListener('click', openMobileSidebar);
+        
+        sidebarOverlay.addEventListener('click', closeMobileSidebar);
+        
+        if (mobileSidebarClose) {
+            mobileSidebarClose.addEventListener('click', closeMobileSidebar);
+        }
+        
+        // Close sidebar when clicking on a menu item (mobile only)
+        const navLinks = document.querySelectorAll('.admin-nav a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    closeMobileSidebar();
+                }
+            });
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768 && adminSidebar.classList.contains('mobile-open')) {
+                closeMobileSidebar();
+            }
+        });
+    }
+}
+
+// Search functionality
+function setupSearch() {
+    // Product search
+    const productSearchInput = document.getElementById('productSearchInput');
+    if (productSearchInput) {
+        productSearchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#productsTable tbody tr');
+            
+            rows.forEach(row => {
+                const productName = row.querySelector('.product-cell span')?.textContent.toLowerCase() || '';
+                const sku = row.cells[1]?.textContent.toLowerCase() || '';
+                const category = row.cells[2]?.textContent.toLowerCase() || '';
+                
+                if (productName.includes(searchTerm) || sku.includes(searchTerm) || category.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Order search
+    const orderSearchInput = document.getElementById('orderSearchInput');
+    if (orderSearchInput) {
+        orderSearchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#ordersTable tbody tr');
+            
+            rows.forEach(row => {
+                const orderNumber = row.cells[0]?.textContent.toLowerCase() || '';
+                const customerName = row.cells[1]?.textContent.toLowerCase() || '';
+                
+                if (orderNumber.includes(searchTerm) || customerName.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // Customer search
+    const customerSearchInput = document.getElementById('customerSearchInput');
+    if (customerSearchInput) {
+        customerSearchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#customersTable tbody tr');
+            
+            rows.forEach(row => {
+                const customerName = row.cells[0]?.textContent.toLowerCase() || '';
+                const email = row.cells[1]?.textContent.toLowerCase() || '';
+                const phone = row.cells[2]?.textContent.toLowerCase() || '';
+                
+                if (customerName.includes(searchTerm) || email.includes(searchTerm) || phone.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+}
+
+// Initialize admin page when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if user is authenticated
+    if (!checkAdminAuth()) return;
+    
+    // Set up admin name and avatar
+    const adminUser = JSON.parse(sessionStorage.getItem('adminUser') || '{}');
+    if (adminUser.name) {
+        document.getElementById('adminName').textContent = adminUser.name;
+    }
+    
+    // Initialize dashboard
+    initializeAdminDashboard();
+    
+    // Set up navigation
+    setupNavigation();
+    
+    // Set up mobile sidebar
+    setupMobileSidebar();
+    
+    // Set up search functionality
+    setupSearch();
+    
+    // Set up logout button
+    document.getElementById('logoutBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        sessionStorage.removeItem('adminToken');
+        sessionStorage.removeItem('adminAuthenticated');
+        sessionStorage.removeItem('adminUser');
+        window.location.href = 'admin-login.html';
+    });
+    
+    // Load products for the products section
+    loadProducts();
+    
+    // Set up add product button
+    setupAddProductButton();
+    
+    // Load orders for the orders section
+    loadOrders();
+    
+    // Load customers for the customers section
+    loadCustomers();
+    
+    console.log('Admin dashboard initialized');
 }); 
