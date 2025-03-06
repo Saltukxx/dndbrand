@@ -31,22 +31,34 @@
             <nav class="admin-nav">
                 <ul>
                     <li>
-                        <a href="./index.html" class="active">Home</a>
+                        <a href="#dashboard" class="nav-link active" data-section="dashboard">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
                     </li>
                     <li>
-                        <a href="./shop.html">Shop</a>
+                        <a href="#products" class="nav-link" data-section="products">
+                            <i class="fas fa-box"></i>
+                            <span>Ürünler</span>
+                        </a>
                     </li>
                     <li>
-                        <a href="./about.html">About</a>
+                        <a href="#orders" class="nav-link" data-section="orders">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Siparişler</span>
+                        </a>
                     </li>
                     <li>
-                        <a href="./contact.html">Contact</a>
+                        <a href="#customers" class="nav-link" data-section="customers">
+                            <i class="fas fa-users"></i>
+                            <span>Müşteriler</span>
+                        </a>
                     </li>
                     <li>
-                        <a href="./cart.html">Cart</a>
-                    </li>
-                    <li>
-                        <a href="./account.html">Account</a>
+                        <a href="#settings" class="nav-link" data-section="settings">
+                            <i class="fas fa-cog"></i>
+                            <span>Ayarlar</span>
+                        </a>
                     </li>
                 </ul>
             </nav>
@@ -78,6 +90,9 @@
 
         <!-- Admin Content -->
         <main class="admin-content">
+            <!-- Notification Element -->
+            <div class="admin-notification" id="adminNotification"></div>
+            
             <!-- Dashboard Section -->
             <section class="admin-section active" id="dashboard">
                 <h2 class="section-title">Dashboard</h2>
@@ -259,115 +274,103 @@
                 </div>
             </section>
             
-            <!-- Analytics Section -->
-            <section class="admin-section" id="analytics">
-                <h2 class="section-title">Analitik</h2>
-                
-                <div class="dashboard-stats">
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3>Aylık Gelir</h3>
-                            <div class="stat-value">₺24,500</div>
-                            <div class="stat-change positive">
-                                <i class="fas fa-arrow-up"></i> %15 geçen aya göre
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3>Dönüşüm Oranı</h3>
-                            <div class="stat-value">3.2%</div>
-                            <div class="stat-change positive">
-                                <i class="fas fa-arrow-up"></i> %0.5 geçen aya göre
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3>Yeni Ziyaretçiler</h3>
-                            <div class="stat-value">1,250</div>
-                            <div class="stat-change positive">
-                                <i class="fas fa-arrow-up"></i> %12 geçen aya göre
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-undo"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3>İade Oranı</h3>
-                            <div class="stat-value">2.1%</div>
-                            <div class="stat-change negative">
-                                <i class="fas fa-arrow-up"></i> %0.3 geçen aya göre
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="analytics-placeholder">
-                    <p>Analitik grafikleri burada görüntülenecek.</p>
-                </div>
-            </section>
-            
             <!-- Settings Section -->
             <section class="admin-section" id="settings">
                 <h2 class="section-title">Ayarlar</h2>
                 
-                <div class="settings-form">
-                    <div class="form-row">
-                        <div class="form-group col-6">
-                            <label for="siteName">Site Adı</label>
-                            <input type="text" id="siteName" value="DnD Brand">
-                        </div>
-                        <div class="form-group col-6">
-                            <label for="siteUrl">Site URL</label>
-                            <input type="text" id="siteUrl" value="https://www.dndbrand.com">
-                        </div>
+                <div class="settings-container">
+                    <div class="settings-card">
+                        <h3>Genel Ayarlar</h3>
+                        <form id="generalSettingsForm">
+                            <div class="form-group">
+                                <label for="siteName">Site Adı</label>
+                                <input type="text" id="siteName" name="siteName" value="DnD Brand">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="siteDescription">Site Açıklaması</label>
+                                <textarea id="siteDescription" name="siteDescription" rows="3">DnD Brand - Moda ve Stil</textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="contactEmail">İletişim E-posta</label>
+                                <input type="email" id="contactEmail" name="contactEmail" value="info@dndbrand.com">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="contactPhone">İletişim Telefon</label>
+                                <input type="text" id="contactPhone" name="contactPhone" value="+90 555 123 4567">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">Kaydet</button>
+                        </form>
                     </div>
                     
-                    <div class="form-row">
-                        <div class="form-group col-6">
-                            <label for="adminEmail">Admin Email</label>
-                            <input type="email" id="adminEmail" value="admin@dndbrand.com">
-                        </div>
-                        <div class="form-group col-6">
-                            <label for="contactEmail">İletişim Email</label>
-                            <input type="email" id="contactEmail" value="info@dndbrand.com">
-                        </div>
+                    <div class="settings-card">
+                        <h3>API Ayarları</h3>
+                        <form id="apiSettingsForm">
+                            <div class="form-group">
+                                <label for="apiUrl">API URL</label>
+                                <input type="text" id="apiUrl" name="apiUrl" value="https://dndbrand-server.onrender.com/api">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="useCorsProxy">CORS Proxy Kullan</label>
+                                <select id="useCorsProxy" name="useCorsProxy">
+                                    <option value="true" selected>Evet</option>
+                                    <option value="false">Hayır</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="useMockData">Demo Veri Kullan</label>
+                                <select id="useMockData" name="useMockData">
+                                    <option value="true" selected>Evet</option>
+                                    <option value="false">Hayır</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">Kaydet</button>
+                        </form>
                     </div>
                     
-                    <div class="form-row">
-                        <div class="form-group col-12">
-                            <label for="siteDescription">Site Açıklaması</label>
-                            <textarea id="siteDescription" rows="3">DnD Brand - Kaliteli ve şık giyim ürünleri</textarea>
-                        </div>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button class="btn btn-secondary">İptal</button>
-                        <button class="btn btn-primary">Kaydet</button>
+                    <div class="settings-card">
+                        <h3>Kullanıcı Ayarları</h3>
+                        <form id="userSettingsForm">
+                            <div class="form-group">
+                                <label for="adminName">Admin Adı</label>
+                                <input type="text" id="adminName" name="adminName" value="Admin">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="adminEmail">Admin E-posta</label>
+                                <input type="email" id="adminEmail" name="adminEmail" value="admin@dndbrand.com">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="currentPassword">Mevcut Şifre</label>
+                                <input type="password" id="currentPassword" name="currentPassword">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="newPassword">Yeni Şifre</label>
+                                <input type="password" id="newPassword" name="newPassword">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="confirmPassword">Şifre Tekrar</label>
+                                <input type="password" id="confirmPassword" name="confirmPassword">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">Kaydet</button>
+                        </form>
                     </div>
                 </div>
             </section>
         </main>
     </div>
     
-    <!-- Notification -->
-    <div class="admin-notification" id="adminNotification"></div>
-    
+    <script src="../js/config.js"></script>
     <script src="../js/admin.js"></script>
 </body>
 </html> 

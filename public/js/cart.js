@@ -23,6 +23,9 @@ function initializeCart() {
     let cart = localStorage.getItem('dndCart');
     cart = cart ? JSON.parse(cart) : [];
     
+    // Log cart contents for debugging
+    console.log('Cart contents:', cart);
+    
     // Update cart count
     updateCartCount();
     
@@ -166,8 +169,11 @@ function updateCartItemQuantity(productId, quantity) {
     let cart = localStorage.getItem('dndCart');
     cart = cart ? JSON.parse(cart) : [];
     
-    // Find item in cart
-    const itemIndex = cart.findIndex(item => item.id == productId);
+    // Find item in cart - handle different ID formats
+    const itemIndex = cart.findIndex(item => {
+        const itemId = item.id;
+        return itemId === productId || itemId === productId.toString() || (parseInt(itemId) === parseInt(productId));
+    });
     
     if (itemIndex !== -1) {
         // Update quantity
@@ -201,8 +207,11 @@ function removeCartItem(productId) {
     let cart = localStorage.getItem('dndCart');
     cart = cart ? JSON.parse(cart) : [];
     
-    // Find item in cart
-    const itemIndex = cart.findIndex(item => item.id == productId);
+    // Find item in cart - handle different ID formats
+    const itemIndex = cart.findIndex(item => {
+        const itemId = item.id;
+        return itemId === productId || itemId === productId.toString() || (parseInt(itemId) === parseInt(productId));
+    });
     
     if (itemIndex !== -1) {
         // Get item name for notification

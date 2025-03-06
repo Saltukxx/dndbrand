@@ -46,9 +46,7 @@ const CONFIG = {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
-            },
-            // Add timeout to prevent hanging requests
-            signal: AbortSignal.timeout(15000) // 15 second timeout
+            }
         },
         
         // Retry settings for failed requests

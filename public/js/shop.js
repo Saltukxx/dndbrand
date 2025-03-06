@@ -1217,7 +1217,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add product to cart
     function addToCart(productId, quantity) {
         // Get product - handle both MongoDB _id and regular id
-        const product = products.find(p => (p._id === productId || p.id === parseInt(productId)));
+        const product = products.find(p => {
+            if (p._id && p._id === productId) return true;
+            if (p.id && (p.id === productId || p.id === parseInt(productId))) return true;
+            return false;
+        });
         
         if (!product) {
             console.error('Product not found with ID:', productId);
@@ -1230,17 +1234,20 @@ document.addEventListener('DOMContentLoaded', function() {
         let cart = localStorage.getItem('dndCart');
         cart = cart ? JSON.parse(cart) : [];
         
-        // Use _id if available, otherwise use id
-        const id = product._id || product.id;
+        // Use a consistent ID format - prefer _id if available
+        const id = product._id || product.id.toString();
         
-        // Check if product already in cart
-        const existingItem = cart.find(item => (item.id === id || item.id === parseInt(productId)));
+        // Check if product already in cart - use consistent ID comparison
+        const existingItemIndex = cart.findIndex(item => {
+            const itemId = item.id;
+            return itemId === id || itemId === productId || itemId === productId.toString();
+        });
         
-        if (existingItem) {
+        if (existingItemIndex !== -1) {
             // Update quantity
-            existingItem.quantity += quantity;
+            cart[existingItemIndex].quantity += quantity;
         } else {
-            // Add new item
+            // Add new item with consistent ID
             cart.push({
                 id: id,
                 name: product.name,
@@ -1258,6 +1265,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Show notification
         showNotification('Ürün sepete eklendi.', 'success');
+        
+        // Update cart preview if it exists
+        if (typeof updateCartPreview === 'function') {
+            updateCartPreview();
+        }
     }
 
     // Add product to wishlist
