@@ -506,25 +506,29 @@ async function loadProducts() {
         tableBody.innerHTML = '<tr><td colspan="7">Yükleniyor...</td></tr>';
         
     try {
-        const products = await fetchWithCORS('products', {
+        const response = await fetchWithCORS('products', {
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
+        
+        // Ensure products is an array
+        const products = Array.isArray(response) ? response : 
+                        (response && response.products ? response.products : []);
             
-            if (products.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="7">Henüz ürün bulunmamaktadır.</td></tr>';
-                return;
-            }
+        if (products.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="7">Henüz ürün bulunmamaktadır.</td></tr>';
+            return;
+        }
             
-            tableBody.innerHTML = '';
+        tableBody.innerHTML = '';
             
-            products.forEach(product => {
-                const row = document.createElement('tr');
+        products.forEach(product => {
+            const row = document.createElement('tr');
                 
-                // Get status badge class
-                let statusClass = '';
-                let statusText = '';
+            // Get status badge class
+            let statusClass = '';
+            let statusText = '';
             
             if (product.stock > 0) {
                 statusClass = 'active';
@@ -532,44 +536,45 @@ async function loadProducts() {
             } else {
                 statusClass = 'out-of-stock';
                 statusText = 'Stokta Yok';
-                }
+            }
                 
-                // Format price
-            const formattedPrice = product.price.toLocaleString('tr-TR', {
+            // Format price with fallback for missing price
+            const price = typeof product.price === 'number' ? product.price : 0;
+            const formattedPrice = price.toLocaleString('tr-TR', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
                 
-                row.innerHTML = `
-                <td class="product-cell">
-                    <div class="product-info">
-                        <img src="${product.images && product.images.length > 0 ? product.images[0] : '../img/placeholder.jpg'}" alt="${product.name}">
-                            <span>${product.name}</span>
-                        </div>
-                    </td>
-                    <td>${product.sku || '-'}</td>
-                    <td>${product.category || '-'}</td>
-                <td>₺${formattedPrice}</td>
-                <td>${product.stock}</td>
-                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    <td class="actions-cell">
-                    <button class="action-btn view-btn" data-id="${product._id || product.id}" title="Görüntüle">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    <button class="action-btn edit-btn" data-id="${product._id || product.id}" title="Düzenle">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    <button class="action-btn delete-btn" data-id="${product._id || product.id}" title="Sil">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                `;
+            row.innerHTML = `
+            <td class="product-cell">
+                <div class="product-info">
+                    <img src="${product.images && product.images.length > 0 ? product.images[0] : '../img/placeholder.jpg'}" alt="${product.name}">
+                        <span>${product.name}</span>
+                    </div>
+                </td>
+                <td>${product.sku || '-'}</td>
+                <td>${product.category || '-'}</td>
+            <td>₺${formattedPrice}</td>
+            <td>${product.stock}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td class="actions-cell">
+                <button class="action-btn view-btn" data-id="${product._id || product.id}" title="Görüntüle">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                <button class="action-btn edit-btn" data-id="${product._id || product.id}" title="Düzenle">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                <button class="action-btn delete-btn" data-id="${product._id || product.id}" title="Sil">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
                 
-                tableBody.appendChild(row);
-            });
+            tableBody.appendChild(row);
+        });
             
-            // Add event listeners to action buttons
-            addProductActionListeners();
+        // Add event listeners to action buttons
+        addProductActionListeners();
     } catch (error) {
         console.error('Error loading products:', error);
         

@@ -19,6 +19,9 @@ app.use('/api-proxy', async (req, res) => {
     
     console.log(`Proxying request to: ${targetUrl}`);
     
+    // Get the origin from the request headers
+    const origin = req.headers.origin || '*';
+    
     // Choose http or https module based on URL
     const httpModule = targetUrl.startsWith('https') ? https : http;
     
@@ -31,8 +34,8 @@ app.use('/api-proxy', async (req, res) => {
           'User-Agent': 'DnDBrand-LocalServer',
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Origin': 'https://dndbrand.com',
-          'Referer': 'https://dndbrand.com/'
+          'Origin': origin,
+          'Referer': origin + '/'
         },
       },
       (proxyRes) => {
@@ -43,7 +46,7 @@ app.use('/api-proxy', async (req, res) => {
         });
         
         // Set CORS headers
-        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
         res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -70,7 +73,8 @@ app.use('/api-proxy', async (req, res) => {
 
 // Add OPTIONS pre-flight handler for the proxy
 app.options('/api-proxy/*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '*';
+  res.header('Access-Control-Allow-Origin', origin);
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
   res.header('Access-Control-Allow-Credentials', 'true');

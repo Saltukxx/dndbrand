@@ -90,7 +90,7 @@ const corsOptions = {
       return callback(null, true);
     }
     
-    const allowedOrigins = process.env.CORS_ORIGIN ? 
+    const allowedDomains = process.env.CORS_ORIGIN ? 
       process.env.CORS_ORIGIN.split(',') : 
       [
         'https://dndbrand.com',
@@ -103,14 +103,19 @@ const corsOptions = {
         'http://localhost:5000'
       ];
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Check if the origin starts with any of the allowed domains
+    const isAllowed = allowedDomains.some(domain => 
+      origin === domain || origin.startsWith(`${domain}/`)
+    );
+    
+    if (isAllowed) {
       callback(null, true);
     } else {
       console.log('CORS blocked origin:', origin);
-      // For development purposes, you might want to allow all origins
+      // For development purposes, uncomment the next line to allow all origins
       // callback(null, true);
       
-      // For production, you can block disallowed origins
+      // For production, block disallowed origins
       callback(new Error('Not allowed by CORS'), false);
     }
   },
