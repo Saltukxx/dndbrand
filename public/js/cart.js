@@ -15,105 +15,132 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Initialize cart
 function initializeCart() {
-    // Get cart items container
-    const cartItemsContainer = document.getElementById('cart-items-container');
-    if (!cartItemsContainer) return;
-    
     // Get cart from localStorage
-    let cart = localStorage.getItem('dndCart');
+    let cart = localStorage.getItem('cart') || localStorage.getItem('dndCart');
     cart = cart ? JSON.parse(cart) : [];
     
-    // Log cart contents for debugging
-    console.log('Cart contents:', cart);
+    // If we found data in 'dndCart', migrate it to 'cart'
+    if (localStorage.getItem('dndCart') && !localStorage.getItem('cart')) {
+        localStorage.setItem('cart', localStorage.getItem('dndCart'));
+    }
     
-    // Update cart count
-    updateCartCount();
+    // Get cart container
+    const cartItemsContainer = document.querySelector('.cart-items');
+    if (!cartItemsContainer) return;
+    
+    // Clear cart container
+    const cartHeader = cartItemsContainer.querySelector('.cart-header');
+    cartItemsContainer.innerHTML = '';
+    
+    // Add cart header back
+    if (cartHeader) {
+        cartItemsContainer.appendChild(cartHeader);
+    }
     
     // Check if cart is empty
     if (cart.length === 0) {
-        cartItemsContainer.innerHTML = `
-            <div class="empty-cart">
+        const emptyCartMessage = document.createElement('div');
+        emptyCartMessage.className = 'empty-cart-message';
+        emptyCartMessage.innerHTML = `
+            <div class="empty-cart-icon">
                 <i class="fas fa-shopping-bag"></i>
-                <h2>Sepetiniz Boş</h2>
-                <p>Sepetinizde henüz ürün bulunmamaktadır.</p>
-                <a href="./shop.html" class="btn btn-primary">Alışverişe Başla</a>
             </div>
+            <h3>Sepetiniz Boş</h3>
+            <p>Sepetinizde ürün bulunmamaktadır.</p>
+            <a href="shop.html" class="btn">Alışverişe Başla</a>
         `;
+        cartItemsContainer.appendChild(emptyCartMessage);
         
-        // Hide summary items
-        document.getElementById('subtotal').textContent = '₺0.00';
-        document.getElementById('shipping').textContent = '₺0.00';
-        document.getElementById('total').textContent = '₺0.00';
-        
-        // Disable checkout button
-        const checkoutButton = document.getElementById('checkout-button');
-        if (checkoutButton) {
-            checkoutButton.disabled = true;
-            checkoutButton.classList.add('disabled');
+        // Hide cart summary
+        const cartSummary = document.querySelector('.cart-summary');
+        if (cartSummary) {
+            cartSummary.style.display = 'none';
         }
         
         return;
     }
     
-    // Clear container
-    cartItemsContainer.innerHTML = '';
+    // Show cart summary
+    const cartSummary = document.querySelector('.cart-summary');
+    if (cartSummary) {
+        cartSummary.style.display = 'block';
+    }
     
     // Add cart items
-    let subtotal = 0;
-    
     cart.forEach(item => {
-        // Calculate item total
-        const itemTotal = item.price * item.quantity;
-        subtotal += itemTotal;
-        
-        // Format prices
-        const formattedPrice = item.price.toLocaleString('tr-TR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-        
-        const formattedTotal = itemTotal.toLocaleString('tr-TR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-        
-        // Create cart item element
-        const cartItem = document.createElement('div');
-        cartItem.className = 'cart-item';
-        cartItem.setAttribute('data-id', item.id);
-        
-        cartItem.innerHTML = `
-            <div class="cart-item-product">
-                <div class="cart-item-image">
-                    <img src="${item.image}" alt="${item.name}">
-                </div>
-                <div class="cart-item-details">
-                    <h3>${item.name}</h3>
-                    <p class="cart-item-variant">${item.variant || ''}</p>
-                </div>
-            </div>
-            <div class="cart-item-price" data-label="Fiyat">₺${formattedPrice}</div>
-            <div class="cart-item-quantity" data-label="Adet">
-                <div class="quantity-selector">
-                    <button class="decrease-quantity">-</button>
-                    <input type="number" value="${item.quantity}" min="1" max="10" readonly>
-                    <button class="increase-quantity">+</button>
-                </div>
-            </div>
-            <div class="cart-item-total" data-label="Toplam">₺${formattedTotal}</div>
-            <div class="cart-item-remove">
-                <button class="remove-button" title="Ürünü Kaldır"><i class="fas fa-times"></i></button>
-            </div>
-        `;
-        
+        const cartItem = createCartItem(item);
         cartItemsContainer.appendChild(cartItem);
     });
     
-    // Add event listeners to quantity buttons and remove buttons
+    // Add cart item event listeners
     addCartItemEventListeners();
     
-    // Update summary
-    updateCartSummary(subtotal);
+    // Update cart summary
+    updateCartSummary();
+}
+
+// Create cart item element
+function createCartItem(item) {
+    // Create cart item element
+    const cartItem = document.createElement('div');
+    cartItem.className = 'cart-item';
+    cartItem.setAttribute('data-id', item.id);
+    
+    // Format price
+    const formattedPrice = typeof item.price === 'number' ? 
+        item.price.toLocaleString('tr-TR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }) : '0.00';
+    
+    // Calculate item total
+    const itemTotal = item.price * item.quantity;
+    
+    // Format total
+    const formattedTotal = typeof itemTotal === 'number' ? 
+        itemTotal.toLocaleString('tr-TR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }) : '0.00';
+    
+    // Get image URL with fallback
+    const imageUrl = item.image || '../images/no-image.jpg';
+    
+    // Create variant text if color or size exists
+    let variantText = '';
+    if (item.color || item.size) {
+        variantText = `<p class="cart-item-variant">`;
+        if (item.color) variantText += `Renk: ${item.color}`;
+        if (item.color && item.size) variantText += ` | `;
+        if (item.size) variantText += `Beden: ${item.size}`;
+        variantText += `</p>`;
+    }
+    
+    cartItem.innerHTML = `
+        <div class="cart-item-product">
+            <div class="cart-item-image">
+                <img src="${imageUrl}" alt="${item.name}" onerror="this.src='../images/no-image.jpg';">
+            </div>
+            <div class="cart-item-details">
+                <h3>${item.name}</h3>
+                ${variantText}
+            </div>
+        </div>
+        <div class="cart-item-price" data-label="Fiyat">₺${formattedPrice}</div>
+        <div class="cart-item-quantity" data-label="Adet">
+            <div class="quantity-selector">
+                <button class="decrease-quantity">-</button>
+                <input type="number" value="${item.quantity}" min="1" max="10" readonly>
+                <button class="increase-quantity">+</button>
+            </div>
+        </div>
+        <div class="cart-item-total" data-label="Toplam">₺${formattedTotal}</div>
+        <div class="cart-item-remove">
+            <button class="remove-button" title="Ürünü Kaldır"><i class="fas fa-times"></i></button>
+        </div>
+    `;
+    
+    return cartItem;
 }
 
 // Add event listeners to cart item buttons
@@ -164,132 +191,126 @@ function addCartItemEventListeners() {
 }
 
 // Update cart item quantity
-function updateCartItemQuantity(productId, quantity) {
-    // Get cart from localStorage
-    let cart = localStorage.getItem('dndCart');
-    cart = cart ? JSON.parse(cart) : [];
-    
-    // Find item in cart - handle different ID formats
-    const itemIndex = cart.findIndex(item => {
-        const itemId = item.id;
-        return itemId === productId || itemId === productId.toString() || (parseInt(itemId) === parseInt(productId));
-    });
-    
-    if (itemIndex !== -1) {
-        // Update quantity
-        cart[itemIndex].quantity = quantity;
+function updateCartItemQuantity(itemId, quantity, options = {}) {
+    try {
+        // Get cart from localStorage
+        let cart = localStorage.getItem('cart');
+        cart = cart ? JSON.parse(cart) : [];
         
-        // Save cart to localStorage
-        localStorage.setItem('dndCart', JSON.stringify(cart));
-        
-        // Update cart item total
-        const cartItem = document.querySelector(`.cart-item[data-id="${productId}"]`);
-        const itemTotal = cart[itemIndex].price * quantity;
-        
-        const formattedTotal = itemTotal.toLocaleString('tr-TR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+        // Find item in cart
+        const itemIndex = cart.findIndex(item => {
+            if (item.id !== itemId) return false;
+            
+            // Check if options match
+            if (options.color && item.color !== options.color) return false;
+            if (options.size && item.size !== options.size) return false;
+            
+            return true;
         });
         
-        cartItem.querySelector('.cart-item-total').textContent = `₺${formattedTotal}`;
+        if (itemIndex === -1) return;
         
-        // Update cart summary
-        updateCartSummaryFromCart();
+        // Update quantity
+        cart[itemIndex].quantity = parseInt(quantity);
         
-        // Show notification
-        showNotification('Sepet güncellendi', 'success');
-    }
-}
-
-// Remove cart item
-function removeCartItem(productId) {
-    // Get cart from localStorage
-    let cart = localStorage.getItem('dndCart');
-    cart = cart ? JSON.parse(cart) : [];
-    
-    // Find item in cart - handle different ID formats
-    const itemIndex = cart.findIndex(item => {
-        const itemId = item.id;
-        return itemId === productId || itemId === productId.toString() || (parseInt(itemId) === parseInt(productId));
-    });
-    
-    if (itemIndex !== -1) {
-        // Get item name for notification
-        const itemName = cart[itemIndex].name;
-        
-        // Remove item from cart
-        cart.splice(itemIndex, 1);
+        // Remove item if quantity is 0
+        if (cart[itemIndex].quantity <= 0) {
+            cart.splice(itemIndex, 1);
+        }
         
         // Save cart to localStorage
-        localStorage.setItem('dndCart', JSON.stringify(cart));
-        
-        // Remove cart item element
-        const cartItem = document.querySelector(`.cart-item[data-id="${productId}"]`);
-        cartItem.remove();
+        localStorage.setItem('cart', JSON.stringify(cart));
         
         // Update cart count
         updateCartCount();
         
         // Update cart summary
-        updateCartSummaryFromCart();
+        updateCartSummary();
         
-        // Show notification
-        showNotification(`"${itemName}" sepetten çıkarıldı`, 'info');
-        
-        // Check if cart is empty
-        if (cart.length === 0) {
-            // Reload page to show empty cart message
-            location.reload();
-        }
+        return true;
+    } catch (error) {
+        console.error('Error updating cart item quantity:', error);
+        return false;
     }
 }
 
-// Update cart summary from cart items
-function updateCartSummaryFromCart() {
-    // Get cart from localStorage
-    let cart = localStorage.getItem('dndCart');
-    cart = cart ? JSON.parse(cart) : [];
-    
-    // Calculate subtotal
-    let subtotal = 0;
-    
-    cart.forEach(item => {
-        subtotal += item.price * item.quantity;
-    });
-    
-    // Update summary
-    updateCartSummary(subtotal);
+// Remove cart item
+function removeCartItem(itemId, options = {}) {
+    try {
+        // Get cart from localStorage
+        let cart = localStorage.getItem('cart');
+        cart = cart ? JSON.parse(cart) : [];
+        
+        // Find item in cart
+        const itemIndex = cart.findIndex(item => {
+            if (item.id !== itemId) return false;
+            
+            // Check if options match
+            if (options.color && item.color !== options.color) return false;
+            if (options.size && item.size !== options.size) return false;
+            
+            return true;
+        });
+        
+        if (itemIndex === -1) return;
+        
+        // Remove item from cart
+        cart.splice(itemIndex, 1);
+        
+        // Save cart to localStorage
+        localStorage.setItem('cart', JSON.stringify(cart));
+        
+        // Update cart count
+        updateCartCount();
+        
+        // Reinitialize cart
+        initializeCart();
+        
+        // Show notification
+        showNotification('Ürün sepetten çıkarıldı.', 'success');
+        
+        return true;
+    } catch (error) {
+        console.error('Error removing cart item:', error);
+        return false;
+    }
 }
 
 // Update cart summary
-function updateCartSummary(subtotal) {
+function updateCartSummary() {
+    // Get cart from localStorage
+    let cart = localStorage.getItem('cart');
+    cart = cart ? JSON.parse(cart) : [];
+    
+    // Calculate subtotal
+    const subtotal = cart.reduce((total, item) => {
+        return total + (item.price * item.quantity);
+    }, 0);
+    
+    // Get summary elements
+    const subtotalElement = document.getElementById('subtotal');
+    const shippingElement = document.getElementById('shipping');
+    const totalElement = document.getElementById('total');
+    
+    if (!subtotalElement || !shippingElement || !totalElement) return;
+    
     // Format subtotal
     const formattedSubtotal = subtotal.toLocaleString('tr-TR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     });
     
-    // Update subtotal
-    document.getElementById('subtotal').textContent = `₺${formattedSubtotal}`;
+    // Calculate shipping cost (free if subtotal > 500)
+    const shippingCost = subtotal > 500 ? 0 : 25;
     
-    // Calculate shipping
-    let shipping = 0;
-    
-    if (subtotal > 0 && subtotal < 500) {
-        shipping = 29.99;
-    }
-    
-    // Format shipping
-    const formattedShipping = shipping.toLocaleString('tr-TR', {
+    // Format shipping cost
+    const formattedShipping = shippingCost.toLocaleString('tr-TR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     });
     
-    // Update shipping
-    document.getElementById('shipping').textContent = shipping > 0 ? `₺${formattedShipping}` : 'Ücretsiz';
-    
     // Calculate total
-    const total = subtotal + shipping;
+    const total = subtotal + shippingCost;
     
     // Format total
     const formattedTotal = total.toLocaleString('tr-TR', {
@@ -297,8 +318,22 @@ function updateCartSummary(subtotal) {
         maximumFractionDigits: 2
     });
     
-    // Update total
-    document.getElementById('total').textContent = `₺${formattedTotal}`;
+    // Update summary elements
+    subtotalElement.textContent = `₺${formattedSubtotal}`;
+    shippingElement.textContent = shippingCost === 0 ? 'Ücretsiz' : `₺${formattedShipping}`;
+    totalElement.textContent = `₺${formattedTotal}`;
+    
+    // Update checkout button
+    const checkoutButton = document.getElementById('checkout-button');
+    if (checkoutButton) {
+        if (cart.length === 0) {
+            checkoutButton.disabled = true;
+            checkoutButton.classList.add('disabled');
+        } else {
+            checkoutButton.disabled = false;
+            checkoutButton.classList.remove('disabled');
+        }
+    }
 }
 
 // Initialize coupon form

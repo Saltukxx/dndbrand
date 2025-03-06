@@ -134,12 +134,17 @@ function updateCartCount() {
     
     if (cartCountElements.length === 0) return;
     
-    // Get cart from localStorage
-    let cart = localStorage.getItem('dndCart');
+    // Get cart from localStorage - use consistent key 'cart' instead of 'dndCart'
+    let cart = localStorage.getItem('cart') || localStorage.getItem('dndCart');
     cart = cart ? JSON.parse(cart) : [];
     
+    // If we found data in 'dndCart', migrate it to 'cart'
+    if (localStorage.getItem('dndCart') && !localStorage.getItem('cart')) {
+        localStorage.setItem('cart', localStorage.getItem('dndCart'));
+    }
+    
     // Calculate total quantity
-    const totalQuantity = cart.reduce((total, item) => total + item.quantity, 0);
+    const totalQuantity = cart.reduce((total, item) => total + (parseInt(item.quantity) || 0), 0);
     
     // Update cart count elements
     cartCountElements.forEach(element => {
@@ -319,52 +324,82 @@ function getProducts() {
 
 // Add product to cart
 function addToCart(product, quantity = 1, color = null, size = null) {
-    // Get cart from localStorage
-    let cart = localStorage.getItem('dndCart');
-    cart = cart ? JSON.parse(cart) : [];
-    
-    // Ensure product ID is consistent
-    const productId = product._id || product.id.toString();
-    
-    // Create cart item
-    const cartItem = {
-        id: productId,
-        name: product.name,
-        price: product.price,
-        image: product.images && product.images.length > 0 ? product.images[0] : product.image,
-        quantity: quantity,
-        color: color,
-        size: size
-    };
-    
-    // Check if product already in cart with same options
-    const existingItemIndex = cart.findIndex(item => {
-        const itemId = item.id;
-        const sameId = itemId === productId || itemId === productId.toString();
-        const sameOptions = item.color === color && item.size === size;
-        return sameId && sameOptions;
-    });
-    
-    if (existingItemIndex !== -1) {
-        // Update quantity
-        cart[existingItemIndex].quantity += quantity;
-    } else {
-        // Add new item
-        cart.push(cartItem);
-    }
-    
-    // Save cart to localStorage
-    localStorage.setItem('dndCart', JSON.stringify(cart));
-    
-    // Show notification
-    showNotification('Ürün sepete eklendi!', 'success');
-    
-    // Update cart count
-    updateCartCount();
-    
-    // Update cart preview if it exists
-    if (typeof updateCartPreview === 'function') {
-        updateCartPreview();
+    try {
+        // Validate product
+        if (!product) {
+            console.error('Invalid product:', product);
+            showNotification('Ürün bilgisi eksik veya hatalı.', 'error');
+            return;
+        }
+        
+        // Get cart from localStorage - use consistent key 'cart'
+        let cart = localStorage.getItem('cart');
+        cart = cart ? JSON.parse(cart) : [];
+        
+        // Ensure product ID is consistent
+        const productId = product._id || product.id || (typeof product === 'string' ? product : null);
+        
+        if (!productId) {
+            console.error('Invalid product ID:', product);
+            showNotification('Ürün ID bilgisi eksik veya hatalı.', 'error');
+            return;
+        }
+        
+        // Get product image
+        let productImage = null;
+        if (product.images && product.images.length > 0) {
+            productImage = product.images[0];
+        } else if (product.image) {
+            productImage = product.image;
+        }
+        
+        // Create cart item
+        const cartItem = {
+            id: productId,
+            name: product.name || 'Ürün',
+            price: product.price || 0,
+            image: productImage,
+            quantity: parseInt(quantity) || 1,
+            color: color,
+            size: size
+        };
+        
+        // Check if product already in cart with same options
+        const existingItemIndex = cart.findIndex(item => {
+            const itemId = item.id;
+            const sameId = itemId === productId || itemId === productId.toString();
+            const sameOptions = item.color === color && item.size === size;
+            return sameId && sameOptions;
+        });
+        
+        if (existingItemIndex !== -1) {
+            // Update quantity
+            cart[existingItemIndex].quantity += parseInt(quantity) || 1;
+        } else {
+            // Add new item
+            cart.push(cartItem);
+        }
+        
+        // Save cart to localStorage with consistent key
+        localStorage.setItem('cart', JSON.stringify(cart));
+        
+        // Show notification
+        showNotification(`${cartItem.name} sepete eklendi!`, 'success');
+        
+        // Update cart count
+        updateCartCount();
+        
+        // Update cart preview if it exists
+        if (typeof updateCartPreview === 'function') {
+            updateCartPreview();
+        }
+        
+        console.log('Product added to cart:', cartItem);
+        return true;
+    } catch (error) {
+        console.error('Error adding product to cart:', error);
+        showNotification('Ürün sepete eklenirken bir hata oluştu.', 'error');
+        return false;
     }
 }
 
@@ -449,38 +484,30 @@ document.head.appendChild(style);
 
 // Update cart preview
 function updateCartPreview() {
-    const cartPreviewItems = document.querySelector('.cart-preview-items');
-    const cartPreviewCount = document.querySelector('.cart-preview-count');
-    const cartPreviewTotal = document.querySelector('.cart-preview-total-price');
-    const emptyCartMessage = document.querySelector('.empty-cart-message');
+    const cartPreview = document.querySelector('.cart-preview');
+    if (!cartPreview) return;
     
-    if (!cartPreviewItems) return;
+    const cartPreviewItems = cartPreview.querySelector('.cart-preview-items');
+    const cartPreviewCount = cartPreview.querySelector('.cart-preview-count');
+    const cartPreviewTotal = cartPreview.querySelector('.cart-preview-total-price');
+    const emptyCartMessage = cartPreview.querySelector('.empty-cart-message');
     
     // Get cart from localStorage
-    let cart = localStorage.getItem('dndCart');
+    let cart = localStorage.getItem('cart');
     cart = cart ? JSON.parse(cart) : [];
     
     // Update cart count
     if (cartPreviewCount) {
-        const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
-        cartPreviewCount.textContent = `${totalItems} Ürün`;
+        cartPreviewCount.textContent = `${cart.length} Ürün`;
     }
     
     // Check if cart is empty
     if (cart.length === 0) {
-        // Show empty cart message
-        if (emptyCartMessage) {
-            emptyCartMessage.style.display = 'block';
-        }
-        
-        // Clear cart preview items
         if (cartPreviewItems) {
-            // Keep the empty cart message, remove other items
-            const items = cartPreviewItems.querySelectorAll('.cart-preview-item');
-            items.forEach(item => item.remove());
+            // Show empty cart message
+            cartPreviewItems.innerHTML = '<div class="empty-cart-message">Sepetiniz boş</div>';
         }
         
-        // Update total
         if (cartPreviewTotal) {
             cartPreviewTotal.textContent = '₺0.00';
         }
@@ -488,38 +515,41 @@ function updateCartPreview() {
         return;
     }
     
-    // Hide empty cart message
+    // Hide empty cart message if it exists
     if (emptyCartMessage) {
         emptyCartMessage.style.display = 'none';
     }
     
-    // Clear cart preview items except the empty cart message
+    // Clear cart preview items
     if (cartPreviewItems) {
-        const items = cartPreviewItems.querySelectorAll('.cart-preview-item');
-        items.forEach(item => item.remove());
-    }
-    
-    // Calculate total
-    let total = 0;
-    
-    // Add cart items to preview
-    cart.forEach(item => {
-        total += item.price * item.quantity;
+        cartPreviewItems.innerHTML = '';
         
-        if (cartPreviewItems) {
+        // Add cart items to preview
+        cart.forEach(item => {
+            // Format price
+            const formattedPrice = typeof item.price === 'number' ? 
+                item.price.toLocaleString('tr-TR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) : '0.00';
+            
+            // Create cart preview item
             const cartPreviewItem = document.createElement('div');
             cartPreviewItem.className = 'cart-preview-item';
             
+            // Get image URL with fallback
+            const imageUrl = item.image || '../images/no-image.jpg';
+            
             cartPreviewItem.innerHTML = `
                 <div class="cart-preview-item-image">
-                    <img src="${item.image}" alt="${item.name}">
+                    <img src="${imageUrl}" alt="${item.name}" onerror="this.src='../images/no-image.jpg';">
                 </div>
-                <div class="cart-preview-item-info">
+                <div class="cart-preview-item-details">
                     <h4>${item.name}</h4>
-                    <p>${item.quantity} x ₺${item.price.toLocaleString('tr-TR', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    })}</p>
+                    <div class="cart-preview-item-price">
+                        <span class="quantity">${item.quantity}x</span>
+                        <span class="price">₺${formattedPrice}</span>
+                    </div>
                 </div>
                 <div class="cart-preview-item-remove" data-id="${item.id}">
                     <i class="fas fa-times"></i>
@@ -527,57 +557,76 @@ function updateCartPreview() {
             `;
             
             cartPreviewItems.appendChild(cartPreviewItem);
-        }
-    });
-    
-    // Update total
-    if (cartPreviewTotal) {
-        cartPreviewTotal.textContent = `₺${total.toLocaleString('tr-TR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        })}`;
+        });
+        
+        // Add event listeners to remove buttons
+        const removeButtons = cartPreviewItems.querySelectorAll('.cart-preview-item-remove');
+        removeButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const productId = this.getAttribute('data-id');
+                removeCartItem(productId);
+            });
+        });
     }
     
-    // Add event listeners to remove buttons
-    const removeButtons = document.querySelectorAll('.cart-preview-item-remove');
-    removeButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const productId = this.getAttribute('data-id');
-            removeCartItem(productId);
+    // Update cart total
+    if (cartPreviewTotal) {
+        // Calculate total
+        const total = cart.reduce((sum, item) => {
+            return sum + (item.price * item.quantity);
+        }, 0);
+        
+        // Format total
+        const formattedTotal = total.toLocaleString('tr-TR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
         });
-    });
+        
+        cartPreviewTotal.textContent = `₺${formattedTotal}`;
+    }
 }
 
-// Remove item from cart (for cart preview)
+// Remove item from cart
 function removeCartItem(productId) {
-    // Get cart from localStorage
-    let cart = localStorage.getItem('dndCart');
-    cart = cart ? JSON.parse(cart) : [];
-    
-    // Find item in cart - handle different ID formats
-    const itemIndex = cart.findIndex(item => {
-        const itemId = item.id;
-        return itemId === productId || itemId === productId.toString() || (parseInt(itemId) === parseInt(productId));
-    });
-    
-    if (itemIndex !== -1) {
+    try {
+        // Get cart from localStorage
+        let cart = localStorage.getItem('cart');
+        cart = cart ? JSON.parse(cart) : [];
+        
+        // Find item in cart
+        const itemIndex = cart.findIndex(item => item.id === productId);
+        
+        if (itemIndex === -1) {
+            console.warn('Product not found in cart:', productId);
+            return false;
+        }
+        
+        // Get item name for notification
+        const itemName = cart[itemIndex].name;
+        
         // Remove item from cart
         cart.splice(itemIndex, 1);
         
         // Save cart to localStorage
-        localStorage.setItem('dndCart', JSON.stringify(cart));
+        localStorage.setItem('cart', JSON.stringify(cart));
         
-        // Update cart preview
-        updateCartPreview();
+        // Show notification
+        showNotification(`${itemName} sepetten çıkarıldı.`, 'info');
         
         // Update cart count
         updateCartCount();
         
-        // Show notification
-        showNotification('Ürün sepetten çıkarıldı', 'info');
+        // Update cart preview
+        updateCartPreview();
+        
+        return true;
+    } catch (error) {
+        console.error('Error removing item from cart:', error);
+        showNotification('Ürün sepetten çıkarılırken bir hata oluştu.', 'error');
+        return false;
     }
 }
 

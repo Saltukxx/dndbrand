@@ -278,16 +278,31 @@ async function addToCart(productId) {
         const response = await fetch(`${API_URL}/products/${productId}`);
         const data = await response.json();
         
-        if (!data.success || !data.data) {
+        let product;
+        
+        if (data.success && data.data) {
+            product = data.data;
+        } else if (data && !data.success) {
             console.error('Error fetching product details:', data.message || 'Unknown error');
+            showNotification('Ürün bilgileri alınamadı.', 'error');
+            return;
+        } else if (data) {
+            // Handle case where API returns product directly without success wrapper
+            product = data;
+        } else {
+            console.error('Error fetching product details: Invalid response format');
             showNotification('Ürün bilgileri alınamadı.', 'error');
             return;
         }
         
-        const product = data.data;
+        // If we have a global addToCart function in script.js, use that
+        if (window.addToCart && typeof window.addToCart === 'function') {
+            return window.addToCart(product, 1);
+        }
         
-        // Get cart from localStorage
-        let cart = localStorage.getItem('dndCart');
+        // Otherwise, implement cart functionality here
+        // Get cart from localStorage - use consistent key 'cart'
+        let cart = localStorage.getItem('cart');
         cart = cart ? JSON.parse(cart) : [];
         
         // Check if product already in cart
@@ -308,16 +323,19 @@ async function addToCart(productId) {
         }
         
         // Save cart to localStorage
-        localStorage.setItem('dndCart', JSON.stringify(cart));
+        localStorage.setItem('cart', JSON.stringify(cart));
         
         // Show notification
-        showNotification('Ürün sepete eklendi!', 'success');
+        showNotification(`${product.name} sepete eklendi!`, 'success');
         
         // Update cart count
         updateCartCount();
+        
+        return true;
     } catch (error) {
         console.error('Error adding product to cart:', error);
         showNotification('Ürün sepete eklenirken bir hata oluştu.', 'error');
+        return false;
     }
 }
 
@@ -327,7 +345,7 @@ function updateCartCount() {
     if (!cartCountElement) return;
     
     // Get cart from localStorage
-    let cart = localStorage.getItem('dndCart');
+    let cart = localStorage.getItem('cart');
     cart = cart ? JSON.parse(cart) : [];
     
     // Calculate total quantity
