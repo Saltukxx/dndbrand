@@ -1,9 +1,0 @@
-<div class="footer-column">
-    <h3>Alışveriş</h3>
-    <ul>
-        <li><a href="shop.html?category=men">Erkek</a></li>
-        <li><a href="shop.html?category=women">Kadın</a></li>
-        <li><a href="shop.html?category=accessories">Aksesuarlar</a></li>
-        <li><a href="shop.html?sale=true">İndirim</a></li>
-    </ul>
-</div> 

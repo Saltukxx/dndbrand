@@ -1,32 +1,32 @@
 #!/bin/bash
 
-echo "Starting DnD Brand E-commerce Application..."
+echo "DnD Brand E-commerce Website"
+echo "============================"
 echo
+
+# Check if Node.js is installed
+if ! command -v node &> /dev/null; then
+    echo "Error: Node.js is not installed."
+    echo "Please install Node.js from https://nodejs.org/"
+    exit 1
+fi
+
+# Check if npm is installed
+if ! command -v npm &> /dev/null; then
+    echo "Error: npm is not installed."
+    echo "Please install Node.js from https://nodejs.org/"
+    exit 1
+fi
 
 echo "Installing dependencies..."
-npm run install:all
-echo
+npm install
 
-echo "Starting server..."
-npm run dev:server &
-SERVER_PID=$!
 echo
-
-echo "Opening application in browser..."
-sleep 5
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    open http://localhost:5000
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    xdg-open http://localhost:5000
-fi
+echo "Starting DnD Brand server..."
 echo
-
-echo "DnD Brand E-commerce Application is now running!"
-echo "Server: http://localhost:5000/api"
-echo "Frontend: http://localhost:5000"
+echo "Server will be available at http://localhost:3000"
 echo
 echo "Press Ctrl+C to stop the server"
+echo
 
-# Wait for user to press Ctrl+C
-trap "kill $SERVER_PID; exit" INT
-wait $SERVER_PID 
+npm start 
