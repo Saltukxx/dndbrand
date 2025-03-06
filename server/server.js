@@ -49,7 +49,39 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // Regular middleware
-app.use(cors());
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Get allowed origins from environment variable
+    const allowedOrigins = process.env.CORS_ORIGIN ? 
+      process.env.CORS_ORIGIN.split(',') : 
+      [
+        'https://dndbrand.com',
+        'https://www.dndbrand.com',
+        'http://dndbrand.com',
+        'http://www.dndbrand.com',
+        'https://saltukxx.github.io',
+        'http://localhost:3000',
+        'http://localhost:8080',
+        'http://localhost:8000',
+        'http://localhost:5000'
+      ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10kb' })); // Limit JSON body size
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
@@ -62,6 +94,18 @@ if (!fs.existsSync(uploadsDir)) {
 // Static files
 app.use(express.static(path.join(__dirname, '../')));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Add OPTIONS pre-flight handler
+app.options('*', cors(corsOptions));
+
+// Add CORS headers middleware
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
 
 // API routes with parameter validation
 app.use('/api/products', validateRequestParams, productRoutes);
