@@ -32,6 +32,7 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const userRoutes = require('./routes/userRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // Initialize express app
 const app = express();
@@ -117,6 +118,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check endpoint for Render
 app.get('/healthz', (req, res) => {

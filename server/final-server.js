@@ -97,11 +97,29 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // Serv
 const PORT = process.env.PORT || 8080;
 console.log('Using port:', PORT);
 
+// Import routes
+const productRoutes = require('./routes/productRoutes');
+const userRoutes = require('./routes/userRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const customerRoutes = require('./routes/customerRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+
 // API routes
 app.get('/', (req, res) => {
   console.log('Request received at root endpoint from:', req.ip);
   res.send('Final server is running!');
 });
+
+// Mount routes
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/uploads', uploadRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/api/products', async (req, res) => {
   console.log('Request received at products endpoint from:', req.ip);
