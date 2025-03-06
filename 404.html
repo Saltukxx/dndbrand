@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DnD Brand</title>
+    <script>
+        // URL mapping for clean URLs
+        const urlMap = {
+            '/': '/public/html/index.html',
+            '/shop': '/public/html/shop.html',
+            '/about': '/public/html/about.html',
+            '/contact': '/public/html/contact.html',
+            '/cart': '/public/html/cart.html',
+            '/checkout': '/public/html/checkout.html',
+            '/account': '/public/html/account.html',
+            '/admin': '/public/html/admin.html',
+            '/admin-login': '/public/html/admin-login.html',
+            '/product': '/public/html/product.html'
+        };
+
+        // Get the path from the URL
+        let path = window.location.pathname;
+        
+        // Remove trailing slash if present (except for root)
+        if (path !== '/' && path.endsWith('/')) {
+            path = path.slice(0, -1);
+        }
+
+        // Check if we have a mapping for this path
+        if (urlMap[path]) {
+            window.location.href = urlMap[path];
+        } else if (path.includes('.')) {
+            // If it's a file request, don't redirect
+        } else {
+            // If no mapping found and not a file request, redirect to homepage
+            window.location.href = '/public/html/index.html';
+        }
+    </script>
+</head>
+<body>
+    <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+        <h1>Redirecting...</h1>
+        <p>If you are not redirected automatically, <a href="/public/html/index.html">click here</a>.</p>
+    </div>
+</body>
+</html> 

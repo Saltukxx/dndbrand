@@ -64,7 +64,7 @@ async function loadHeader() {
                         display: flex;
                         align-items: center;
                     ">
-                        <a href="index.html" style="
+                        <a href="/" style="
                             display: flex;
                             align-items: center;
                             text-decoration: none;
@@ -92,7 +92,7 @@ async function loadHeader() {
                             margin: 0;
                             padding: 0;
                         ">
-                            <li style="margin: 0 15px;"><a href="index.html" style="
+                            <li style="margin: 0 15px;"><a href="/" style="
                                 font-size: 16px;
                                 font-weight: 600;
                                 text-transform: uppercase;
@@ -103,7 +103,7 @@ async function loadHeader() {
                                 color: #f5f5f5;
                                 text-decoration: none;
                             ">Ana Sayfa</a></li>
-                            <li style="margin: 0 15px;"><a href="shop.html" style="
+                            <li style="margin: 0 15px;"><a href="/shop" style="
                                 font-size: 16px;
                                 font-weight: 600;
                                 text-transform: uppercase;
@@ -114,7 +114,7 @@ async function loadHeader() {
                                 color: #f5f5f5;
                                 text-decoration: none;
                             ">Koleksiyon</a></li>
-                            <li style="margin: 0 15px;"><a href="about.html" style="
+                            <li style="margin: 0 15px;"><a href="/about" style="
                                 font-size: 16px;
                                 font-weight: 600;
                                 text-transform: uppercase;
@@ -125,7 +125,7 @@ async function loadHeader() {
                                 color: #f5f5f5;
                                 text-decoration: none;
                             ">Hakkımızda</a></li>
-                            <li style="margin: 0 15px;"><a href="contact.html" style="
+                            <li style="margin: 0 15px;"><a href="/contact" style="
                                 font-size: 16px;
                                 font-weight: 600;
                                 text-transform: uppercase;
@@ -210,7 +210,7 @@ async function loadHeader() {
         <header>
             <div class="container">
                 <div class="logo">
-                    <a href="index.html">
+                    <a href="/">
                         <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="DnD Brand Logo" class="logo-image">
                         <h1>DnD <span>Brand</span></h1>
                     </a>
@@ -226,17 +226,17 @@ async function loadHeader() {
         <header>
             <div class="container">
                 <div class="logo">
-                    <a href="index.html">
+                    <a href="/">
                         <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="DnD Brand Logo" class="logo-image">
                         <h1>DnD <span>Brand</span></h1>
                     </a>
                 </div>
                 <nav>
                     <ul>
-                        <li><a href="index.html">Ana Sayfa</a></li>
-                        <li><a href="shop.html">Koleksiyon</a></li>
-                        <li><a href="about.html">Hakkımızda</a></li>
-                        <li><a href="contact.html">İletişim</a></li>
+                        <li><a href="/">Ana Sayfa</a></li>
+                        <li><a href="/shop">Koleksiyon</a></li>
+                        <li><a href="/about">Hakkımızda</a></li>
+                        <li><a href="/contact">İletişim</a></li>
                     </ul>
                 </nav>
                 <div class="nav-icons">
@@ -423,10 +423,10 @@ async function loadFooter() {
                     <div class="footer-column">
                         <h3>Hızlı Linkler</h3>
                         <ul>
-                            <li><a href="index.html">Ana Sayfa</a></li>
-                            <li><a href="shop.html">Koleksiyon</a></li>
-                            <li><a href="about.html">Hakkımızda</a></li>
-                            <li><a href="contact.html">İletişim</a></li>
+                            <li><a href="/">Ana Sayfa</a></li>
+                            <li><a href="/shop">Koleksiyon</a></li>
+                            <li><a href="/about">Hakkımızda</a></li>
+                            <li><a href="/contact">İletişim</a></li>
                             <li><a href="blog.html">Blog</a></li>
                         </ul>
                     </div>

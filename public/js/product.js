@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="error-message">
                     <h2>Ürün bulunamadı</h2>
                     <p>Lütfen geçerli bir ürün seçin.</p>
-                    <a href="shop.html" class="btn">Mağazaya Dön</a>
+                    <a href="/shop" class="btn">Mağazaya Dön</a>
                 </div>
             `;
         }
@@ -209,7 +209,7 @@ async function loadProductDetails(productId) {
             productDetailElement.innerHTML = `
                 <div class="error-message">
                     <p>Ürün bulunamadı.</p>
-                    <a href="shop.html" class="btn">Mağazaya Dön</a>
+                    <a href="/shop" class="btn">Mağazaya Dön</a>
                 </div>
             `;
         return;
@@ -246,7 +246,7 @@ async function loadProductDetails(productId) {
         productDetailElement.innerHTML = `
             <div class="error-message">
                 <p>Ürün yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</p>
-                <a href="shop.html" class="btn">Mağazaya Dön</a>
+                <a href="/shop" class="btn">Mağazaya Dön</a>
             </div>
         `;
     }

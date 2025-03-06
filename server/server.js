@@ -87,6 +87,28 @@ app.use((err, req, res, next) => {
 
 // Serve frontend
 app.get('*', (req, res) => {
+  // Define clean URL mappings
+  const urlMap = {
+    '/': '/public/html/index.html',
+    '/shop': '/public/html/shop.html',
+    '/about': '/public/html/about.html',
+    '/contact': '/public/html/contact.html',
+    '/cart': '/public/html/cart.html',
+    '/checkout': '/public/html/checkout.html',
+    '/account': '/public/html/account.html',
+    '/admin': '/public/html/admin.html',
+    '/admin-login': '/public/html/admin-login.html',
+    '/product': '/public/html/product.html'
+  };
+
+  // Check if the URL is in our map
+  const cleanPath = req.path.split('?')[0]; // Remove query parameters
+  if (urlMap[cleanPath]) {
+    // Serve the mapped file
+    return res.sendFile(path.resolve(__dirname, '..', urlMap[cleanPath]));
+  }
+
+  // For all other routes, serve the index.html
   res.sendFile(path.resolve(__dirname, '../', 'index.html'));
 });
 

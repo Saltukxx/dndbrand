@@ -33,7 +33,7 @@ function initializeCart() {
                 <i class="fas fa-shopping-bag"></i>
                 <h2>Sepetiniz Boş</h2>
                 <p>Sepetinizde henüz ürün bulunmamaktadır.</p>
-                <a href="shop.html" class="btn btn-primary">Alışverişe Başla</a>
+                <a href="/shop" class="btn btn-primary">Alışverişe Başla</a>
             </div>
         `;
         
