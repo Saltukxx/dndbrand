@@ -24,6 +24,49 @@ const CONFIG = {
     SECURITY: {
         REQUIRE_HTTPS: false, // Disabled to prevent redirect loops
         HSTS_ENABLED: false   // Disabled to prevent redirect issues
+    },
+    
+    // API Request settings
+    API_REQUEST: {
+        // Default fetch options for API requests
+        DEFAULT_OPTIONS: {
+            mode: 'cors',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        }
+    }
+};
+
+// Helper function for API requests with proper CORS handling
+CONFIG.fetchAPI = async function(endpoint, options = {}) {
+    try {
+        const url = endpoint.startsWith('http') ? endpoint : `${CONFIG.API_URL}/${endpoint.replace(/^\//, '')}`;
+        
+        // Merge default options with provided options
+        const fetchOptions = {
+            ...CONFIG.API_REQUEST.DEFAULT_OPTIONS,
+            ...options,
+            headers: {
+                ...CONFIG.API_REQUEST.DEFAULT_OPTIONS.headers,
+                ...(options.headers || {})
+            }
+        };
+        
+        const response = await fetch(url, fetchOptions);
+        
+        // Check if the response is ok (status in the range 200-299)
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `API request failed with status ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error(`API request error for ${endpoint}:`, error);
+        throw error;
     }
 };
 

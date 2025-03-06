@@ -24,9 +24,15 @@ async function loadFeaturedProducts() {
         // Show loading state
         featuredContainer.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Ürünler yükleniyor...</div>';
         
-        // Fetch products from API
-        const response = await fetch(`${API_URL}/products`);
-        const data = await response.json();
+        // Fetch products from API using the new fetchAPI function
+        let data;
+        if (window.CONFIG && window.CONFIG.fetchAPI) {
+            data = await window.CONFIG.fetchAPI('products');
+        } else {
+            // Fallback to regular fetch if fetchAPI is not available
+            const response = await fetch(`${API_URL}/products`);
+            data = await response.json();
+        }
         
         // Clear container
         featuredContainer.innerHTML = '';
