@@ -32,259 +32,101 @@ async function loadHeader() {
     try {
         // Check if we're on the checkout page
         const isCheckoutPage = window.location.pathname.includes('checkout.html');
-        // Check if we're on the account page
-        const isAccountPage = window.location.pathname.includes('account.html');
         
         console.log('Is checkout page:', isCheckoutPage);
-        console.log('Is account page:', isAccountPage);
         console.log('Current path:', window.location.pathname);
         
-        // Special header for account page to prevent overlay issues
-        if (isAccountPage) {
-            const accountHeaderHTML = `
-            <div class="account-page-header" style="
-                background-color: #121212; 
-                padding: 20px 0; 
-                position: relative; 
-                z-index: 100; 
-                width: 100%;
-                display: block;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            ">
-                <div class="container" style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    width: 90%;
-                    max-width: 1400px;
-                    margin: 0 auto;
-                    padding: 0 15px;
-                ">
-                    <div class="logo" style="
-                        display: flex;
-                        align-items: center;
-                    ">
-                        <a href="/" style="
-                            display: flex;
-                            align-items: center;
-                            text-decoration: none;
-                        ">
-                            <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="DnD Brand Logo" class="logo-image" style="
-                                height: 50px;
-                                margin-right: 15px;
-                                object-fit: contain;
-                            ">
-                            <h1 style="
-                                font-size: 2.2rem;
-                                font-weight: 700;
-                                font-family: 'League Spartan', sans-serif;
-                                color: #f5f5f5;
-                                margin-bottom: 0;
-                            ">DnD <span style="color: var(--secondary-color);">Brand</span></h1>
+        // Use simplified header for checkout page
+        if (isCheckoutPage) {
+            const checkoutHeaderHTML = `
+            <header>
+                <div class="container">
+                    <div class="logo">
+                        <a href="index.html">
+                            <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="DnD Brand Logo" class="logo-image">
+                            <h1>DnD <span>Brand</span></h1>
                         </a>
                     </div>
-                    <nav style="
-                        display: block;
-                    ">
-                        <ul style="
-                            display: flex;
-                            list-style: none;
-                            margin: 0;
-                            padding: 0;
-                        ">
-                            <li style="margin: 0 15px;"><a href="/" style="
-                                font-size: 16px;
-                                font-weight: 600;
-                                text-transform: uppercase;
-                                letter-spacing: 1px;
-                                position: relative;
-                                padding: 5px 0;
-                                font-family: 'League Spartan', sans-serif;
-                                color: #f5f5f5;
-                                text-decoration: none;
-                            ">Ana Sayfa</a></li>
-                            <li style="margin: 0 15px;"><a href="/shop" style="
-                                font-size: 16px;
-                                font-weight: 600;
-                                text-transform: uppercase;
-                                letter-spacing: 1px;
-                                position: relative;
-                                padding: 5px 0;
-                                font-family: 'League Spartan', sans-serif;
-                                color: #f5f5f5;
-                                text-decoration: none;
-                            ">Koleksiyon</a></li>
-                            <li style="margin: 0 15px;"><a href="/about" style="
-                                font-size: 16px;
-                                font-weight: 600;
-                                text-transform: uppercase;
-                                letter-spacing: 1px;
-                                position: relative;
-                                padding: 5px 0;
-                                font-family: 'League Spartan', sans-serif;
-                                color: #f5f5f5;
-                                text-decoration: none;
-                            ">Hakkımızda</a></li>
-                            <li style="margin: 0 15px;"><a href="/contact" style="
-                                font-size: 16px;
-                                font-weight: 600;
-                                text-transform: uppercase;
-                                letter-spacing: 1px;
-                                position: relative;
-                                padding: 5px 0;
-                                font-family: 'League Spartan', sans-serif;
-                                color: #f5f5f5;
-                                text-decoration: none;
-                            ">İletişim</a></li>
+                    <div class="checkout-steps">
+                        <div class="step active">
+                            <span class="step-number">1</span>
+                            <span class="step-name">Sepet</span>
+                        </div>
+                        <div class="step active">
+                            <span class="step-number">2</span>
+                            <span class="step-name">Teslimat</span>
+                        </div>
+                        <div class="step">
+                            <span class="step-number">3</span>
+                            <span class="step-name">Ödeme</span>
+                        </div>
+                        <div class="step">
+                            <span class="step-number">4</span>
+                            <span class="step-name">Onay</span>
+                        </div>
+                    </div>
+                </div>
+            </header>`;
+            
+            headerContainer.innerHTML = checkoutHeaderHTML;
+        } else {
+            // Standard header for all other pages
+            const standardHeaderHTML = `
+            <header>
+                <div class="container">
+                    <div class="logo">
+                        <a href="./index.html">
+                            <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="DnD Brand Logo" class="logo-image">
+                            <h1>DnD <span>Brand</span></h1>
+                        </a>
+                    </div>
+                    <nav>
+                        <ul>
+                            <li><a href="./index.html" class="nav-link">ANA SAYFA</a></li>
+                            <li><a href="./shop.html" class="nav-link">KOLEKSİYON</a></li>
+                            <li><a href="./about.html" class="nav-link">HAKKIMIZDA</a></li>
+                            <li><a href="./contact.html" class="nav-link">İLETİŞİM</a></li>
                         </ul>
                     </nav>
-                    <div class="nav-icons" style="
-                        display: flex;
-                        align-items: center;
-                    ">
-                        <a href="search.html" class="search-icon" style="
-                            margin-left: 20px;
-                            font-size: 18px;
-                            position: relative;
-                            color: #f5f5f5;
-                            text-decoration: none;
-                        "><i class="fas fa-search"></i></a>
-                        <a href="account.html" class="account-icon" style="
-                            margin-left: 20px;
-                            font-size: 18px;
-                            position: relative;
-                            color: #f5f5f5;
-                            text-decoration: none;
-                        "><i class="fas fa-user"></i></a>
-                        <div class="cart-icon" style="
-                            margin-left: 20px;
-                            font-size: 18px;
-                            position: relative;
-                            color: #f5f5f5;
-                            cursor: pointer;
-                        ">
+                    <div class="nav-icons">
+                        <a href="./search.html" class="search-icon"><i class="fas fa-search"></i></a>
+                        <a href="./account.html" class="account-icon"><i class="fas fa-user"></i><span>HESABIM</span></a>
+                        <a href="./cart.html" class="cart-icon">
                             <i class="fas fa-shopping-bag"></i>
-                            <span class="cart-label" style="margin-left: 5px;">Sepet</span>
-                            <span class="cart-count" style="
-                                position: absolute;
-                                top: -8px;
-                                right: -8px;
-                                background-color: var(--secondary-color);
-                                color: white;
-                                font-size: 10px;
-                                width: 18px;
-                                height: 18px;
-                                border-radius: 50%;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                            ">0</span>
-                        </div>
-                    </div>
-                    <div class="mobile-menu-btn" style="
-                        display: none;
-                        font-size: 24px;
-                        cursor: pointer;
-                        color: #f5f5f5;
-                    ">
-                        <i class="fas fa-bars"></i>
+                            <span>SEPET</span>
+                            <span class="cart-count">0</span>
+                            
+                            <div class="cart-preview">
+                                <div class="cart-preview-header">
+                                    <h3>Sepetiniz</h3>
+                                    <span class="cart-preview-count">0 Ürün</span>
+                                </div>
+                                <div class="cart-preview-items">
+                                    <!-- Cart items will be added here by JavaScript -->
+                                    <div class="empty-cart-message">Sepetiniz boş</div>
+                                </div>
+                                <div class="cart-preview-footer">
+                                    <div class="cart-preview-total">
+                                        <span>Toplam:</span>
+                                        <span class="cart-preview-total-price">₺0.00</span>
+                                    </div>
+                                    <div class="cart-preview-actions">
+                                        <a href="./cart.html" class="view-cart">Sepeti Görüntüle</a>
+                                        <a href="./checkout.html" class="checkout">Ödeme</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
                     </div>
                 </div>
-            </div>
-            `;
+            </header>`;
             
-            // Set the HTML content
-            headerContainer.innerHTML = accountHeaderHTML;
-            console.log('Account header loaded successfully');
-            
-            // No need to fix styling as we've applied inline styles
-            
-            // Initialize header functionality
-            initializeHeader();
-            
-            return;
+            headerContainer.innerHTML = standardHeaderHTML;
         }
-        
-        // Create header HTML - simplified version for checkout page
-        const headerHTML = isCheckoutPage ? `
-        <header>
-            <div class="container">
-                <div class="logo">
-                    <a href="/">
-                        <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="DnD Brand Logo" class="logo-image">
-                        <h1>DnD <span>Brand</span></h1>
-                    </a>
-                </div>
-                <div class="checkout-header-right">
-                    <div class="secure-checkout-badge">
-                        <i class="fas fa-lock"></i> Güvenli Ödeme
-                    </div>
-                </div>
-            </div>
-        </header>
-        ` : `
-        <header>
-            <div class="container">
-                <div class="logo">
-                    <a href="/">
-                        <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="DnD Brand Logo" class="logo-image">
-                        <h1>DnD <span>Brand</span></h1>
-                    </a>
-                </div>
-                <nav>
-                    <ul>
-                        <li><a href="/">Ana Sayfa</a></li>
-                        <li><a href="/shop">Koleksiyon</a></li>
-                        <li><a href="/about">Hakkımızda</a></li>
-                        <li><a href="/contact">İletişim</a></li>
-                    </ul>
-                </nav>
-                <div class="nav-icons">
-                    <a href="search.html" class="search-icon"><i class="fas fa-search"></i></a>
-                    <a href="account.html" class="account-icon"><i class="fas fa-user"></i></a>
-                    <div class="cart-icon">
-                        <i class="fas fa-shopping-bag"></i>
-                        <span class="cart-label">Sepet</span>
-                        <span class="cart-count">0</span>
-                        
-                        <div class="cart-preview">
-                            <div class="cart-preview-header">
-                                <h3>Sepetiniz</h3>
-                                <span class="cart-preview-count">0 Ürün</span>
-                            </div>
-                            <div class="cart-preview-items">
-                                <!-- Cart items will be added here by JavaScript -->
-                                <div class="empty-cart-message">Sepetiniz boş</div>
-                            </div>
-                            <div class="cart-preview-footer">
-                                <div class="cart-preview-total">
-                                    <span>Toplam:</span>
-                                    <span class="cart-preview-total-price">₺0.00</span>
-                                </div>
-                                <div class="cart-preview-actions">
-                                    <a href="cart.html" class="view-cart">Sepeti Görüntüle</a>
-                                    <a href="checkout.html" class="checkout">Ödeme</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="mobile-menu-btn">
-                    <i class="fas fa-bars"></i>
-                </div>
-            </div>
-        </header>
-        `;
-        
-        // Set the HTML content
-        headerContainer.innerHTML = headerHTML;
-        console.log('Header loaded successfully');
-        
-        // Fix header styling immediately after loading
-        fixHeaderStyling();
         
         // Initialize header functionality
         initializeHeader();
+        
     } catch (error) {
         console.error('Error loading header:', error);
     }
@@ -423,22 +265,22 @@ async function loadFooter() {
                     <div class="footer-column">
                         <h3>Hızlı Linkler</h3>
                         <ul>
-                            <li><a href="/public/html/index.html">Ana Sayfa</a></li>
-                            <li><a href="/public/html/shop.html">Koleksiyon</a></li>
-                            <li><a href="/public/html/about.html">Hakkımızda</a></li>
-                            <li><a href="/public/html/contact.html">İletişim</a></li>
-                            <li><a href="/public/html/blog.html">Blog</a></li>
+                            <li><a href="./index.html">Ana Sayfa</a></li>
+                            <li><a href="./shop.html">Koleksiyon</a></li>
+                            <li><a href="./about.html">Hakkımızda</a></li>
+                            <li><a href="./contact.html">İletişim</a></li>
+                            <li><a href="./blog.html">Blog</a></li>
                         </ul>
                     </div>
                     
                     <div class="footer-column">
                         <h3>Yardım</h3>
                         <ul>
-                            <li><a href="/public/html/faq.html">Sıkça Sorulan Sorular</a></li>
-                            <li><a href="/public/html/shipping.html">Kargo ve Teslimat</a></li>
-                            <li><a href="/public/html/returns.html">İade ve Değişim</a></li>
-                            <li><a href="/public/html/size-guide.html">Beden Rehberi</a></li>
-                            <li><a href="/public/html/privacy.html">Gizlilik Politikası</a></li>
+                            <li><a href="./faq.html">Sıkça Sorulan Sorular</a></li>
+                            <li><a href="./shipping.html">Kargo ve Teslimat</a></li>
+                            <li><a href="./returns.html">İade ve Değişim</a></li>
+                            <li><a href="./size-guide.html">Beden Rehberi</a></li>
+                            <li><a href="./privacy.html">Gizlilik Politikası</a></li>
                         </ul>
                     </div>
                     

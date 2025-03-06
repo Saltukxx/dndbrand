@@ -123,59 +123,78 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add a timestamp to prevent caching
             const timestamp = new Date().getTime();
             
-            // Add more debugging for CORS issues
-            console.log('Making fetch request to:', `${API_URL}/products?_t=${timestamp}`);
-            
-            const response = await fetch(`${API_URL}/products?_t=${timestamp}`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json'
+            // Use the improved fetchAPI function from config.js
+            if (window.CONFIG && window.CONFIG.fetchAPI) {
+                try {
+                    console.log('Using CONFIG.fetchAPI for products...');
+                    const data = await CONFIG.fetchAPI(`products?_t=${timestamp}`);
+                    console.log('Successfully fetched data via CONFIG.fetchAPI!');
+                    
+                    // Process the data as usual
+                    if (Array.isArray(data)) {
+                        console.log(`Found ${data.length} products in the response (direct array)`);
+                        return data;
+                    } else if (data && data.products && Array.isArray(data.products)) {
+                        console.log(`Found ${data.products.length} products in the response (products property)`);
+                        return data.products;
+                    } else if (data && data.data && Array.isArray(data.data)) {
+                        console.log(`Found ${data.data.length} products in the response (data property)`);
+                        return data.data;
+                    } else if (data && data.results && Array.isArray(data.results)) {
+                        console.log(`Found ${data.results.length} products in the response (results property)`);
+                        return data.results;
+                    } else if (data && data.value && Array.isArray(data.value)) {
+                        console.log(`Found ${data.value.length} products in the response (value property)`);
+                        return data.value;
+                    }
+                    
+                    console.error('Could not find products in the response:', data);
+                    return getMockProducts();
+                } catch (apiError) {
+                    console.error('CONFIG.fetchAPI request failed:', apiError);
+                    console.log('Falling back to mock products');
+                    return getMockProducts();
                 }
-            });
-            
-            console.log('Response status:', response.status);
-            console.log('Response headers:', [...response.headers.entries()]);
-            
-            if (!response.ok) {
-                console.error('Error response:', response);
-                throw new Error(`Ürünler yüklenirken bir hata oluştu. Status: ${response.status}`);
+            } else {
+                // Direct fetch as fallback if CONFIG.fetchAPI is not available
+                try {
+                    console.log('CONFIG.fetchAPI not available, using direct fetch');
+                    
+                    // For Render-hosted backends, ensure we're not sending credentials
+                    const response = await fetch(`${API_URL}/products?_t=${timestamp}`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        },
+                        credentials: 'omit', // Important for CORS with Render
+                        mode: 'cors'
+                    });
+                    
+                    console.log('Response status:', response.status);
+                    
+                    if (!response.ok) {
+                        throw new Error(`API request failed with status ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('Raw API response:', data);
+                    
+                    // Process the data
+                    if (Array.isArray(data)) {
+                        return data;
+                    } else if (data && data.data && Array.isArray(data.data)) {
+                        return data.data;
+                    } else if (data && data.products && Array.isArray(data.products)) {
+                        return data.products;
+                    } else {
+                        console.error('Unexpected data format:', data);
+                        return getMockProducts();
+                    }
+                } catch (fetchError) {
+                    console.error('Direct fetch failed:', fetchError);
+                    return getMockProducts();
+                }
             }
-            
-            const data = await response.json();
-            console.log('Raw API response:', data);
-            
-            // Check if the response has a 'value' property (PowerShell format)
-            if (data && data.value && Array.isArray(data.value)) {
-                console.log(`Found ${data.value.length} products in the response (value property)`);
-                return data.value;
-            }
-            
-            // Check if the response has a 'products' property
-            if (data && data.products && Array.isArray(data.products)) {
-                console.log(`Found ${data.products.length} products in the response (products property)`);
-                return data.products;
-            }
-            
-            // Check if the response has a 'data' property
-            if (data && data.data && Array.isArray(data.data)) {
-                console.log(`Found ${data.data.length} products in the response (data property)`);
-                return data.data;
-            }
-            
-            // Check if the response has a 'results' property
-            if (data && data.results && Array.isArray(data.results)) {
-                console.log(`Found ${data.results.length} products in the response (results property)`);
-                return data.results;
-            }
-            
-            // If the response is an array directly
-            if (Array.isArray(data)) {
-                console.log(`Found ${data.length} products in the response (direct array)`);
-                return data;
-            }
-            
-            console.error('Could not find products in the response:', data);
-            return [];
         } catch (error) {
             console.error('Error fetching products:', error);
             
@@ -183,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (error instanceof TypeError && error.message.includes('fetch')) {
                 console.error('This might be a CORS issue. Check that your API server allows requests from this origin.');
                 console.error('Current origin:', window.location.origin);
+                console.log('Using mock products due to CORS or network error');
             }
             
             // Return mock products for development/fallback
@@ -943,7 +963,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <img src="${productImage}" alt="${product.name}" 
                              onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';">
                         <div class="product-overlay">
-                            <a href="product.html?id=${productId}" class="quick-view" data-id="${productId}">
+                            <a href="./product.html?id=${productId}" class="quick-view" data-id="${productId}">
                                 <i class="fas fa-eye"></i>
                             </a>
                             <a href="#" class="add-to-cart" data-id="${productId}">
@@ -955,7 +975,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
                     <div class="product-info">
-                        <h3><a href="product.html?id=${productId}">${product.name}</a></h3>
+                        <h3><a href="./product.html?id=${productId}">${product.name}</a></h3>
                         <p class="brand">${categoryName}</p>
                         <div class="price">
                             ${oldPriceHtml}
@@ -1155,7 +1175,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sessionStorage.setItem('lastProductClick', now.toString());
         
         // Navigate to product page
-        window.location.href = `product.html?id=${productId}`;
+        window.location.href = `./product.html?id=${productId}`;
     }
 
     // Add event listeners to product actions

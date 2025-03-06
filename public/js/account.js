@@ -1174,7 +1174,7 @@ function createWishlistElement(item) {
     
     // Make the whole card clickable to go to product page
     element.addEventListener('click', () => {
-        window.location.href = `product.html?id=${item._id}`;
+        window.location.href = `./product.html?id=${item._id}`;
     });
     
     return element;

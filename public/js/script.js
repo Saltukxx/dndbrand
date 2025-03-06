@@ -247,7 +247,7 @@ function openQuickView(productId) {
                 </div>
                 ` : ''}
                 <div class="quick-view-actions">
-                    <a href="product.html?id=${product.id}" class="btn view-details">Detayları Gör</a>
+                    <a href="./product.html?id=${product.id}" class="btn view-details">Detayları Gör</a>
                     ${product.stock > 0 ? `<button class="btn add-to-cart-btn">Sepete Ekle</button>` : `<button class="btn add-to-cart-btn disabled" disabled>Tükendi</button>`}
                 </div>
             </div>

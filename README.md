@@ -147,4 +147,60 @@ Please change these credentials in production.
 
 ## License
 
-This project is licensed under the MIT License. 
+This project is licensed under the MIT License.
+
+# DnD Brand E-commerce Website
+
+This is the frontend for the DnD Brand e-commerce website.
+
+## Running the Website Locally
+
+There are two ways to run the website locally:
+
+### Method 1: Using the Node.js Server (Recommended)
+
+This method avoids CORS issues by serving the website from a proper web server.
+
+1. Make sure you have Node.js installed on your computer
+2. Open a terminal/command prompt in the project directory
+3. Install dependencies:
+   ```
+   npm install
+   ```
+4. Start the server:
+   ```
+   npm start
+   ```
+5. Open your browser and navigate to:
+   ```
+   http://localhost:3000/html/index.html
+   ```
+
+### Method 2: Using the File System (May Encounter CORS Issues)
+
+If you open the HTML files directly from your file system, you may encounter CORS issues when trying to fetch data from the API. The website will still work, but it will use mock data instead of real data from the API.
+
+1. Navigate to the `public/html` directory
+2. Open `index.html` in your web browser
+
+## CORS Issues
+
+If you're experiencing CORS issues:
+
+1. The website has been configured to automatically use mock data when running from a `file://` origin
+2. For development, use the Node.js server method described above
+3. If you need to access the real API data, you must run the website from a proper web server
+
+## API Configuration
+
+The API URL is configured in `public/js/config.js`. By default, it points to the production API:
+
+```javascript
+API_URL: 'https://dndbrand-server.onrender.com/api'
+```
+
+For local development with a local API server, you can uncomment the development URL:
+
+```javascript
+// API_URL: 'http://localhost:8080/api'
+``` 

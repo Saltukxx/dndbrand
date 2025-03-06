@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="error-message">
                     <h2>Ürün bulunamadı</h2>
                     <p>Lütfen geçerli bir ürün seçin.</p>
-                    <a href="/shop" class="btn">Mağazaya Dön</a>
+                    <a href="./shop.html" class="btn">Mağazaya Dön</a>
                 </div>
             `;
         }
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 (e.target.tagName === 'SPAN' && e.target.textContent === 'Sepet')) {
                 e.preventDefault();
                 e.stopPropagation();
-                window.location.href = 'cart.html';
+                window.location.href = './cart.html';
             }
         });
     }
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (viewCartLink) {
         viewCartLink.addEventListener('click', function(e) {
             e.preventDefault();
-            window.location.href = 'cart.html';
+            window.location.href = './cart.html';
         });
     }
     
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (checkoutLink) {
         checkoutLink.addEventListener('click', function(e) {
             e.preventDefault();
-            window.location.href = 'checkout.html';
+            window.location.href = './checkout.html';
         });
     }
     
@@ -77,54 +77,59 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Helper function to get the correct image path
+// Get product image with proper handling
 function getProductImage(imagePath, useOriginal = false) {
+    // Handle null, undefined, or non-string values
     if (!imagePath) {
-        return '/img/no-image.jpg';
+        return 'https://dndbrand-server.onrender.com/api/images/default-product.jpg';
     }
     
-    // If it's already a full URL, return it as is
-    if (typeof imagePath === 'string' && (imagePath.startsWith('http') || imagePath.startsWith('https'))) {
-        return imagePath;
+    // If imagePath is an array, use the first item
+    if (Array.isArray(imagePath)) {
+        if (imagePath.length === 0) {
+            return 'https://dndbrand-server.onrender.com/api/images/default-product.jpg';
+        }
+        imagePath = imagePath[0];
     }
     
-    // If it's an object with thumbnail and original properties (new format)
-    if (typeof imagePath === 'object') {
-        if (useOriginal && imagePath.original) {
+    // If imagePath is an object, try to extract the URL
+    if (typeof imagePath === 'object' && imagePath !== null) {
+        if (imagePath.url) {
+            imagePath = imagePath.url;
+        } else if (imagePath.src) {
+            imagePath = imagePath.src;
+        } else if (imagePath.path) {
+            imagePath = imagePath.path;
+        } else if (imagePath.original) {
             imagePath = imagePath.original;
         } else if (imagePath.thumbnail) {
             imagePath = imagePath.thumbnail;
-        } else if (imagePath.original) {
-            imagePath = imagePath.original;
-        } else if (imagePath.url) {
-            imagePath = imagePath.url;
         } else {
-            return '/img/no-image.jpg';
+            // Can't extract a string URL from the object
+            return 'https://dndbrand-server.onrender.com/api/images/default-product.jpg';
         }
     }
     
-    // If it's an upload path, use it directly from the server root
-    if (typeof imagePath === 'string' && imagePath.includes('/uploads/')) {
-        // Make sure we don't duplicate the /uploads/ part
-        if (imagePath.startsWith('/api/uploads/')) {
-            return imagePath.replace('/api/uploads/', '/uploads/');
-        }
-        // Make sure the path starts with a slash
-        if (!imagePath.startsWith('/')) {
-            return '/' + imagePath;
-        }
+    // Ensure imagePath is a string at this point
+    imagePath = String(imagePath);
+    
+    // If it's already a full URL, return it
+    if (imagePath.startsWith('http')) {
         return imagePath;
-    } 
-    
-    // For other API paths, add the API_URL
-    if (typeof imagePath === 'string') {
-    if (!imagePath.startsWith('/')) {
-        imagePath = '/' + imagePath;
-    }
-    return `${API_URL}${imagePath}`;
     }
     
-    return '/img/no-image.jpg';
+    // If it's a relative path, check if it's a path to our images folder
+    if (imagePath.includes('/images/')) {
+        return imagePath;
+    }
+    
+    // If it's just a filename, add the API URL path
+    if (!imagePath.includes('/')) {
+        return `https://dndbrand-server.onrender.com/api/images/${imagePath}`;
+    }
+    
+    // Default to API URL
+    return `https://dndbrand-server.onrender.com/api${imagePath}`;
 }
 
 // Fetch product details from API
@@ -132,36 +137,66 @@ async function fetchProductDetails(productId) {
     try {
         // Add timestamp to prevent caching
         const timestamp = new Date().getTime();
-        const url = `${API_URL}/products/${productId}?_=${timestamp}`;
+        const apiUrl = 'https://dndbrand-server.onrender.com/api';
+        const url = `${apiUrl}/products/${productId}?_=${timestamp}`;
         
-        const response = await fetch(url);
+        console.log('Fetching product from:', url);
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+        // Try multiple CORS proxies with different timeouts
+        const corsProxies = [
+            'https://api.cors.sh/',
+            'https://corsproxy.io/?',
+            'https://cors-proxy.htmldriven.com/?url=',
+            'https://api.allorigins.win/raw?url=',
+            'https://crossorigin.me/'
+        ];
+        
+        // Create a timeout promise
+        const timeout = (ms) => new Promise((_, reject) => 
+            setTimeout(() => reject(new Error(`Request timed out after ${ms}ms`)), ms)
+        );
+        
+        // Try each CORS proxy with a timeout
+        for (const proxy of corsProxies) {
+            try {
+                console.log('Trying CORS proxy:', proxy);
+                const proxyUrl = `${proxy}${encodeURIComponent(url)}`;
+                
+                // Race between fetch and timeout
+                const response = await Promise.race([
+                    fetch(proxyUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        },
+                        credentials: 'omit'
+                    }),
+                    timeout(5000) // 5 second timeout
+                ]);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Proxy request successful:', data);
+                    
+                    // Check for different response formats
+                    if (data.success && data.data) {
+                        return data.data;
+                    } else if (data._id) {
+                        return data;
+                    } else if (data.product) {
+                        return data.product;
+                    } else if (Array.isArray(data)) {
+                        return data.find(product => product._id === productId || product.id === productId);
+                    }
+                }
+                console.warn(`Proxy request failed with status: ${response.status} for proxy: ${proxy}`);
+            } catch (proxyError) {
+                console.warn(`Proxy request failed: ${proxyError.message} for proxy: ${proxy}`);
+            }
         }
         
-        const data = await response.json();
-        
-        // Check for different response formats
-        if (data.success && data.data) {
-            return data.data;
-        } else if (!data.success && data.error) {
-            // Format: { success: false, error: '...' }
-            console.error('API error:', data.error);
-            return null;
-        } else if (data._id) {
-            return data;
-        } else if (data.product) {
-            return data.product;
-        } else if (Array.isArray(data)) {
-            // Format: Array of products, find by ID
-            return data.find(product => product._id === productId || product.id === productId);
-        } else {
-            console.error('Unknown API response format:', data);
-            
-            // Try fallback approach - fetch all products and find by ID
-            return await fetchAllProductsAndFindById(productId);
-        }
+        // If all proxy requests fail, try the fallback approach
+        return await fetchAllProductsAndFindById(productId);
     } catch (error) {
         console.error('Error fetching product details:', error);
         
@@ -173,28 +208,75 @@ async function fetchProductDetails(productId) {
 // Fallback function to fetch all products and find by ID
 async function fetchAllProductsAndFindById(productId) {
     try {
-        const response = await fetch(`${API_URL}/products`);
-        const data = await response.json();
+        const apiUrl = 'https://dndbrand-server.onrender.com/api';
+        const url = `${apiUrl}/products`;
         
-        let products = [];
-        if (data.success && Array.isArray(data.data)) {
-            products = data.data;
-        } else if (Array.isArray(data)) {
-            products = data;
+        console.log('Fetching all products as fallback from:', url);
+        
+        // Try multiple CORS proxies with different timeouts
+        const corsProxies = [
+            'https://api.cors.sh/',
+            'https://corsproxy.io/?',
+            'https://cors-proxy.htmldriven.com/?url=',
+            'https://api.allorigins.win/raw?url=',
+            'https://crossorigin.me/'
+        ];
+        
+        // Create a timeout promise
+        const timeout = (ms) => new Promise((_, reject) => 
+            setTimeout(() => reject(new Error(`Request timed out after ${ms}ms`)), ms)
+        );
+        
+        // Try each CORS proxy with a timeout
+        for (const proxy of corsProxies) {
+            try {
+                console.log('Trying CORS proxy for all products:', proxy);
+                const proxyUrl = `${proxy}${encodeURIComponent(url)}`;
+                
+                // Race between fetch and timeout
+                const response = await Promise.race([
+                    fetch(proxyUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        },
+                        credentials: 'omit'
+                    }),
+                    timeout(5000) // 5 second timeout
+                ]);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Proxy request for all products successful');
+                    
+                    let products = [];
+                    if (data.success && Array.isArray(data.data)) {
+                        products = data.data;
+                    } else if (Array.isArray(data)) {
+                        products = data;
+                    }
+                    
+                    return products.find(product => product._id === productId || product.id === productId);
+                }
+                console.warn(`Proxy request for all products failed with status: ${response.status} for proxy: ${proxy}`);
+            } catch (proxyError) {
+                console.warn(`Proxy request for all products failed: ${proxyError.message} for proxy: ${proxy}`);
+            }
         }
         
-        return products.find(product => product._id === productId || product.id === productId);
+        // If all approaches fail, throw an error
+        throw new Error('Could not fetch product data from any source');
     } catch (fallbackError) {
-        console.error('Fallback approach also failed:', fallbackError);
-        return null;
+        console.error('All product fetch approaches failed:', fallbackError);
+        throw fallbackError;
     }
 }
 
 // Load product details
 async function loadProductDetails(productId) {
-    // Show loading
-    const productDetailElement = document.getElementById('product-detail');
-    productDetailElement.innerHTML = `
+    // Show loading spinner
+    const productDetailContainer = document.getElementById('product-detail');
+    productDetailContainer.innerHTML = `
         <div class="loading-spinner">
             <div class="spinner"></div>
             <p>Ürün yükleniyor...</p>
@@ -203,37 +285,168 @@ async function loadProductDetails(productId) {
     
     try {
         // Fetch product details
-    const product = await fetchProductDetails(productId);
-    
-    if (!product) {
-            productDetailElement.innerHTML = `
-                <div class="error-message">
-                    <p>Ürün bulunamadı.</p>
-                    <a href="/shop" class="btn">Mağazaya Dön</a>
+        const product = await fetchProductDetails(productId);
+        
+        if (!product) {
+            // Product not found, show error message
+            productDetailContainer.innerHTML = `
+                <div class="product-not-found">
+                    <h2>Ürün Bulunamadı</h2>
+                    <p>Aradığınız ürün bulunamadı veya kaldırılmış olabilir.</p>
+                    <a href="./shop.html" class="btn">Mağazaya Dön</a>
                 </div>
             `;
-        return;
-    }
-    
-    // Update page title
-        document.title = `${product.name} - DnD Brand`;
-        
-        // Update breadcrumb
-        const breadcrumbProductName = document.querySelector('.breadcrumb-item.active');
-        if (breadcrumbProductName) {
-            breadcrumbProductName.textContent = product.name;
+            return;
         }
         
-        // Get product template
-        const template = document.getElementById('product-template');
-        const productContent = template.content.cloneNode(true);
+        // Update page title
+        document.title = `${product.name} | DnD Brand`;
         
-        // Update product details
-        updateProductDetails(productContent, product);
+        // Create product detail HTML
+        const productHTML = `
+            <div class="product-detail-container">
+                <div class="product-images">
+                    ${product.isNew || product.isFeatured ? `<div class="premium-badge">${product.isNew ? 'Yeni' : 'Premium'}</div>` : ''}
+                    <div class="main-image">
+                        <img src="${getProductImage(product)}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/600x800?text=Ürün+Görseli'; this.onerror=null;">
+                    </div>
+                    <div class="thumbnail-container">
+                        <div class="thumbnail active">
+                            <img src="${getProductImage(product)}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/80x80?text=Ürün'; this.onerror=null;">
+                        </div>
+                        ${product.images && Array.isArray(product.images) && product.images.slice(1).map((img, index) => `
+                            <div class="thumbnail">
+                                <img src="${getProductImage(img)}" alt="${product.name} - ${index + 2}" onerror="this.src='https://via.placeholder.com/80x80?text=Ürün'; this.onerror=null;">
+                            </div>
+                        `).join('') || ''}
+                    </div>
+                </div>
+                
+                <div class="product-info">
+                    <h1 class="product-title">${product.name}</h1>
+                    
+                    <div class="product-price">
+                        ${product.discount ? `
+                            <span class="old-price">₺${product.price.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</span>
+                            <span>₺${(product.price * (1 - product.discount / 100)).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</span>
+                            <span class="discount-badge">%${product.discount} İndirim</span>
+                        ` : `₺${product.price.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`}
+                    </div>
+                    
+                    <p class="product-description">${product.description || 'Bu ürün hakkında detaylı bilgi yakında eklenecektir.'}</p>
+                    
+                    <div class="product-features">
+                        <ul class="feature-list">
+                            <li class="feature-item"><i class="fas fa-check"></i> Premium kalite</li>
+                            <li class="feature-item"><i class="fas fa-check"></i> Özel tasarım</li>
+                            <li class="feature-item"><i class="fas fa-check"></i> Dayanıklı malzeme</li>
+                            ${product.brand ? `<li class="feature-item"><i class="fas fa-check"></i> ${product.brand} markası</li>` : ''}
+                        </ul>
+                    </div>
+                    
+                    <div class="product-variants">
+                        ${product.colors && product.colors.length > 0 ? `
+                            <div class="variant-group">
+                                <span class="variant-title">Renk</span>
+                                <div class="variant-options">
+                                    ${product.colors.map(color => `
+                                        <div class="variant-option color-option" 
+                                             data-value="${color}" 
+                                             style="background-color: ${getColorCode(color)}" 
+                                             title="${color}"></div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${product.sizes && product.sizes.length > 0 ? `
+                            <div class="variant-group">
+                                <span class="variant-title">Beden</span>
+                                <div class="variant-options">
+                                    ${product.sizes.map(size => `
+                                        <div class="variant-option size-option" data-value="${size}">${size}</div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="product-actions">
+                        <div class="quantity-selector">
+                            <button class="quantity-btn quantity-decrease">-</button>
+                            <input type="text" class="quantity-input" value="1" min="1">
+                            <button class="quantity-btn quantity-increase">+</button>
+                        </div>
+                        
+                        <button class="add-to-cart-btn">
+                            <i class="fas fa-shopping-cart"></i> Sepete Ekle
+                        </button>
+                        
+                        <button class="wishlist-btn">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="product-guarantee">
+                        <div class="guarantee-item">
+                            <i class="fas fa-truck"></i>
+                            <span>Hızlı Teslimat</span>
+                        </div>
+                        <div class="guarantee-item">
+                            <i class="fas fa-undo"></i>
+                            <span>30 Gün İade</span>
+                        </div>
+                        <div class="guarantee-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Güvenli Ödeme</span>
+                        </div>
+                        <div class="guarantee-item">
+                            <i class="fas fa-headset"></i>
+                            <span>7/24 Destek</span>
+                        </div>
+                    </div>
+                    
+                    <div class="product-share">
+                        <span class="share-label">Paylaş:</span>
+                        <div class="share-buttons">
+                            <a href="#" class="share-button"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" class="share-button"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="share-button"><i class="fab fa-instagram"></i></a>
+                            <a href="#" class="share-button"><i class="fab fa-pinterest-p"></i></a>
+                        </div>
+                    </div>
+                    
+                    <div class="product-additional-info">
+                        <div class="tabs">
+                            <div class="tab active" data-tab="tab-description">Açıklama</div>
+                            <div class="tab" data-tab="tab-additional-info">Ek Bilgiler</div>
+                            <div class="tab" data-tab="tab-reviews">Yorumlar</div>
+                        </div>
+                        
+                        <div class="tab-content active" id="tab-description">
+                            <p>${product.description || 'Bu ürün hakkında detaylı bilgi yakında eklenecektir.'}</p>
+                        </div>
+                        
+                        <div class="tab-content" id="tab-additional-info">
+                            <ul>
+                                ${product.brand ? `<li><strong>Marka:</strong> ${product.brand}</li>` : ''}
+                                ${product.material ? `<li><strong>Malzeme:</strong> ${product.material}</li>` : ''}
+                                ${product.category ? `<li><strong>Kategori:</strong> ${product.category}</li>` : ''}
+                                ${product.colors ? `<li><strong>Renkler:</strong> ${product.colors.join(', ')}</li>` : ''}
+                                ${product.sizes ? `<li><strong>Bedenler:</strong> ${product.sizes.join(', ')}</li>` : ''}
+                            </ul>
+                        </div>
+                        
+                        <div class="tab-content" id="tab-reviews">
+                            <p>Bu ürün için henüz yorum bulunmamaktadır.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
         
-        // Clear loading and append product content
-        productDetailElement.innerHTML = '';
-        productDetailElement.appendChild(productContent);
+        // Update the container with the product HTML
+        productDetailContainer.innerHTML = productHTML;
         
         // Initialize product functionality
         initializeProductFunctionality(product);
@@ -243,12 +456,51 @@ async function loadProductDetails(productId) {
         
     } catch (error) {
         console.error('Error loading product details:', error);
-        productDetailElement.innerHTML = `
-            <div class="error-message">
-                <p>Ürün yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</p>
-                <a href="/shop" class="btn">Mağazaya Dön</a>
+        
+        // Show error message with retry button
+        productDetailContainer.innerHTML = `
+            <div class="product-error">
+                <h2>Bağlantı Hatası</h2>
+                <p>Ürün bilgileri yüklenirken bir sorun oluştu. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.</p>
+                <div class="error-details">
+                    <p>Hata: ${error.message}</p>
+                    <p>Ürün ID: ${productId}</p>
+                </div>
+                <div class="error-actions">
+                    <button class="btn retry-button">Tekrar Dene</button>
+                    <a href="./shop.html" class="btn btn-secondary">Mağazaya Dön</a>
+                </div>
+                
+                <div class="basic-product-info">
+                    <h3>Temel Ürün Bilgileri</h3>
+                    <p>API bağlantısı kurulamadığı için temel ürün bilgileri gösteriliyor.</p>
+                    
+                    <div class="basic-product-details">
+                        <div class="basic-product-image">
+                            <img src="https://via.placeholder.com/400x500?text=Urun+Gorseli" alt="Ürün Görseli">
+                        </div>
+                        <div class="basic-product-content">
+                            <h2>Ürün #${productId}</h2>
+                            <p class="basic-product-price">₺XXX.XX</p>
+                            <p class="basic-product-description">Bu ürün hakkında detaylı bilgi için lütfen daha sonra tekrar deneyin veya müşteri hizmetleriyle iletişime geçin.</p>
+                            
+                            <div class="basic-product-actions">
+                                <a href="./shop.html" class="btn">Diğer Ürünleri Gör</a>
+                                <a href="./contact.html" class="btn btn-secondary">İletişime Geç</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
+        
+        // Add event listener to retry button
+        const retryButton = productDetailContainer.querySelector('.retry-button');
+        if (retryButton) {
+            retryButton.addEventListener('click', () => {
+                loadProductDetails(productId);
+            });
+        }
     }
 }
 
@@ -289,10 +541,37 @@ function updateProductImages(template, product) {
     
     if (!mainImageElement || !thumbnailContainer) return;
     
+    // Get product images
+    let images = [];
+    
+    // Handle different image formats
+    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+        // Format: product.images = ['image1.jpg', 'image2.jpg']
+        images = product.images;
+    } else if (product.image) {
+        // Format: product.image = 'image.jpg'
+        images = [product.image];
+    } else if (product.additionalImages && Array.isArray(product.additionalImages)) {
+        // Format: product.additionalImages = ['image1.jpg', 'image2.jpg']
+        images = product.additionalImages;
+    } else if (product.imageUrl) {
+        // Format: product.imageUrl = 'image.jpg'
+        images = [product.imageUrl];
+    } else {
+        // No images found, use default
+        images = ['default-product.jpg'];
+    }
+    
     // Set main image
-    const mainImageSrc = getProductImage(product);
+    const mainImageSrc = getProductImage(images[0]);
     mainImageElement.src = mainImageSrc;
     mainImageElement.alt = product.name;
+    
+    // Add onerror handler to main image
+    mainImageElement.onerror = function() {
+        this.src = 'https://dndbrand-server.onrender.com/api/images/default-product.jpg';
+        this.onerror = null; // Prevent infinite loop
+    };
     
     // Clear thumbnails
     thumbnailContainer.innerHTML = '';
@@ -301,26 +580,44 @@ function updateProductImages(template, product) {
     const mainThumbnail = document.createElement('div');
     mainThumbnail.className = 'thumbnail active';
     mainThumbnail.innerHTML = `<img src="${mainImageSrc}" alt="${product.name}">`;
+    
+    // Add onerror handler to thumbnail
+    const mainThumbnailImg = mainThumbnail.querySelector('img');
+    if (mainThumbnailImg) {
+        mainThumbnailImg.onerror = function() {
+            this.src = 'https://dndbrand-server.onrender.com/api/images/default-product.jpg';
+            this.onerror = null; // Prevent infinite loop
+        };
+    }
+    
     thumbnailContainer.appendChild(mainThumbnail);
     
     // Add additional images as thumbnails
-    if (product.additionalImages && Array.isArray(product.additionalImages)) {
-        product.additionalImages.forEach((imagePath, index) => {
+    if (images.length > 1) {
+        for (let i = 1; i < images.length; i++) {
             const thumbnail = document.createElement('div');
             thumbnail.className = 'thumbnail';
             
             // Get full image path
-            const fullImagePath = imagePath.startsWith('http') ? 
-                imagePath : 
-                `../images/products/${imagePath}`;
+            const fullImagePath = getProductImage(images[i]);
             
-            thumbnail.innerHTML = `<img src="${fullImagePath}" alt="${product.name} - Image ${index + 2}">`;
+            thumbnail.innerHTML = `<img src="${fullImagePath}" alt="${product.name} - Image ${i + 1}">`;
+            
+            // Add onerror handler to thumbnail
+            const thumbnailImg = thumbnail.querySelector('img');
+            if (thumbnailImg) {
+                thumbnailImg.onerror = function() {
+                    this.src = 'https://dndbrand-server.onrender.com/api/images/default-product.jpg';
+                    this.onerror = null; // Prevent infinite loop
+                };
+            }
+            
             thumbnailContainer.appendChild(thumbnail);
-        });
+        }
     }
     
-    // Add click event to thumbnails
-    const thumbnails = thumbnailContainer.querySelectorAll('.thumbnail');
+    // Add click event listeners to thumbnails
+    const thumbnails = template.querySelectorAll('.thumbnail');
     thumbnails.forEach(thumb => {
         thumb.addEventListener('click', function() {
             // Update active class
@@ -329,23 +626,40 @@ function updateProductImages(template, product) {
             
             // Update main image
             const thumbImg = this.querySelector('img');
-            mainImageElement.src = thumbImg.src;
+            if (thumbImg && mainImageElement) {
+                mainImageElement.src = thumbImg.src;
+                mainImageElement.alt = thumbImg.alt;
+            }
         });
     });
 }
 
-// Update product variants
+// Update product variants (colors, sizes)
 function updateProductVariants(template, product) {
     const variantsContainer = template.querySelector('.product-variants');
-    
     if (!variantsContainer) return;
     
-    // Clear variants
+    // Clear existing variants
     variantsContainer.innerHTML = '';
     
     // Check if product has variants
-    if (!product.variants || Object.keys(product.variants).length === 0) {
-        variantsContainer.style.display = 'none';
+    if (!product.variants) {
+        // Try to use colors and sizes instead
+        if (product.colors && Array.isArray(product.colors) && product.colors.length > 0) {
+            addColorVariants(variantsContainer, product.colors);
+        }
+        
+        if (product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0) {
+            addSizeVariants(variantsContainer, product.sizes);
+        }
+        
+        // If no variants, colors, or sizes, hide the container
+        if (!product.colors && !product.sizes) {
+            variantsContainer.style.display = 'none';
+        } else {
+            variantsContainer.style.display = 'block';
+        }
+        
         return;
     }
     
@@ -354,6 +668,12 @@ function updateProductVariants(template, product) {
     
     // Add each variant group
     Object.entries(product.variants).forEach(([variantName, options]) => {
+        // Skip if options is not an array
+        if (!Array.isArray(options)) {
+            console.warn(`Variant ${variantName} options is not an array:`, options);
+            return;
+        }
+        
         const variantGroup = document.createElement('div');
         variantGroup.className = 'variant-group';
         variantGroup.dataset.variantName = variantName;
@@ -361,7 +681,7 @@ function updateProductVariants(template, product) {
         // Add variant title
         const variantTitle = document.createElement('span');
         variantTitle.className = 'variant-title';
-        variantTitle.textContent = variantName;
+        variantTitle.textContent = variantName.charAt(0).toUpperCase() + variantName.slice(1);
         variantGroup.appendChild(variantTitle);
         
         // Add variant options
@@ -394,6 +714,96 @@ function updateProductVariants(template, product) {
         variantGroup.appendChild(variantOptions);
         variantsContainer.appendChild(variantGroup);
     });
+}
+
+// Helper function to add color variants
+function addColorVariants(container, colors) {
+    const variantGroup = document.createElement('div');
+    variantGroup.className = 'variant-group';
+    variantGroup.dataset.variantName = 'color';
+    
+    // Add variant title
+    const variantTitle = document.createElement('span');
+    variantTitle.className = 'variant-title';
+    variantTitle.textContent = 'Renk';
+    variantGroup.appendChild(variantTitle);
+    
+    // Add variant options
+    const variantOptions = document.createElement('div');
+    variantOptions.className = 'variant-options';
+    
+    // Add options
+    colors.forEach(color => {
+        const optionElement = document.createElement('div');
+        optionElement.className = 'variant-option color-option';
+        optionElement.dataset.value = color;
+        
+        // Add color swatch
+        const colorCode = getColorCode(color);
+        optionElement.style.backgroundColor = colorCode;
+        optionElement.title = color;
+        
+        // Add click event
+        optionElement.addEventListener('click', function() {
+            // Update selected class
+            variantOptions.querySelectorAll('.variant-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            this.classList.add('selected');
+        });
+        
+        variantOptions.appendChild(optionElement);
+    });
+    
+    // Select first option by default
+    const firstOption = variantOptions.querySelector('.variant-option');
+    if (firstOption) firstOption.classList.add('selected');
+    
+    variantGroup.appendChild(variantOptions);
+    container.appendChild(variantGroup);
+}
+
+// Helper function to add size variants
+function addSizeVariants(container, sizes) {
+    const variantGroup = document.createElement('div');
+    variantGroup.className = 'variant-group';
+    variantGroup.dataset.variantName = 'size';
+    
+    // Add variant title
+    const variantTitle = document.createElement('span');
+    variantTitle.className = 'variant-title';
+    variantTitle.textContent = 'Beden';
+    variantGroup.appendChild(variantTitle);
+    
+    // Add variant options
+    const variantOptions = document.createElement('div');
+    variantOptions.className = 'variant-options';
+    
+    // Add options
+    sizes.forEach(size => {
+        const optionElement = document.createElement('div');
+        optionElement.className = 'variant-option size-option';
+        optionElement.textContent = size;
+        optionElement.dataset.value = size;
+        
+        // Add click event
+        optionElement.addEventListener('click', function() {
+            // Update selected class
+            variantOptions.querySelectorAll('.variant-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            this.classList.add('selected');
+        });
+        
+        variantOptions.appendChild(optionElement);
+    });
+    
+    // Select first option by default
+    const firstOption = variantOptions.querySelector('.variant-option');
+    if (firstOption) firstOption.classList.add('selected');
+    
+    variantGroup.appendChild(variantOptions);
+    container.appendChild(variantGroup);
 }
 
 // Update product additional info
@@ -550,62 +960,173 @@ function updateProductAdditionalInfo(template, product) {
 // Initialize product functionality
 function initializeProductFunctionality(product) {
     // Initialize quantity selector
+    const quantityDecrease = document.querySelector('.quantity-decrease');
+    const quantityIncrease = document.querySelector('.quantity-increase');
     const quantityInput = document.querySelector('.quantity-input');
-    const increaseBtn = document.querySelector('.quantity-increase');
-    const decreaseBtn = document.querySelector('.quantity-decrease');
     
-    if (quantityInput && increaseBtn && decreaseBtn) {
-        // Set initial value
-        quantityInput.value = 1;
-        
-        // Add event listeners
-        increaseBtn.addEventListener('click', () => {
-            quantityInput.value = parseInt(quantityInput.value) + 1;
-        });
-        
-        decreaseBtn.addEventListener('click', () => {
-            const currentValue = parseInt(quantityInput.value);
-            if (currentValue > 1) {
-                quantityInput.value = currentValue - 1;
+    if (quantityDecrease && quantityIncrease && quantityInput) {
+        // Decrease quantity
+        quantityDecrease.addEventListener('click', () => {
+            let quantity = parseInt(quantityInput.value);
+            if (quantity > 1) {
+                quantityInput.value = quantity - 1;
             }
         });
         
-        // Prevent non-numeric input
-        quantityInput.addEventListener('input', () => {
-            const value = quantityInput.value.replace(/[^0-9]/g, '');
-            quantityInput.value = value || 1;
+        // Increase quantity
+        quantityIncrease.addEventListener('click', () => {
+            let quantity = parseInt(quantityInput.value);
+            quantityInput.value = quantity + 1;
+        });
+        
+        // Validate input
+        quantityInput.addEventListener('change', () => {
+            let quantity = parseInt(quantityInput.value);
+            if (isNaN(quantity) || quantity < 1) {
+                quantityInput.value = 1;
+            }
         });
     }
     
     // Initialize add to cart button
     const addToCartBtn = document.querySelector('.add-to-cart-btn');
     if (addToCartBtn) {
-        // Update button text to "Sepete Ekle"
-        addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Sepete Ekle';
-        
         addToCartBtn.addEventListener('click', () => {
-            // Get quantity
+            // Get selected quantity
             const quantity = parseInt(quantityInput.value) || 1;
             
             // Get selected variants
             const selectedVariants = {};
-            document.querySelectorAll('.variant-group').forEach(group => {
-                const variantName = group.dataset.variantName;
-                const selectedOption = group.querySelector('.variant-option.selected');
-                if (variantName && selectedOption) {
-                    selectedVariants[variantName] = selectedOption.dataset.value;
-                }
-            });
+            
+            // Get selected color
+            const selectedColor = document.querySelector('.color-option.selected');
+            if (selectedColor) {
+                selectedVariants.color = selectedColor.getAttribute('data-value');
+            } else if (document.querySelector('.color-option')) {
+                // Select first color if none selected
+                const firstColor = document.querySelector('.color-option');
+                firstColor.classList.add('selected');
+                selectedVariants.color = firstColor.getAttribute('data-value');
+            }
+            
+            // Get selected size
+            const selectedSize = document.querySelector('.size-option.selected');
+            if (selectedSize) {
+                selectedVariants.size = selectedSize.getAttribute('data-value');
+            } else if (document.querySelector('.size-option')) {
+                // Select first size if none selected
+                const firstSize = document.querySelector('.size-option');
+                firstSize.classList.add('selected');
+                selectedVariants.size = firstSize.getAttribute('data-value');
+            }
             
             // Add to cart
             addToCart(product, quantity, selectedVariants);
+            
+            // Show success animation
+            addToCartBtn.classList.add('added');
+            setTimeout(() => {
+                addToCartBtn.classList.remove('added');
+            }, 1500);
         });
     }
     
-    // Remove wishlist button functionality
+    // Initialize wishlist button
     const wishlistBtn = document.querySelector('.wishlist-btn');
     if (wishlistBtn) {
-        wishlistBtn.style.display = 'none';
+        // Check if product is in wishlist
+        const wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+        const isInWishlist = wishlist.some(item => item.id === product.id || item.id === product._id);
+        
+        if (isInWishlist) {
+            wishlistBtn.classList.add('active');
+            wishlistBtn.querySelector('i').classList.remove('far');
+            wishlistBtn.querySelector('i').classList.add('fas');
+        }
+        
+        wishlistBtn.addEventListener('click', () => {
+            const wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+            const productId = product.id || product._id;
+            
+            // Check if product is already in wishlist
+            const existingIndex = wishlist.findIndex(item => item.id === productId);
+            
+            if (existingIndex !== -1) {
+                // Remove from wishlist
+                wishlist.splice(existingIndex, 1);
+                localStorage.setItem('wishlist', JSON.stringify(wishlist));
+                
+                // Update button
+                wishlistBtn.classList.remove('active');
+                wishlistBtn.querySelector('i').classList.remove('fas');
+                wishlistBtn.querySelector('i').classList.add('far');
+                
+                showNotification('Ürün favorilerden çıkarıldı', 'info');
+            } else {
+                // Add to wishlist
+                wishlist.push({
+                    id: productId,
+                    name: product.name,
+                    price: product.price,
+                    image: getProductImage(product)
+                });
+                localStorage.setItem('wishlist', JSON.stringify(wishlist));
+                
+                // Update button
+                wishlistBtn.classList.add('active');
+                wishlistBtn.querySelector('i').classList.remove('far');
+                wishlistBtn.querySelector('i').classList.add('fas');
+                
+                showNotification('Ürün favorilere eklendi', 'success');
+            }
+        });
+    }
+    
+    // Initialize variant selectors
+    const variantOptions = document.querySelectorAll('.variant-option');
+    variantOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            // Get all options in the same group
+            const group = this.closest('.variant-options');
+            const options = group.querySelectorAll('.variant-option');
+            
+            // Remove selected class from all options
+            options.forEach(opt => opt.classList.remove('selected'));
+            
+            // Add selected class to clicked option
+            this.classList.add('selected');
+        });
+    });
+    
+    // Select first option in each variant group by default
+    document.querySelectorAll('.variant-options').forEach(group => {
+        const firstOption = group.querySelector('.variant-option');
+        if (firstOption) {
+            firstOption.classList.add('selected');
+        }
+    });
+    
+    // Initialize thumbnail images
+    const thumbnails = document.querySelectorAll('.thumbnail');
+    const mainImage = document.querySelector('.main-image img');
+    
+    if (thumbnails.length && mainImage) {
+        thumbnails.forEach(thumbnail => {
+            thumbnail.addEventListener('click', function() {
+                // Remove active class from all thumbnails
+                thumbnails.forEach(thumb => thumb.classList.remove('active'));
+                
+                // Add active class to clicked thumbnail
+                this.classList.add('active');
+                
+                // Update main image
+                const thumbnailImg = this.querySelector('img');
+                if (thumbnailImg) {
+                    mainImage.src = thumbnailImg.src;
+                    mainImage.alt = thumbnailImg.alt;
+                }
+            });
+        });
     }
     
     // Initialize tabs
@@ -614,37 +1135,24 @@ function initializeProductFunctionality(product) {
     
     if (tabs.length && tabContents.length) {
         tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
+            tab.addEventListener('click', function() {
                 // Remove active class from all tabs
                 tabs.forEach(t => t.classList.remove('active'));
                 
                 // Add active class to clicked tab
-                tab.classList.add('active');
+                this.classList.add('active');
                 
                 // Hide all tab contents
-                tabContents.forEach(content => {
-                    content.classList.remove('active');
-                });
+                tabContents.forEach(content => content.classList.remove('active'));
                 
-                // Show selected tab content
-                const tabId = tab.getAttribute('data-tab');
+                // Show corresponding tab content
+                const tabId = this.getAttribute('data-tab');
                 const tabContent = document.getElementById(tabId);
                 if (tabContent) {
                     tabContent.classList.add('active');
                 }
             });
         });
-        
-        // Enhance the Açıklama tab content
-        const descriptionTab = document.getElementById('tab-description');
-        if (descriptionTab && product.description) {
-            // Add more styling to the description content
-            descriptionTab.innerHTML = `
-                <div class="enhanced-description">
-                    ${product.description}
-                </div>
-            `;
-        }
     }
 }
 
@@ -751,15 +1259,66 @@ async function loadRelatedProducts(category) {
     `;
     
     try {
-        // Fetch all products
-        const response = await fetch(`${API_URL}/products`);
-        const data = await response.json();
+        const apiUrl = 'https://dndbrand-server.onrender.com/api';
+        const url = `${apiUrl}/products`;
+        
+        console.log('Fetching related products from:', url);
+        
+        // Try multiple CORS proxies with different timeouts
+        const corsProxies = [
+            'https://api.cors.sh/',
+            'https://corsproxy.io/?',
+            'https://cors-proxy.htmldriven.com/?url=',
+            'https://api.allorigins.win/raw?url=',
+            'https://crossorigin.me/'
+        ];
+        
+        // Create a timeout promise
+        const timeout = (ms) => new Promise((_, reject) => 
+            setTimeout(() => reject(new Error(`Request timed out after ${ms}ms`)), ms)
+        );
         
         let products = [];
-        if (data.success && data.data) {
-            products = data.data;
-        } else if (Array.isArray(data)) {
-            products = data;
+        let fetchSuccess = false;
+        
+        // Try each CORS proxy with a timeout
+        for (const proxy of corsProxies) {
+            if (fetchSuccess) break;
+            
+            try {
+                console.log('Trying CORS proxy for related products:', proxy);
+                const proxyUrl = `${proxy}${encodeURIComponent(url)}`;
+                
+                // Race between fetch and timeout
+                const response = await Promise.race([
+                    fetch(proxyUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        },
+                        credentials: 'omit'
+                    }),
+                    timeout(5000) // 5 second timeout
+                ]);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Proxy request for related products successful');
+                    
+                    if (data.success && Array.isArray(data.data)) {
+                        products = data.data;
+                        fetchSuccess = true;
+                        break;
+                    } else if (Array.isArray(data)) {
+                        products = data;
+                        fetchSuccess = true;
+                        break;
+                    }
+                }
+                console.warn(`Proxy request for related products failed with status: ${response.status} for proxy: ${proxy}`);
+            } catch (proxyError) {
+                console.warn(`Proxy request for related products failed: ${proxyError.message} for proxy: ${proxy}`);
+            }
         }
         
         if (!products.length) {
@@ -767,23 +1326,19 @@ async function loadRelatedProducts(category) {
             return;
         }
         
-        // Get current product ID from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
-        
-        // Filter related products (same category, excluding current product)
+        // Filter products by category and exclude current product
+        const currentProductId = new URLSearchParams(window.location.search).get('id');
         const relatedProducts = products
-            .filter(p => p.category === category && p._id !== productId)
+            .filter(product => product.category === category && (product._id !== currentProductId && product.id !== currentProductId))
             .slice(0, 4); // Limit to 4 related products
         
-        if (relatedProducts.length === 0) {
-            // If no products in same category, just show random products
-            const randomProducts = products
-                .filter(p => p._id !== productId)
-                .sort(() => 0.5 - Math.random())
+        if (!relatedProducts.length) {
+            // If no products in the same category, just show any other products
+            const otherProducts = products
+                .filter(product => product._id !== currentProductId && product.id !== currentProductId)
                 .slice(0, 4);
             
-            displayRelatedProducts(randomProducts);
+            displayRelatedProducts(otherProducts);
         } else {
             displayRelatedProducts(relatedProducts);
         }
@@ -812,22 +1367,43 @@ function displayRelatedProducts(products) {
             maximumFractionDigits: 2
         });
         
-        // Create product card
+        // Get product image
+        let productImage;
+        if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+            productImage = getProductImage(product.images[0]);
+        } else if (product.image) {
+            productImage = getProductImage(product.image);
+        } else if (product.imageUrl) {
+            productImage = getProductImage(product.imageUrl);
+        } else {
+            productImage = 'https://via.placeholder.com/300x400?text=Ürün+Görseli';
+        }
+        
+        // Create product card HTML
         const productCard = document.createElement('div');
         productCard.className = 'product-card';
-        
         productCard.innerHTML = `
             <div class="product-card-image">
-                <img src="${getProductImage(product)}" alt="${product.name}">
+                ${product.isNew || product.isFeatured ? `<div class="premium-badge">${product.isNew ? 'Yeni' : 'Premium'}</div>` : ''}
+                <img src="${productImage}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300x400?text=Ürün+Görseli'; this.onerror=null;">
+                <div class="product-card-overlay">
+                    <a href="product.html?id=${product._id || product.id}" class="view-details">Detayları Gör</a>
+                    <button class="add-to-cart-quick" data-id="${product._id || product.id}">Sepete Ekle</button>
+                </div>
             </div>
             <div class="product-card-info">
                 <h3 class="product-card-title">${product.name}</h3>
-                <div class="product-card-price">₺${price}</div>
+                <div class="product-card-price">
+                    ${product.discount ? `
+                        <span class="old-price">₺${product.price.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</span>
+                        <span>₺${(product.price * (1 - product.discount / 100)).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</span>
+                    ` : `₺${price}`}
+                </div>
                 <div class="product-card-actions">
-                    <button class="quick-view-btn" data-id="${product.id}">
+                    <button class="quick-view-btn" data-id="${product._id || product.id}">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="add-to-cart-quick-btn" data-id="${product.id}">
+                    <button class="add-to-cart-quick-btn" data-id="${product._id || product.id}">
                         <i class="fas fa-shopping-cart"></i>
                     </button>
                 </div>
@@ -836,80 +1412,69 @@ function displayRelatedProducts(products) {
         
         // Add to grid
         relatedProductsGrid.appendChild(productCard);
+        
+        // Add click event to the entire card
+        productCard.addEventListener('click', (e) => {
+            // Don't trigger if clicking on a button
+            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                return;
+            }
+            
+            // Navigate to product page
+            navigateToProduct(product._id || product.id);
+        });
     });
     
     // Add event listeners for quick view buttons
     document.querySelectorAll('.quick-view-btn').forEach(button => {
         button.addEventListener('click', (e) => {
-            const productId = e.currentTarget.dataset.id;
-            if (productId) {
-                window.location.href = `product.html?id=${productId}`;
-            }
+            e.stopPropagation();
+            const productId = button.getAttribute('data-id');
+            openQuickView(productId);
         });
     });
     
     // Add event listeners for add to cart buttons
     document.querySelectorAll('.add-to-cart-quick-btn').forEach(button => {
-        button.addEventListener('click', async (e) => {
-            const productId = e.currentTarget.dataset.id;
-            if (productId) {
-                try {
-                    // Show loading state
-                    const originalContent = button.innerHTML;
-                    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                    button.disabled = true;
-                    
-                    // Fetch product details
-                    const product = await fetchProductDetails(productId);
-                    if (product) {
-                        // Add to cart with default quantity of 1
-                        addToCart(product, 1);
-                        
-                        // Reset button with success indicator
-                        button.innerHTML = '<i class="fas fa-check"></i>';
-                        setTimeout(() => {
-                            button.innerHTML = originalContent;
-                            button.disabled = false;
-                        }, 1500);
-                    } else {
-                        throw new Error('Product not found');
-                    }
-                } catch (error) {
-                    console.error('Error adding product to cart:', error);
-                    
-                    // Reset button
-                    button.innerHTML = '<i class="fas fa-shopping-cart"></i>';
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const productId = button.getAttribute('data-id');
+            
+            // Show loading state
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            button.disabled = true;
+            
+            // Add to cart
+            addToCart(productId, 1);
+            
+            // Show success state
+            setTimeout(() => {
+                button.innerHTML = '<i class="fas fa-check"></i>';
+                
+                // Reset after a delay
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
                     button.disabled = false;
-                    
-                    // Show error notification
-                    showNotification('Ürün sepete eklenirken bir hata oluştu.', 'error');
-                }
-            }
+                }, 1000);
+            }, 500);
         });
     });
 }
 
-// Function to handle product navigation with debouncing
+// Navigate to product page
 function navigateToProduct(productId) {
-    // Store the last click timestamp to prevent double clicks
-    const now = Date.now();
-    const lastClick = parseInt(sessionStorage.getItem('lastProductClick') || '0');
-    
-    // If less than 500ms since last click, ignore this click (debounce)
-    if (now - lastClick < 500) {
-        console.log('Ignoring rapid product navigation');
-        return;
-    }
-    
-    // Store current timestamp
-    sessionStorage.setItem('lastProductClick', now.toString());
+    if (!productId) return;
     
     // Navigate to product page
-    window.location.href = `product.html?id=${productId}`;
+    window.location.href = `./product.html?id=${productId}`;
 }
 
-// Update the openQuickView function to use the debounced navigation
+// Open quick view modal
 function openQuickView(productId) {
+    if (!productId) return;
+    
+    // For now, just navigate to the product page
     navigateToProduct(productId);
 }
 
@@ -994,14 +1559,18 @@ function updateCartPreview() {
     
     // Show/hide empty cart message
     if (cart.length === 0) {
-        emptyCartMessage.style.display = 'block';
+        if (emptyCartMessage) {
+            emptyCartMessage.style.display = 'block';
+        }
         cartPreviewItems.innerHTML = '';
         cartPreviewTotal.textContent = '₺0.00';
         return;
     }
     
     // Hide empty cart message
-    emptyCartMessage.style.display = 'none';
+    if (emptyCartMessage) {
+        emptyCartMessage.style.display = 'none';
+    }
     
     // Calculate total price
     const totalPrice = cart.reduce((total, item) => total + (item.price * item.quantity), 0);

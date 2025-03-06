@@ -7,24 +7,24 @@
     <script>
         // URL mapping for clean URLs
         const urlMap = {
-            '/': '/public/html/index.html',
-            '/shop': '/public/html/shop.html',
-            '/about': '/public/html/about.html',
-            '/contact': '/public/html/contact.html',
-            '/cart': '/public/html/cart.html',
-            '/checkout': '/public/html/checkout.html',
-            '/account': '/public/html/account.html',
-            '/admin': '/public/html/admin.html',
-            '/admin-login': '/public/html/admin-login.html',
-            '/product': '/public/html/product.html',
-            '/search': '/public/html/search.html',
-            '/collections': '/public/html/collections.html',
-            '/shipping': '/public/html/shipping.html',
-            '/returns': '/public/html/returns.html',
-            '/faq': '/public/html/faq.html',
-            '/sustainability': '/public/html/sustainability.html',
-            '/careers': '/public/html/careers.html',
-            '/privacy': '/public/html/privacy.html'
+            '/': 'public/html/index.html',
+            '/shop': 'public/html/shop.html',
+            '/about': 'public/html/about.html',
+            '/contact': 'public/html/contact.html',
+            '/cart': 'public/html/cart.html',
+            '/checkout': 'public/html/checkout.html',
+            '/account': 'public/html/account.html',
+            '/admin': 'public/html/admin.html',
+            '/admin-login': 'public/html/admin-login.html',
+            '/product': 'public/html/product.html',
+            '/search': 'public/html/search.html',
+            '/collections': 'public/html/collections.html',
+            '/shipping': 'public/html/shipping.html',
+            '/returns': 'public/html/returns.html',
+            '/faq': 'public/html/faq.html',
+            '/sustainability': 'public/html/sustainability.html',
+            '/careers': 'public/html/careers.html',
+            '/privacy': 'public/html/privacy.html'
         };
 
         // Get the path from the URL
@@ -55,7 +55,7 @@
                 // If it's a file request, don't redirect
             } else {
                 // If no mapping found and not a file request, redirect to homepage
-                window.location.href = '/public/html/index.html';
+                window.location.href = 'public/html/index.html';
             }
         }
     </script>
@@ -63,7 +63,7 @@
 <body>
     <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
         <h1>Redirecting...</h1>
-        <p>If you are not redirected automatically, <a href="/public/html/index.html">click here</a>.</p>
+        <p>If you are not redirected automatically, <a href="public/html/index.html">click here</a>.</p>
     </div>
 </body>
 </html> 

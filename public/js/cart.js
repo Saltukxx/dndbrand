@@ -33,7 +33,7 @@ function initializeCart() {
                 <i class="fas fa-shopping-bag"></i>
                 <h2>Sepetiniz Boş</h2>
                 <p>Sepetinizde henüz ürün bulunmamaktadır.</p>
-                <a href="/shop" class="btn btn-primary">Alışverişe Başla</a>
+                <a href="./shop.html" class="btn btn-primary">Alışverişe Başla</a>
             </div>
         `;
         
@@ -369,7 +369,7 @@ function initializeCheckoutButton() {
     if (checkoutButton) {
         checkoutButton.addEventListener('click', function() {
             // In a real application, this would redirect to the checkout page
-            window.location.href = 'checkout.html';
+            window.location.href = './checkout.html';
         });
     }
 }

@@ -25,26 +25,50 @@ async function loadFeaturedProducts() {
         featuredContainer.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Ürünler yükleniyor...</div>';
         
         // Fetch products from API using the new fetchAPI function
-        let data;
+        let products = [];
         if (window.CONFIG && window.CONFIG.fetchAPI) {
-            data = await window.CONFIG.fetchAPI('products');
+            try {
+                const data = await window.CONFIG.fetchAPI('products');
+                console.log('API Response:', data);
+                
+                // Handle different response formats
+                if (data && data.data && Array.isArray(data.data)) {
+                    products = data.data;
+                } else if (Array.isArray(data)) {
+                    products = data;
+                } else {
+                    console.warn('Unexpected API response format:', data);
+                    products = [];
+                }
+            } catch (apiError) {
+                console.error('Error fetching products from API:', apiError);
+                products = [];
+            }
         } else {
             // Fallback to regular fetch if fetchAPI is not available
-            const response = await fetch(`${API_URL}/products`);
-            data = await response.json();
+            try {
+                const response = await fetch(`${API_URL}/products`);
+                const data = await response.json();
+                if (data && data.data && Array.isArray(data.data)) {
+                    products = data.data;
+                } else if (Array.isArray(data)) {
+                    products = data;
+                }
+            } catch (fetchError) {
+                console.error('Fallback fetch error:', fetchError);
+                products = [];
+            }
         }
         
         // Clear container
         featuredContainer.innerHTML = '';
         
         // Check if there are products
-        if (!data.data || data.data.length === 0) {
+        if (!products || products.length === 0) {
             featuredContainer.innerHTML = '<div class="no-products"><p>Henüz ürün bulunmamaktadır.</p></div>';
             return;
         }
         
-        // Get products from API response
-        const products = data.data;
         console.log('All products:', products);
         
         // Sort by featured first, then limit to 4 products
@@ -82,7 +106,7 @@ function createProductCard(product) {
     console.log('Creating card for product:', product);
     
     const card = document.createElement('div');
-    card.className = 'product-card';
+    card.className = 'product-card fade-in';
     card.setAttribute('data-id', product._id || product.id);
     
     // Format price
@@ -146,13 +170,14 @@ function createProductCard(product) {
             <img src="${productImage}" alt="${product.name}" 
                  onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';">
             <div class="product-overlay">
-                <a href="#" class="add-to-cart" data-id="${product._id || product.id}">Sepete Ekle</a>
-                <a href="product.html?id=${product._id || product.id}" class="view-details">Detayları Gör</a>
+                <a href="#" class="add-to-cart" data-id="${product._id || product.id}" title="Sepete Ekle">Sepete Ekle</a>
+                <a href="./product.html?id=${product._id || product.id}" class="view-details" title="Detayları Gör">Detayları Gör</a>
             </div>
         </div>
         <div class="product-info">
+            <div class="brand">DnD Brand</div>
             <h3>${product.name}</h3>
-            <p class="price">${oldPriceHtml} ${formattedPrice} ₺</p>
+            <div class="price">${oldPriceHtml} ${formattedPrice} ₺</div>
         </div>
     `;
     
@@ -161,7 +186,7 @@ function createProductCard(product) {
 
 // Get product image helper function
 function getProductImage(product) {
-    let productImage = '/img/no-image.jpg';
+    let productImage = '../img/no-image.jpg';
     
     try {
         // Check for images array
@@ -240,7 +265,7 @@ function initializeProductCards() {
                 }
                 
                 const productId = this.getAttribute('data-id');
-                window.location.href = `/product?id=${productId}`;
+                window.location.href = `./product.html?id=${productId}`;
             });
         });
     }
@@ -370,7 +395,7 @@ function initializeHomepage() {
             button.addEventListener('click', function() {
                 const target = this.getAttribute('data-target');
                 if (target === 'shop') {
-                    window.location.href = '/shop';
+                    window.location.href = './shop.html';
                 }
             });
         });

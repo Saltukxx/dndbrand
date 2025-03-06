@@ -8,86 +8,71 @@
     <link rel="stylesheet" href="../css/account.css">
     <link rel="stylesheet" href="../css/shop.css">
     <link rel="stylesheet" href="../css/contact.css">
-    <link rel="stylesheet" href="../css/account-debug.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <style>
-        /* Emergency fix for header overlay issues */
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            position: relative;
-            z-index: 0;
-        }
-        
-        #header-container {
-            position: relative !important;
-            z-index: 10 !important;
-        }
-        
-        #header-container header {
-            position: relative !important;
-            top: auto !important;
-            left: auto !important;
-            width: 100% !important;
-            z-index: 10 !important;
-            background-color: rgba(15, 15, 15, 0.9) !important;
-        }
-        
-        .page-header {
-            position: relative !important;
-            z-index: 5 !important;
-            margin-top: 0 !important;
-        }
-        
-        .account-section {
-            position: relative !important;
-            z-index: 20 !important;
-            flex: 1 !important;
-        }
-        
-        #debug-buttons {
-            position: fixed !important;
-            bottom: 20px !important;
-            right: 20px !important;
-            z-index: 9999 !important;
-        }
-        
-        /* Hide any background images that might be causing issues */
-        body::before,
-        body::after,
-        .page-header::before,
-        .page-header::after {
-            display: none !important;
-            content: none !important;
-        }
-        
-        /* Fix for any absolute positioned elements */
-        .mobile-menu,
-        .mobile-menu-overlay,
-        .whatsapp-float {
-            z-index: 1000 !important;
-        }
-    </style>
 </head>
 <body>
-    <!-- Header will be loaded dynamically -->
-    <div id="header-container"></div>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="DnD Brand Logo" class="logo-image">
+                <h1>DnD <span>Brand</span></h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">ANA SAYFA</a></li>
+                    <li><a href="shop.html">KOLEKSİYON</a></li>
+                    <li><a href="about.html">HAKKIMIZDA</a></li>
+                    <li><a href="contact.html">İLETİŞİM</a></li>
+                </ul>
+            </nav>
+            <div class="nav-icons">
+                <a href="search.html" class="search-icon"><i class="fas fa-search"></i></a>
+                <a href="account.html" class="account-icon"><i class="fas fa-user"></i><span>HESABIM</span></a>
+                <a href="cart.html" class="cart-icon">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>SEPET</span>
+                    <span class="cart-count">0</span>
+                    
+                    <div class="cart-preview">
+                        <div class="cart-preview-header">
+                            <h3>Sepetiniz</h3>
+                            <span class="cart-preview-count">0 Ürün</span>
+                        </div>
+                        <div class="cart-preview-items">
+                            <!-- Cart items will be added here by JavaScript -->
+                            <div class="empty-cart-message">Sepetiniz boş</div>
+                        </div>
+                        <div class="cart-preview-footer">
+                            <div class="cart-preview-total">
+                                <span>Toplam:</span>
+                                <span class="cart-preview-total-price">₺0.00</span>
+                            </div>
+                            <div class="cart-preview-actions">
+                                <a href="cart.html" class="view-cart">Sepeti Görüntüle</a>
+                                <a href="checkout.html" class="checkout">Ödeme</a>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </header>
 
     <div class="mobile-menu">
-        <div class="close-menu">
-            <i class="fas fa-times"></i>
+        <div class="mobile-menu-header">
+            <div class="logo">DnD Brand</div>
+            <div class="close-btn"><i class="fas fa-times"></i></div>
         </div>
         <ul>
-            <li><a href="/">Ana Sayfa</a></li>
-            <li><a href="/shop">Koleksiyon</a></li>
-            <li><a href="/about">Hakkımızda</a></li>
-            <li><a href="/contact">İletişim</a></li>
-            <li><a href="/account">Hesabım</a></li>
-            <li><a href="/cart">Sepet</a></li>
+            <li><a href="index.html">Ana Sayfa</a></li>
+            <li><a href="shop.html">Koleksiyon</a></li>
+            <li><a href="about.html">Hakkımızda</a></li>
+            <li><a href="contact.html">İletişim</a></li>
+            <li><a href="account.html">Hesabım</a></li>
+            <li><a href="cart.html">Sepet</a></li>
         </ul>
     </div>
     <div class="mobile-menu-overlay"></div>
@@ -97,7 +82,8 @@
         <div class="container">
             <h1>Hesabım</h1>
             <div class="breadcrumb">
-                <a href="/">Ana Sayfa</a> / <span>Hesabım</span>
+                <div class="breadcrumb-item"><a href="index.html">Ana Sayfa</a></div>
+                <div class="breadcrumb-item active">Hesabım</div>
             </div>
         </div>
     </section>
@@ -468,8 +454,52 @@
         </div>
     </section>
 
-    <!-- Footer will be loaded dynamically -->
-    <div id="footer-container"></div>
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>DnD Brand</h3>
+                    <p>Modern birey için premium giyim. Özel koleksiyonlarımızla tarzınızı yeniden tanımlayın.</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-pinterest-p"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Alışveriş</h3>
+                    <ul>
+                        <li><a href="shop.html?type=men">Erkek Koleksiyonu</a></li>
+                        <li><a href="shop.html?type=women">Kadın Koleksiyonu</a></li>
+                        <li><a href="shop.html?type=accessories">Aksesuarlar</a></li>
+                        <li><a href="shop.html?sale=true">İndirim</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Yardım</h3>
+                    <ul>
+                        <li><a href="contact.html">Bize Ulaşın</a></li>
+                        <li><a href="shipping.html">Kargo Bilgileri</a></li>
+                        <li><a href="returns.html">İade ve Değişim</a></li>
+                        <li><a href="faq.html">Sıkça Sorulan Sorular</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Hakkımızda</h3>
+                    <ul>
+                        <li><a href="about.html">Hikayemiz</a></li>
+                        <li><a href="sustainability.html">Sürdürülebilirlik</a></li>
+                        <li><a href="careers.html">Kariyer</a></li>
+                        <li><a href="privacy.html">Gizlilik Politikası</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 DnD Brand. Tüm hakları saklıdır.</p>
+            </div>
+        </div>
+    </footer>
 
     <!-- WhatsApp Float Button -->
     <a href="https://wa.me/905373058528?text=Merhaba%20DnD%20Brand,%20" class="whatsapp-float pulse" target="_blank">
@@ -480,10 +510,8 @@
     <div id="notification-container"></div>
 
     <!-- Scripts -->
-    <script src="../js/components.js"></script>
     <script src="../js/storage-manager.js"></script>
     <script src="../js/script.js"></script>
-    <script src="../js/account-debug.js"></script>
     <script src="../js/account-api.js"></script>
     <script src="../js/account.js"></script>
 </body>

@@ -233,7 +233,7 @@ function initializeProductCards() {
                 }
                 
                 const productId = this.getAttribute('data-id');
-                window.location.href = `/product?id=${productId}`;
+                window.location.href = `product.html?id=${productId}`;
             });
         });
     }
@@ -353,6 +353,16 @@ function showNotification(message, type = 'info') {
 
 // Initialize other homepage functionality
 function initializeHomepage() {
+    // Initialize product cards
+    initializeProductCards();
+    
+    // Add event listener for "View All Products" button
+    document.querySelectorAll('.view-all-products').forEach(button => {
+        button.addEventListener('click', () => {
+            window.location.href = 'shop.html';
+        });
+    });
+    
     // Update cart count on page load
     updateCartCount();
     
@@ -363,7 +373,7 @@ function initializeHomepage() {
             button.addEventListener('click', function() {
                 const target = this.getAttribute('data-target');
                 if (target === 'shop') {
-                    window.location.href = '/shop';
+                    window.location.href = 'shop.html';
                 }
             });
         });
