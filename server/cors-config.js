@@ -8,8 +8,8 @@
 // Import the cors package (make sure to install it first: npm install cors)
 const cors = require('cors');
 
-// List of allowed origins
-const allowedOrigins = [
+// List of allowed domains
+const allowedDomains = [
     'https://dndbrand.com',
     'https://www.dndbrand.com',
     'http://localhost:3000',
@@ -27,12 +27,16 @@ const corsOptions = {
             return callback(null, true);
         }
         
-        // Check if the origin is allowed
-        if (allowedOrigins.indexOf(origin) !== -1) {
+        // Check if the origin starts with any of the allowed domains
+        const isAllowed = allowedDomains.some(domain => 
+            origin === domain || origin.startsWith(`${domain}/`)
+        );
+        
+        if (isAllowed) {
             return callback(null, true);
         } else {
             console.log('CORS blocked origin:', origin);
-            // For development, you might want to allow all origins
+            // For development, uncomment the next line to allow all origins
             // return callback(null, true);
             
             // For production, block disallowed origins

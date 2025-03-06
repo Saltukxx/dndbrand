@@ -343,28 +343,30 @@ async function loadDashboardStats() {
     if (!checkAdminAuth()) return;
     
     try {
-        const data = await fetchWithCORS('admin/stats', {
+        const response = await fetchWithCORS('admin/stats', {
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
+        
+        // Ensure stats is an object
+        const stats = response || {};
+        
+        // Update dashboard stats with fallbacks for missing values
+        document.getElementById('totalSales').textContent = typeof stats.totalSales === 'number' ? 
+            '₺' + stats.totalSales.toLocaleString('tr-TR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }) : '₺0.00';
             
-            // Update dashboard stats
-            document.getElementById('totalSales').textContent = `₺${data.totalSales.toLocaleString('tr-TR')}`;
-            document.getElementById('totalCustomers').textContent = data.totalCustomers;
-            document.getElementById('totalProducts').textContent = data.totalProducts;
-            document.getElementById('newOrders').textContent = data.newOrders;
+        document.getElementById('totalCustomers').textContent = stats.totalCustomers || 0;
+        document.getElementById('totalProducts').textContent = stats.totalProducts || 0;
+        document.getElementById('newOrders').textContent = stats.newOrders || 0;
     } catch (error) {
         console.error('Error loading dashboard stats:', error);
         
-        // Show error message in the dashboard
-        document.getElementById('totalSales').textContent = 'Bağlantı hatası';
-        document.getElementById('totalCustomers').textContent = '-';
-        document.getElementById('totalProducts').textContent = '-';
-        document.getElementById('newOrders').textContent = '-';
-        
         // Show notification
-        showNotification('Sunucu bağlantısı kurulamadı. Lütfen daha sonra tekrar deneyin.', 'error');
+        showNotification('İstatistikler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 'error');
     }
 }
 
@@ -372,128 +374,94 @@ async function loadDashboardStats() {
 async function loadRecentOrders() {
     if (!checkAdminAuth()) return;
     
+    // Show loading state
+    const recentOrdersTable = document.getElementById('recentOrdersTable');
+    const tableBody = recentOrdersTable.querySelector('tbody');
+    tableBody.innerHTML = '<tr><td colspan="5">Yükleniyor...</td></tr>';
+    
     try {
-        const orders = await fetchWithCORS('admin/orders/recent', {
+        const response = await fetchWithCORS('admin/orders/recent', {
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
         
-            const tableBody = document.getElementById('recentOrdersTable').querySelector('tbody');
+        // Ensure orders is an array
+        const orders = Array.isArray(response) ? response : 
+                      (response && response.orders ? response.orders : []);
+        
+        if (orders.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5">Henüz sipariş bulunmamaktadır.</td></tr>';
+            return;
+        }
+        
+        tableBody.innerHTML = '';
+        
+        orders.forEach(order => {
+            const row = document.createElement('tr');
             
-            if (orders.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6">Henüz sipariş bulunmamaktadır.</td></tr>';
-                return;
+            // Format date
+            const orderDate = new Date(order.createdAt);
+            const formattedDate = orderDate.toLocaleDateString('tr-TR');
+            
+            // Format price
+            const formattedTotal = typeof order.total === 'number' ? 
+                order.total.toLocaleString('tr-TR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) : '0.00';
+            
+            // Get status badge class
+            let statusClass = '';
+            switch(order.status) {
+                case 'completed':
+                    statusClass = 'completed';
+                    break;
+                case 'processing':
+                    statusClass = 'processing';
+                    break;
+                case 'shipped':
+                    statusClass = 'shipped';
+                    break;
+                case 'cancelled':
+                    statusClass = 'cancelled';
+                    break;
+                default:
+                    statusClass = 'pending';
             }
             
-            tableBody.innerHTML = '';
+            row.innerHTML = `
+                <td>${order.orderNumber || `#${order._id || order.id || 'N/A'}`}</td>
+                <td>${formattedDate}</td>
+                <td>${order.customer ? order.customer.name : 'Misafir'}</td>
+                <td>₺${formattedTotal}</td>
+                <td><span class="status-badge ${statusClass}">${order.status || 'pending'}</span></td>
+            `;
             
-            orders.forEach(order => {
-                const row = document.createElement('tr');
-                
-                // Format date
-                const orderDate = new Date(order.createdAt);
-                const formattedDate = orderDate.toLocaleDateString('tr-TR');
-                
-                // Get status badge class
-                let statusClass = '';
-                switch(order.status) {
-                    case 'completed': statusClass = 'completed'; break;
-                    case 'processing': statusClass = 'processing'; break;
-                    case 'shipped': statusClass = 'shipped'; break;
-                    case 'cancelled': statusClass = 'cancelled'; break;
-                    default: statusClass = 'processing';
-                }
-                
-                // Translate status
-                let statusText = '';
-                switch(order.status) {
-                    case 'completed': statusText = 'Tamamlandı'; break;
-                    case 'processing': statusText = 'İşleniyor'; break;
-                    case 'shipped': statusText = 'Kargoya Verildi'; break;
-                    case 'cancelled': statusText = 'İptal Edildi'; break;
-                    default: statusText = 'İşleniyor';
-                }
-                
-                row.innerHTML = `
-                    <td>#${order.orderNumber}</td>
-                    <td>${order.customer.name}</td>
-                    <td>${formattedDate}</td>
-                    <td>₺${order.total.toLocaleString('tr-TR')}</td>
-                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    <td class="actions-cell">
-                    <button class="action-btn view-btn" data-id="${order._id || order.id}" title="Görüntüle">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    <button class="action-btn edit-btn" data-id="${order._id || order.id}" title="Düzenle">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    <button class="action-btn print-btn" data-id="${order._id || order.id}" title="Yazdır">
-                            <i class="fas fa-print"></i>
-                        </button>
-                    </td>
-                `;
-                
-                tableBody.appendChild(row);
+            tableBody.appendChild(row);
+        });
+        
+        // Add click event to rows
+        const rows = tableBody.querySelectorAll('tr');
+        rows.forEach(row => {
+            row.addEventListener('click', function() {
+                const orderNumber = this.cells[0].textContent;
+                const orderId = orderNumber.startsWith('#') ? orderNumber.substring(1) : orderNumber;
+                viewOrder(orderId);
             });
-            
-            // Add event listeners to action buttons
-            addOrderActionListeners();
+        });
     } catch (error) {
         console.error('Error loading recent orders:', error);
         
         // Show error message in the table
-        const tableBody = document.getElementById('recentOrdersTable').querySelector('tbody');
-        tableBody.innerHTML = '<tr><td colspan="6">Siparişler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</td></tr>';
-        
-        // Show notification
-        showNotification('Sunucu bağlantısı kurulamadı. Lütfen daha sonra tekrar deneyin.', 'error');
+        tableBody.innerHTML = '<tr><td colspan="5">Son siparişler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</td></tr>';
     }
-}
-
-// Add event listeners to order action buttons
-function addOrderActionListeners() {
-    // View order
-    document.querySelectorAll('.view-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const orderId = this.getAttribute('data-id');
-            viewOrder(orderId);
-        });
-    });
-    
-    // Edit order
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const orderId = this.getAttribute('data-id');
-            editOrder(orderId);
-        });
-    });
-    
-    // Print order
-    document.querySelectorAll('.print-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const orderId = this.getAttribute('data-id');
-            printOrder(orderId);
-        });
-    });
 }
 
 // View order details
 function viewOrder(orderId) {
     // Show order details (to be implemented)
     showNotification(`Sipariş #${orderId} görüntüleniyor`);
-}
-
-// Edit order
-function editOrder(orderId) {
-    // Edit order (to be implemented)
-    showNotification(`Sipariş #${orderId} düzenleniyor`);
-}
-
-// Print order
-function printOrder(orderId) {
-    // Print order (to be implemented)
-    showNotification(`Sipariş #${orderId} yazdırılıyor`);
 }
 
 // Load products
@@ -1052,70 +1020,87 @@ async function loadOrders() {
     tableBody.innerHTML = '<tr><td colspan="6">Yükleniyor...</td></tr>';
     
     try {
-        const orders = await fetchWithCORS('admin/orders', {
+        const response = await fetchWithCORS('admin/orders', {
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
+        
+        // Ensure orders is an array
+        const orders = Array.isArray(response) ? response : 
+                      (response && response.orders ? response.orders : []);
             
-            if (orders.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6">Henüz sipariş bulunmamaktadır.</td></tr>';
-                return;
+        if (orders.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="6">Henüz sipariş bulunmamaktadır.</td></tr>';
+            return;
+        }
+            
+        tableBody.innerHTML = '';
+            
+        orders.forEach(order => {
+            const row = document.createElement('tr');
+                
+            // Format date
+            const orderDate = order.createdAt ? new Date(order.createdAt) : new Date();
+            const formattedDate = orderDate.toLocaleDateString('tr-TR');
+                
+            // Format price
+            const formattedTotal = typeof order.total === 'number' ? 
+                order.total.toLocaleString('tr-TR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) : '0.00';
+                
+            // Get status badge class
+            let statusClass = '';
+            let statusText = '';
+            
+            switch(order.status) {
+                case 'completed': 
+                    statusClass = 'completed'; 
+                    statusText = 'Tamamlandı'; 
+                    break;
+                case 'processing': 
+                    statusClass = 'processing'; 
+                    statusText = 'İşleniyor'; 
+                    break;
+                case 'shipped': 
+                    statusClass = 'shipped'; 
+                    statusText = 'Kargoya Verildi'; 
+                    break;
+                case 'cancelled': 
+                    statusClass = 'cancelled'; 
+                    statusText = 'İptal Edildi'; 
+                    break;
+                default: 
+                    statusClass = 'processing';
+                    statusText = 'İşleniyor';
             }
+                
+            row.innerHTML = `
+                <td>${order.orderNumber || `#${order._id || order.id || 'N/A'}`}</td>
+                <td>${order.customer && order.customer.name ? order.customer.name : 'Misafir'}</td>
+                <td>${formattedDate}</td>
+                <td>₺${formattedTotal}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td class="actions-cell">
+                <button class="action-btn view-btn" data-id="${order._id || order.id}" title="Görüntüle">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                <button class="action-btn edit-btn" data-id="${order._id || order.id}" title="Düzenle">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                <button class="action-btn print-btn" data-id="${order._id || order.id}" title="Yazdır">
+                        <i class="fas fa-print"></i>
+                    </button>
+                </td>
+            `;
+                
+            tableBody.appendChild(row);
+        });
             
-            tableBody.innerHTML = '';
-            
-            orders.forEach(order => {
-                const row = document.createElement('tr');
-                
-                // Format date
-                const orderDate = new Date(order.createdAt);
-                const formattedDate = orderDate.toLocaleDateString('tr-TR');
-                
-                // Get status badge class
-                let statusClass = '';
-                switch(order.status) {
-                    case 'completed': statusClass = 'completed'; break;
-                    case 'processing': statusClass = 'processing'; break;
-                    case 'shipped': statusClass = 'shipped'; break;
-                    case 'cancelled': statusClass = 'cancelled'; break;
-                    default: statusClass = 'processing';
-                }
-                
-                // Translate status
-                let statusText = '';
-                switch(order.status) {
-                    case 'completed': statusText = 'Tamamlandı'; break;
-                    case 'processing': statusText = 'İşleniyor'; break;
-                    case 'shipped': statusText = 'Kargoya Verildi'; break;
-                    case 'cancelled': statusText = 'İptal Edildi'; break;
-                    default: statusText = 'İşleniyor';
-                }
-                
-                row.innerHTML = `
-                    <td>#${order.orderNumber}</td>
-                    <td>${order.customer.name}</td>
-                    <td>${formattedDate}</td>
-                    <td>₺${order.total.toLocaleString('tr-TR')}</td>
-                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    <td class="actions-cell">
-                    <button class="action-btn view-btn" data-id="${order._id || order.id}" title="Görüntüle">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    <button class="action-btn edit-btn" data-id="${order._id || order.id}" title="Düzenle">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    <button class="action-btn print-btn" data-id="${order._id || order.id}" title="Yazdır">
-                            <i class="fas fa-print"></i>
-                        </button>
-                    </td>
-                `;
-                
-                tableBody.appendChild(row);
-            });
-            
-            // Add event listeners to action buttons
-            addOrderActionListeners();
+        // Add event listeners to action buttons
+        addOrderActionListeners();
     } catch (error) {
         console.error('Error loading orders:', error);
         
@@ -1137,47 +1122,51 @@ async function loadCustomers() {
     tableBody.innerHTML = '<tr><td colspan="6">Yükleniyor...</td></tr>';
     
     try {
-        const customers = await fetchWithCORS('admin/customers', {
+        const response = await fetchWithCORS('admin/customers', {
             headers: {
                 'Authorization': `Bearer ${authToken}`
             }
         });
+        
+        // Ensure customers is an array
+        const customers = Array.isArray(response) ? response : 
+                         (response && response.customers ? response.customers : []);
             
-            if (customers.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6">Henüz müşteri bulunmamaktadır.</td></tr>';
-                return;
-            }
+        if (customers.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="6">Henüz müşteri bulunmamaktadır.</td></tr>';
+            return;
+        }
             
-            tableBody.innerHTML = '';
+        tableBody.innerHTML = '';
             
-            customers.forEach(customer => {
-                const row = document.createElement('tr');
+        customers.forEach(customer => {
+            const row = document.createElement('tr');
                 
-                // Format date
-            const registrationDate = new Date(customer.createdAt);
+            // Format date
+            const registrationDate = customer.createdAt ? new Date(customer.createdAt) : new Date();
             const formattedDate = registrationDate.toLocaleDateString('tr-TR');
                 
-                row.innerHTML = `
-                    <td>${customer.name}</td>
-                    <td>${customer.email}</td>
-                    <td>${customer.phone || '-'}</td>
-                    <td>${formattedDate}</td>
-                    <td>${customer.orderCount || 0}</td>
-                    <td class="actions-cell">
-                    <button class="action-btn view-btn" data-id="${customer._id || customer.id}" title="Görüntüle">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    <button class="action-btn edit-btn" data-id="${customer._id || customer.id}" title="Düzenle">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                    </td>
-                `;
+            row.innerHTML = `
+                <td>${customer.name || 'İsimsiz'}</td>
+                <td>${customer.email || '-'}</td>
+                <td>${customer.phone || '-'}</td>
+                <td>${formattedDate}</td>
+                <td>${customer.orderCount || 0}</td>
+                <td class="actions-cell">
+                <button class="action-btn view-btn" data-id="${customer._id || customer.id}" title="Görüntüle">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                <button class="action-btn edit-btn" data-id="${customer._id || customer.id}" title="Düzenle">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </td>
+            `;
                 
-                tableBody.appendChild(row);
-            });
+            tableBody.appendChild(row);
+        });
             
         // Add event listeners to action buttons
-            addCustomerActionListeners();
+        addCustomerActionListeners();
     } catch (error) {
         console.error('Error loading customers:', error);
         
