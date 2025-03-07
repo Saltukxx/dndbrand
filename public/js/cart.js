@@ -108,7 +108,7 @@ function createCartItem(item) {
     if (window.ImageService && typeof window.ImageService.getProductImage === 'function') {
         imageUrl = window.ImageService.getProductImage(item.image);
     } else {
-        imageUrl = item.image || '../images/no-image.jpg';
+        imageUrl = item.image || '../images/placeholder-product.jpg';
     }
     
     // Create variant text if color or size exists
@@ -124,7 +124,14 @@ function createCartItem(item) {
     cartItem.innerHTML = `
         <div class="cart-item-product">
             <div class="cart-item-image">
-                <img src="${imageUrl}" alt="${item.name}" onerror="this.src='../images/no-image.jpg';">
+                <img src="${imageUrl}" alt="${item.name}" 
+                     onerror="if (!this.dataset.retryCount || this.dataset.retryCount < 2) {
+                         this.dataset.retryCount = this.dataset.retryCount ? parseInt(this.dataset.retryCount) + 1 : 1;
+                         setTimeout(() => { this.src = '${imageUrl}?retry=' + this.dataset.retryCount; }, 1000);
+                     } else {
+                         this.src='/images/placeholder-product.jpg';
+                         this.onerror=null;
+                     }">
             </div>
             <div class="cart-item-details">
                 <h3>${item.name}</h3>
@@ -190,7 +197,30 @@ function addCartItemEventListeners() {
         button.addEventListener('click', function() {
             const cartItem = this.closest('.cart-item');
             const productId = cartItem.getAttribute('data-id');
-            removeCartItem(productId);
+            
+            // Get color and size options if they exist
+            const colorElement = cartItem.querySelector('.cart-item-variant');
+            let color = null;
+            let size = null;
+            
+            if (colorElement) {
+                const variantText = colorElement.textContent;
+                
+                // Extract color if it exists
+                const colorMatch = variantText.match(/Renk: ([^|]+)/);
+                if (colorMatch && colorMatch[1]) {
+                    color = colorMatch[1].trim();
+                }
+                
+                // Extract size if it exists
+                const sizeMatch = variantText.match(/Beden: ([^|]+)/);
+                if (sizeMatch && sizeMatch[1]) {
+                    size = sizeMatch[1].trim();
+                }
+            }
+            
+            // Remove the item with the specific options
+            removeCartItem(productId, { color, size });
         });
     });
 }

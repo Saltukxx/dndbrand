@@ -583,10 +583,19 @@ function updateProductImages(template, product) {
     mainImageElement.src = mainImageSrc;
     mainImageElement.alt = product.name;
     
-    // Add onerror handler to main image
+    // Add onerror handler to main image with retry limit
     mainImageElement.onerror = function() {
-        this.src = DEFAULT_PRODUCT_IMAGE;
-        this.onerror = null; // Prevent infinite loop
+        if (!this.dataset.retryCount || this.dataset.retryCount < 2) {
+            this.dataset.retryCount = this.dataset.retryCount ? parseInt(this.dataset.retryCount) + 1 : 1;
+            console.log(`Retrying main image load (${this.dataset.retryCount}/3): ${mainImageSrc}`);
+            setTimeout(() => { 
+                this.src = `${mainImageSrc}?retry=${this.dataset.retryCount}`; 
+            }, 1000);
+        } else {
+            console.log('Max retries reached, using default image');
+            this.src = DEFAULT_PRODUCT_IMAGE;
+            this.onerror = null; // Prevent further retries
+        }
     };
     
     // Clear thumbnails
@@ -601,8 +610,17 @@ function updateProductImages(template, product) {
     const mainThumbnailImg = mainThumbnail.querySelector('img');
     if (mainThumbnailImg) {
         mainThumbnailImg.onerror = function() {
-            this.src = DEFAULT_PRODUCT_IMAGE;
-            this.onerror = null; // Prevent infinite loop
+            if (!this.dataset.retryCount || this.dataset.retryCount < 2) {
+                this.dataset.retryCount = this.dataset.retryCount ? parseInt(this.dataset.retryCount) + 1 : 1;
+                console.log(`Retrying thumbnail image load (${this.dataset.retryCount}/3): ${mainImageSrc}`);
+                setTimeout(() => { 
+                    this.src = `${mainImageSrc}?retry=${this.dataset.retryCount}`; 
+                }, 1000);
+            } else {
+                console.log('Max retries reached, using default image for thumbnail');
+                this.src = DEFAULT_PRODUCT_IMAGE;
+                this.onerror = null; // Prevent further retries
+            }
         };
     }
     
@@ -623,8 +641,17 @@ function updateProductImages(template, product) {
             const thumbnailImg = thumbnail.querySelector('img');
             if (thumbnailImg) {
                 thumbnailImg.onerror = function() {
-                    this.src = DEFAULT_PRODUCT_IMAGE;
-                    this.onerror = null; // Prevent infinite loop
+                    if (!this.dataset.retryCount || this.dataset.retryCount < 2) {
+                        this.dataset.retryCount = this.dataset.retryCount ? parseInt(this.dataset.retryCount) + 1 : 1;
+                        console.log(`Retrying thumbnail image load (${this.dataset.retryCount}/3): ${fullImagePath}`);
+                        setTimeout(() => { 
+                            this.src = `${fullImagePath}?retry=${this.dataset.retryCount}`; 
+                        }, 1000);
+                    } else {
+                        console.log('Max retries reached, using default image for thumbnail');
+                        this.src = DEFAULT_PRODUCT_IMAGE;
+                        this.onerror = null; // Prevent further retries
+                    }
                 };
             }
             

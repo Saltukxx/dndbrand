@@ -1040,7 +1040,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="product-image">
                         ${productBadges}
                         <img src="${productImage}" alt="${product.name}" 
-                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';">
+                             onerror="if (!this.dataset.retryCount || this.dataset.retryCount < 2) {
+                                 this.dataset.retryCount = this.dataset.retryCount ? parseInt(this.dataset.retryCount) + 1 : 1;
+                                 setTimeout(() => { this.src = '${productImage}?retry=' + this.dataset.retryCount; }, 1000);
+                             } else {
+                                 this.src='/images/placeholder-product.jpg';
+                                 this.onerror=null;
+                             }">
                         <div class="product-overlay">
                             <a href="./product.html?id=${productId}" class="quick-view" data-id="${productId}">
                                 <i class="fas fa-eye"></i>
