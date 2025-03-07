@@ -3,9 +3,15 @@
  * Displays featured products from admin panel on the homepage
  */
 
-// API URL
-// const API_URL = 'http://localhost:8080/api';
-const API_URL = window.CONFIG ? window.CONFIG.API_URL : 'http://localhost:8080/api';
+// Get API URL from config if available
+let indexApiUrl;
+if (window.CONFIG && window.CONFIG.API_URL) {
+    indexApiUrl = window.CONFIG.API_URL;
+    console.log('Using API URL from config.js:', indexApiUrl);
+} else {
+    indexApiUrl = 'https://dndbrand-server.onrender.com/api';
+    console.log('Config not found, using fallback API URL:', indexApiUrl);
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Load featured products
@@ -47,7 +53,7 @@ async function loadFeaturedProducts() {
         } else {
             // Fallback to regular fetch if fetchAPI is not available
             try {
-                const response = await fetch(`${API_URL}/products`);
+                const response = await fetch(`${indexApiUrl}/products`);
                 const data = await response.json();
                 if (data && data.data && Array.isArray(data.data)) {
                     products = data.data;
@@ -216,12 +222,12 @@ function getProductImage(product) {
             if (!productImage.startsWith('/')) {
                 productImage = '/' + productImage;
             }
-            productImage = `${API_URL}${productImage}`;
+            productImage = `${indexApiUrl}${productImage}`;
         }
         
         // For demo/testing, use placeholder images if the image path doesn't exist
         if (productImage === '/img/no-image.jpg' || 
-            productImage === `${API_URL}/img/no-image.jpg` ||
+            productImage === `${indexApiUrl}/img/no-image.jpg` ||
             productImage === 'undefined' ||
             productImage === 'null') {
             // Use placeholder images based on product category
@@ -283,7 +289,7 @@ function initializeProductCards() {
 async function addToCart(productId) {
     try {
         // Fetch product details from API
-        const response = await fetch(`${API_URL}/products/${productId}`);
+        const response = await fetch(`${indexApiUrl}/products/${productId}`);
         const data = await response.json();
         
         let product;

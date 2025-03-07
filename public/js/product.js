@@ -3,10 +3,18 @@
  * Displays product details from backend API
  */
 
-// API URL from config
-const API_URL = window.CONFIG && window.CONFIG.API_URL 
-    ? window.CONFIG.API_URL 
-    : 'https://dndbrand-server.onrender.com/api';
+// Get API URL from config if available
+let productApiUrl;
+if (window.CONFIG && window.CONFIG.API_URL) {
+    productApiUrl = window.CONFIG.API_URL;
+    console.log('Using API URL from config.js:', productApiUrl);
+} else {
+    productApiUrl = 'https://dndbrand-server.onrender.com/api';
+    console.log('Config not found, using fallback API URL:', productApiUrl);
+}
+
+// Default image path
+const DEFAULT_PRODUCT_IMAGE = `${productApiUrl}/images/default-product.jpg`;
 
 document.addEventListener('DOMContentLoaded', function() {
     // Get product ID from URL
@@ -89,13 +97,13 @@ function getProductImage(imagePath, useOriginal = false) {
     // Fallback to original implementation if ImageService is not available
     // Handle null, undefined, or non-string values
     if (!imagePath) {
-        return 'https://dndbrand-server.onrender.com/api/images/default-product.jpg';
+        return DEFAULT_PRODUCT_IMAGE;
     }
     
     // If imagePath is an array, use the first item
     if (Array.isArray(imagePath)) {
         if (imagePath.length === 0) {
-            return 'https://dndbrand-server.onrender.com/api/images/default-product.jpg';
+            return DEFAULT_PRODUCT_IMAGE;
         }
         imagePath = imagePath[0];
     }
@@ -114,7 +122,7 @@ function getProductImage(imagePath, useOriginal = false) {
             imagePath = imagePath.thumbnail;
         } else {
             // Can't extract a string URL from the object
-            return 'https://dndbrand-server.onrender.com/api/images/default-product.jpg';
+            return DEFAULT_PRODUCT_IMAGE;
         }
     }
     
@@ -133,11 +141,11 @@ function getProductImage(imagePath, useOriginal = false) {
     
     // If it's just a filename, add the API URL path
     if (!imagePath.includes('/')) {
-        return `https://dndbrand-server.onrender.com/api/images/${imagePath}`;
+        return `${productApiUrl}/images/${imagePath}`;
     }
     
     // Default to API URL
-    return `https://dndbrand-server.onrender.com/api${imagePath}`;
+    return `${productApiUrl}${imagePath}`;
 }
 
 // Fetch product details from API
@@ -577,7 +585,7 @@ function updateProductImages(template, product) {
     
     // Add onerror handler to main image
     mainImageElement.onerror = function() {
-        this.src = 'https://dndbrand-server.onrender.com/api/images/default-product.jpg';
+        this.src = DEFAULT_PRODUCT_IMAGE;
         this.onerror = null; // Prevent infinite loop
     };
     
@@ -593,7 +601,7 @@ function updateProductImages(template, product) {
     const mainThumbnailImg = mainThumbnail.querySelector('img');
     if (mainThumbnailImg) {
         mainThumbnailImg.onerror = function() {
-            this.src = 'https://dndbrand-server.onrender.com/api/images/default-product.jpg';
+            this.src = DEFAULT_PRODUCT_IMAGE;
             this.onerror = null; // Prevent infinite loop
         };
     }
@@ -615,7 +623,7 @@ function updateProductImages(template, product) {
             const thumbnailImg = thumbnail.querySelector('img');
             if (thumbnailImg) {
                 thumbnailImg.onerror = function() {
-                    this.src = 'https://dndbrand-server.onrender.com/api/images/default-product.jpg';
+                    this.src = DEFAULT_PRODUCT_IMAGE;
                     this.onerror = null; // Prevent infinite loop
                 };
             }
@@ -1384,7 +1392,7 @@ function displayRelatedProducts(products) {
         } else if (product.imageUrl) {
             productImage = getProductImage(product.imageUrl);
         } else {
-            productImage = 'https://via.placeholder.com/300x400?text=Ürün+Görseli';
+            productImage = DEFAULT_PRODUCT_IMAGE;
         }
         
         // Create product card HTML
@@ -1393,7 +1401,7 @@ function displayRelatedProducts(products) {
         productCard.innerHTML = `
             <div class="product-card-image">
                 ${product.isNew || product.isFeatured ? `<div class="premium-badge">${product.isNew ? 'Yeni' : 'Premium'}</div>` : ''}
-                <img src="${productImage}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300x400?text=Ürün+Görseli'; this.onerror=null;">
+                <img src="${productImage}" alt="${product.name}" onerror="this.src='${DEFAULT_PRODUCT_IMAGE}'; this.onerror=null;">
                 <div class="product-card-overlay">
                     <a href="product.html?id=${product._id || product.id}" class="view-details">Detayları Gör</a>
                     <button class="add-to-cart-quick" data-id="${product._id || product.id}">Sepete Ekle</button>

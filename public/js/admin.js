@@ -3,8 +3,15 @@
  * Comprehensive admin panel with product management, order tracking, and analytics
  */
 
-// API URL from config or default
-const API_URL = typeof CONFIG !== 'undefined' && CONFIG.API_URL ? CONFIG.API_URL : 'https://dndbrand-server.onrender.com/api';
+// Get API URL from config if available
+let adminApiUrl;
+if (window.CONFIG && window.CONFIG.API_URL) {
+    adminApiUrl = window.CONFIG.API_URL;
+    console.log('Using API URL from config.js:', adminApiUrl);
+} else {
+    adminApiUrl = 'https://dndbrand-server.onrender.com/api';
+    console.log('Config not found, using fallback API URL:', adminApiUrl);
+}
 
 // Authentication variables
 let authToken = sessionStorage.getItem('adminToken');
@@ -16,15 +23,39 @@ const ADMIN_REFRESH_INTERVAL = 30000;
 // Helper function to make API requests with CORS handling
 async function fetchWithCORS(endpoint, options = {}) {
     try {
-        // Use CONFIG.fetchAPI directly which handles CORS and provides mock data
-        return await CONFIG.fetchAPI(endpoint, options);
+        // Use the API URL from settings or default
+        const apiUrl = adminApiUrl;
+        
+        // Construct the full URL
+        const url = endpoint.startsWith('http') ? endpoint : `${apiUrl}/${endpoint}`;
+        
+        console.log(`Fetching from: ${url}`);
+        
+        // Add default headers
+        const fetchOptions = {
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                ...(options.headers || {})
+            }
+        };
+        
+        // Try direct fetch first
+        try {
+            const response = await fetch(url, fetchOptions);
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch (error) {
+            console.warn('Direct fetch failed:', error);
+        }
+        
+        // If direct fetch fails, use mock data as fallback
+        console.log('Using mock data for endpoint:', endpoint);
+        return getMockDataForEndpoint(endpoint);
     } catch (error) {
-        console.error(`Error fetching ${endpoint}:`, error);
-        
-        // Show notification about the error
-        showNotification(`Server connection error: ${error.message}`, 'error');
-        
-        // Return appropriate mock data based on endpoint
+        console.error('Error in fetchWithCORS:', error);
         return getMockDataForEndpoint(endpoint);
     }
 }
@@ -1490,46 +1521,41 @@ function setupSettingsForms() {
     }
     
     // API Settings Form
-    const apiSettingsForm = document.getElementById('apiSettingsForm');
+    const apiSettingsForm = document.getElementById('api-settings-form');
     if (apiSettingsForm) {
         apiSettingsForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
             const formData = {
-                apiUrl: document.getElementById('apiUrl').value,
-                useCorsProxy: document.getElementById('useCorsProxy').value === 'true',
-                useMockData: document.getElementById('useMockData').value === 'true'
+                apiUrl: document.getElementById('apiUrl').value.trim(),
+                corsEnabled: document.getElementById('corsEnabled').checked
             };
             
-            // Save to localStorage for demo purposes
-            localStorage.setItem('apiSettings', JSON.stringify(formData));
+            // Save settings to localStorage
+            localStorage.setItem('adminSettings', JSON.stringify({
+                apiUrl: formData.apiUrl,
+                corsEnabled: formData.corsEnabled
+            }));
             
-            // Update API_URL variable
-            if (typeof API_URL !== 'undefined') {
-                window.API_URL = formData.apiUrl;
+            // Update adminApiUrl variable
+            if (formData.apiUrl) {
+                adminApiUrl = formData.apiUrl;
+                window.adminApiUrl = formData.apiUrl;
             }
             
-            // Show success notification
-            showNotification('API ayarları başarıyla kaydedildi.');
-            
-            // Reload page to apply new settings
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
+            showNotification('API ayarları kaydedildi', 'success');
         });
         
-        // Load saved settings if available
-        const savedApiSettings = localStorage.getItem('apiSettings');
-        if (savedApiSettings) {
-            const settings = JSON.parse(savedApiSettings);
-            document.getElementById('apiUrl').value = settings.apiUrl || API_URL;
-            document.getElementById('useCorsProxy').value = settings.useCorsProxy ? 'true' : 'false';
-            document.getElementById('useMockData').value = settings.useMockData ? 'true' : 'false';
+        // Load saved settings
+        const savedSettings = localStorage.getItem('adminSettings');
+        if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            document.getElementById('apiUrl').value = settings.apiUrl || adminApiUrl;
+            document.getElementById('corsEnabled').checked = settings.corsEnabled || false;
         } else {
             // Set default values
-            document.getElementById('apiUrl').value = API_URL;
-            document.getElementById('useCorsProxy').value = 'true';
-            document.getElementById('useMockData').value = 'false';
+            document.getElementById('apiUrl').value = adminApiUrl;
+            document.getElementById('corsEnabled').checked = true;
         }
     }
     

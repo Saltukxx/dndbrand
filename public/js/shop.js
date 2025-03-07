@@ -5,13 +5,13 @@
 
 // API URL
 // Make sure we're using the API URL from config.js
-let API_URL;
+let shopApiUrl;
 if (window.CONFIG && window.CONFIG.API_URL) {
-    API_URL = window.CONFIG.API_URL;
-    console.log('Using API URL from config.js:', API_URL);
+    shopApiUrl = window.CONFIG.API_URL;
+    console.log('Using API URL from config.js:', shopApiUrl);
 } else {
-    API_URL = 'https://dndbrand-server.onrender.com/api';
-    console.log('Config not found, using fallback API URL:', API_URL);
+    shopApiUrl = 'https://dndbrand-server.onrender.com/api';
+    console.log('Config not found, using fallback API URL:', shopApiUrl);
 }
 
 // Add these variables at the top of the file, after the existing variables
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function fetchProducts() {
         try {
             console.log('Fetching products from API...');
-            console.log('API URL:', `${API_URL}/products`);
+            console.log('API URL:', `${shopApiUrl}/products`);
             
             // Add a timestamp to prevent caching
             const timestamp = new Date().getTime();
@@ -148,65 +148,76 @@ document.addEventListener('DOMContentLoaded', function() {
                         return data.value;
                     }
                     
-                    console.error('Could not find products in the response:', data);
-                    return getMockProducts();
-                } catch (apiError) {
-                    console.error('CONFIG.fetchAPI request failed:', apiError);
-                    console.log('Falling back to mock products');
-                    return getMockProducts();
+                    // If we get here, the data format is unexpected
+                    console.warn('Unexpected data format from API:', data);
+                    throw new Error('Unexpected data format from API');
+                } catch (error) {
+                    console.error('Error using CONFIG.fetchAPI:', error);
+                    // Continue to fallback methods
                 }
-            } else {
-                // Direct fetch as fallback if CONFIG.fetchAPI is not available
-                try {
-                    console.log('CONFIG.fetchAPI not available, using direct fetch');
-                    
-                    // For Render-hosted backends, ensure we're not sending credentials
-                    const response = await fetch(`${API_URL}/products?_t=${timestamp}`, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json'
-                        },
-                        credentials: 'omit', // Important for CORS with Render
-                        mode: 'cors'
-                    });
-                    
-                    console.log('Response status:', response.status);
-                    
-                    if (!response.ok) {
-                        throw new Error(`API request failed with status ${response.status}`);
-                    }
-                    
+            }
+            
+            // Fallback to direct fetch if CONFIG.fetchAPI is not available or failed
+            try {
+                console.log('Falling back to direct fetch...');
+                
+                // For Render-hosted backends, ensure we're not sending credentials
+                const response = await fetch(`${shopApiUrl}/products?_t=${timestamp}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'omit' // Changed from 'include' to 'omit' to avoid CORS issues
+                });
+                
+                if (response.ok) {
                     const data = await response.json();
-                    console.log('Raw API response:', data);
+                    console.log('Successfully fetched data via direct fetch!');
                     
-                    // Process the data
+                    // Process the data as usual
                     if (Array.isArray(data)) {
+                        console.log(`Found ${data.length} products in the response (direct array)`);
                         return data;
-                    } else if (data && data.data && Array.isArray(data.data)) {
-                        return data.data;
                     } else if (data && data.products && Array.isArray(data.products)) {
+                        console.log(`Found ${data.products.length} products in the response (products property)`);
                         return data.products;
-                    } else {
-                        console.error('Unexpected data format:', data);
-                        return getMockProducts();
+                    } else if (data && data.data && Array.isArray(data.data)) {
+                        console.log(`Found ${data.data.length} products in the response (data property)`);
+                        return data.data;
+                    } else if (data && data.results && Array.isArray(data.results)) {
+                        console.log(`Found ${data.results.length} products in the response (results property)`);
+                        return data.results;
                     }
-                } catch (fetchError) {
-                    console.error('Direct fetch failed:', fetchError);
-                    return getMockProducts();
+                    
+                    // If we get here, the data format is unexpected
+                    console.warn('Unexpected data format from API:', data);
+                    throw new Error('Unexpected data format from API');
+                } else {
+                    console.error('API request failed with status:', response.status);
+                    throw new Error(`API request failed with status ${response.status}`);
                 }
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                
+                // Show error notification to user
+                if (typeof showNotification === 'function') {
+                    showNotification('Ürünler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 'error');
+                }
+                
+                // Use mock data as a fallback
+                console.log('Using mock data as fallback...');
+                return getMockProducts();
             }
         } catch (error) {
-            console.error('Error fetching products:', error);
+            console.error('Error in fetchProducts:', error);
             
-            // Log more details about the error for debugging
-            if (error instanceof TypeError && error.message.includes('fetch')) {
-                console.error('This might be a CORS issue. Check that your API server allows requests from this origin.');
-                console.error('Current origin:', window.location.origin);
-                console.log('Using mock products due to CORS or network error');
+            // Show error notification to user
+            if (typeof showNotification === 'function') {
+                showNotification('Ürünler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 'error');
             }
             
-            // Return mock products for development/fallback
-            console.log('Returning mock products as fallback');
+            // Use mock data as a fallback
+            console.log('Using mock data as fallback...');
             return getMockProducts();
         }
     }
@@ -356,40 +367,124 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize shop
     async function initShop() {
-        // Show loading state
-        showLoading(true);
-        
-        // Set default price range
-        activeFilters.priceMin = 0;
-        activeFilters.priceMax = 10000; // Increased from 5000 to 10000
-        
-        // Update price inputs
-        if (minPriceInput) minPriceInput.value = activeFilters.priceMin;
-        if (maxPriceInput) maxPriceInput.value = activeFilters.priceMax;
-        
-        // Fetch products
-        products = await fetchProducts();
-        
-        // Apply initial filters
-        applyFilters();
-        
-        // Render products
-        renderProducts();
-        
-        // Setup event listeners
-        setupEventListeners();
-        
-        // Initialize mobile filters
-        initMobileFilters();
-        
-        // Set up auto-refresh
-        setupAutoRefresh();
-        
-        // Add refresh button
-        addRefreshButton();
-        
-        // Hide loading state
-        showLoading(false);
+        try {
+            console.log('Initializing shop...');
+            
+            // Show loading indicator
+            showLoading(true);
+            
+            // Initialize mobile filters
+            initMobileFilters();
+            
+            // Get URL parameters for initial filters
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Set initial category from URL if present
+            if (urlParams.has('type')) {
+                const categoryFromUrl = urlParams.get('type');
+                console.log('Setting initial category from URL:', categoryFromUrl);
+                
+                // Find and activate the category link
+                const categoryLinks = document.querySelectorAll('.category-list a');
+                categoryLinks.forEach(link => {
+                    if (link.getAttribute('data-category') === categoryFromUrl) {
+                        // Remove active class from all links
+                        categoryLinks.forEach(l => l.classList.remove('active'));
+                        // Add active class to this link
+                        link.classList.add('active');
+                    }
+                });
+                
+                // Set the active category
+                activeFilters.category = categoryFromUrl;
+            }
+            
+            // Set sale filter from URL if present
+            if (urlParams.has('sale') && urlParams.get('sale') === 'true') {
+                console.log('Setting sale filter from URL');
+                
+                // Find and check the sale checkbox
+                const saleCheckbox = document.querySelector('input[data-feature="sale"]');
+                if (saleCheckbox) {
+                    saleCheckbox.checked = true;
+                }
+                
+                // Add sale to active features
+                activeFilters.features.push('sale');
+            }
+            
+            // Fetch products
+            try {
+                console.log('Fetching products...');
+                products = await fetchProducts();
+                console.log(`Fetched ${products.length} products`);
+                
+                // Apply initial filters
+                filteredProducts = [...products];
+                applyFilters();
+                
+                // Render products
+                renderProducts();
+                
+                // Update product count
+                updateProductCount();
+                
+                // Add event listeners
+                setupEventListeners();
+                
+                // Setup auto-refresh
+                setupAutoRefresh();
+                
+                // Add refresh button
+                addRefreshButton();
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                
+                // Show error message
+                const productsContainer = document.getElementById('products-container');
+                if (productsContainer) {
+                    productsContainer.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <h3>Ürünler yüklenirken bir hata oluştu</h3>
+                            <p>Lütfen daha sonra tekrar deneyin veya yeniden yüklemeyi deneyin.</p>
+                            <button id="retry-fetch" class="btn">Yeniden Dene</button>
+                        </div>
+                    `;
+                    
+                    // Add retry button event listener
+                    const retryButton = document.getElementById('retry-fetch');
+                    if (retryButton) {
+                        retryButton.addEventListener('click', async () => {
+                            try {
+                                showLoading(true);
+                                products = await fetchProducts();
+                                filteredProducts = [...products];
+                                applyFilters();
+                                renderProducts();
+                                updateProductCount();
+                                showLoading(false);
+                            } catch (retryError) {
+                                console.error('Error retrying fetch:', retryError);
+                                showLoading(false);
+                                showNotification('Ürünler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 'error');
+                            }
+                        });
+                    }
+                }
+            } finally {
+                // Hide loading indicator
+                showLoading(false);
+            }
+        } catch (error) {
+            console.error('Error initializing shop:', error);
+            showLoading(false);
+            
+            // Show error notification
+            if (typeof showNotification === 'function') {
+                showNotification('Sayfa yüklenirken bir hata oluştu. Lütfen sayfayı yenileyin.', 'error');
+            }
+        }
     }
 
     // Show/hide loading state
@@ -746,89 +841,65 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Get product image
     function getProductImage(product) {
-        // Use the centralized ImageService if available
-        if (window.ImageService && typeof window.ImageService.getProductImage === 'function') {
-            return window.ImageService.getProductImage(product, { 
-                category: product.category 
-            });
-        }
-        
-        // Fallback to original implementation if ImageService is not available
-        // Default image if no image is available
-        let productImage = '/img/no-image.jpg';
-        
         try {
-            // Check for images array with new format (objects with original and thumbnail)
-            if (Array.isArray(product.images) && product.images.length > 0) {
-                const firstImage = product.images[0];
-                
-                // Check if image is in the new format (object with thumbnail property)
-                if (firstImage && typeof firstImage === 'object' && firstImage.thumbnail) {
-                    productImage = firstImage.thumbnail;
-                }
-                // Check if it's the old format (string URL)
-                else if (firstImage && typeof firstImage === 'string') {
-                    productImage = firstImage;
-                }
-            } 
-            // Check for single image string
-            else if (typeof product.images === 'string' && product.images) {
-                productImage = product.images;
-            } 
-            // Check for image property
-            else if (product.image) {
-                productImage = product.image;
+            // Use the ImageService if available
+            if (window.ImageService && typeof window.ImageService.getProductImage === 'function') {
+                return window.ImageService.getProductImage(product.image || product.images, {
+                    category: product.category
+                });
             }
             
-            // Check if image is a relative path and add base URL if needed
-            if (productImage && !productImage.startsWith('http')) {
-                // If it's an upload path, use it directly from the server root
-                if (productImage.includes('/uploads/')) {
-                    // Make sure we don't duplicate the /api/uploads/ part
-                    if (productImage.startsWith('/api/uploads/')) {
-                        productImage = productImage.replace('/api/uploads/', '/uploads/');
-                    }
-                    // Make sure the path starts with a slash
-                    if (!productImage.startsWith('/')) {
-                        productImage = '/' + productImage;
-                    }
-                } 
-                // For other API paths, add the API_URL
-                else if (!productImage.startsWith('/img/')) {
-                    // Make sure the path starts with a slash
-                    if (!productImage.startsWith('/')) {
-                        productImage = '/' + productImage;
-                    }
-                    productImage = `${API_URL}${productImage}`;
+            // Fallback to original implementation if ImageService is not available
+            let productImage = '';
+            
+            // Handle different image formats
+            if (product.image) {
+                productImage = product.image;
+            } else if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+                productImage = product.images[0];
+            } else if (product.images && typeof product.images === 'string') {
+                productImage = product.images;
+            } else if (product.thumbnail) {
+                productImage = product.thumbnail;
+            }
+            
+            // Process the image path
+            if (productImage) {
+                // If it's already a full URL, return it
+                if (productImage.startsWith('http')) {
+                    return productImage;
                 }
+                
+                // Make sure the path starts with a slash
+                if (!productImage.startsWith('/')) {
+                    productImage = '/' + productImage;
+                }
+                productImage = `${shopApiUrl}${productImage}`;
             }
             
             // For demo/testing, use placeholder images if the image path doesn't exist
             if (productImage === '/img/no-image.jpg' || 
-                productImage === `${API_URL}/img/no-image.jpg` ||
+                productImage === `${shopApiUrl}/img/no-image.jpg` ||
                 productImage === 'undefined' ||
                 productImage === 'null') {
-                // Use placeholder images based on product category
-                const category = product.category ? product.category.toLowerCase() : '';
-                if (category.includes('men') || category.includes('erkek')) {
-                    productImage = 'https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';
-                } else if (category.includes('women') || category.includes('kadin') || category.includes('kadın')) {
-                    productImage = 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';
-                } else if (category.includes('accessories') || category.includes('aksesuar')) {
-                    productImage = 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';
+                
+                // Use category-specific placeholder
+                if (product.category === 'men') {
+                    return '/images/placeholder-men.jpg';
+                } else if (product.category === 'women') {
+                    return '/images/placeholder-women.jpg';
+                } else if (product.category === 'accessories') {
+                    return '/images/placeholder-accessories.jpg';
                 } else {
-                    productImage = 'https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';
+                    return '/images/placeholder-product.jpg';
                 }
             }
             
-            // For debugging
-            console.log('Product image path:', productImage);
+            return productImage || '/images/placeholder-product.jpg';
         } catch (error) {
-            console.error(`Error processing image for product ${product.name}:`, error);
-            productImage = 'https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';
+            console.error('Error getting product image:', error);
+            return '/images/placeholder-product.jpg';
         }
-        
-        return productImage;
     }
 
     // Render products

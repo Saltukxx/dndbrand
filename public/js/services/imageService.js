@@ -4,20 +4,20 @@
  */
 
 // Get API URL from config if available
-const API_URL = window.CONFIG && window.CONFIG.API_URL 
+const imageServiceApiUrl = window.CONFIG && window.CONFIG.API_URL 
     ? window.CONFIG.API_URL 
     : 'https://dndbrand-server.onrender.com/api';
 
-// Default placeholder images by category
+// Default placeholder images by category - use absolute paths
 const PLACEHOLDER_IMAGES = {
-    men: 'https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-    women: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-    accessories: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-    default: 'https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'
+    men: '/images/placeholder-men.jpg',
+    women: '/images/placeholder-women.jpg',
+    accessories: '/images/placeholder-accessories.jpg',
+    default: '/images/placeholder-product.jpg'
 };
 
-// Default image path
-const DEFAULT_IMAGE = `${API_URL}/images/default-product.jpg`;
+// Default image path - use a path that exists in the project
+const DEFAULT_IMAGE = '/images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png';
 
 /**
  * Get product image URL with proper handling of various formats
@@ -120,12 +120,12 @@ function processImagePath(imagePath) {
         }
         
         // Return the full API URL with the uploads path
-        return `${API_URL}${imagePath}`;
+        return `${imageServiceApiUrl}${imagePath}`;
     }
     
     // If it's just a filename, add the API URL path
     if (!imagePath.includes('/')) {
-        return `${API_URL}/images/${imagePath}`;
+        return `${imageServiceApiUrl}/images/${imagePath}`;
     }
     
     // Make sure the path starts with a slash
@@ -134,7 +134,7 @@ function processImagePath(imagePath) {
     }
     
     // Default to API URL
-    return `${API_URL}${imagePath}`;
+    return `${imageServiceApiUrl}${imagePath}`;
 }
 
 /**
