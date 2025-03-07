@@ -77,6 +77,11 @@ function initializeCart() {
     
     // Update cart summary
     updateCartSummary();
+    
+    // Apply global image error handler if available
+    if (window.ImageService && typeof window.ImageService.applyImageErrorHandler === 'function') {
+        window.ImageService.applyImageErrorHandler();
+    }
 }
 
 // Create cart item element
@@ -124,14 +129,7 @@ function createCartItem(item) {
     cartItem.innerHTML = `
         <div class="cart-item-product">
             <div class="cart-item-image">
-                <img src="${imageUrl}" alt="${item.name}" 
-                     onerror="if (!this.dataset.retryCount || this.dataset.retryCount < 2) {
-                         this.dataset.retryCount = this.dataset.retryCount ? parseInt(this.dataset.retryCount) + 1 : 1;
-                         setTimeout(() => { this.src = '${imageUrl}?retry=' + this.dataset.retryCount; }, 1000);
-                     } else {
-                         this.src='/images/placeholder-product.jpg';
-                         this.onerror=null;
-                     }">
+                <img src="${imageUrl}" alt="${item.name}">
             </div>
             <div class="cart-item-details">
                 <h3>${item.name}</h3>

@@ -173,14 +173,7 @@ function createProductCard(product) {
     card.innerHTML = `
         <div class="product-image">
             ${productBadges}
-            <img src="${productImage}" alt="${product.name}" 
-                 onerror="if (!this.dataset.retryCount || this.dataset.retryCount < 2) {
-                     this.dataset.retryCount = this.dataset.retryCount ? parseInt(this.dataset.retryCount) + 1 : 1;
-                     setTimeout(() => { this.src = '${productImage}?retry=' + this.dataset.retryCount; }, 1000);
-                 } else {
-                     this.src='/images/placeholder-product.jpg';
-                     this.onerror=null;
-                 }">
+            <img src="${productImage}" alt="${product.name}">
             <div class="product-overlay">
                 <a href="#" class="add-to-cart" data-id="${product._id || product.id}" title="Sepete Ekle">Sepete Ekle</a>
                 <a href="./product.html?id=${product._id || product.id}" class="view-details" title="Detayları Gör">Detayları Gör</a>
@@ -421,7 +414,7 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// Initialize other homepage functionality
+// Initialize homepage
 function initializeHomepage() {
     // Update cart count on page load
     updateCartCount();
@@ -437,5 +430,16 @@ function initializeHomepage() {
                 }
             });
         });
+    }
+    
+    // Load featured products
+    loadFeaturedProducts();
+    
+    // Initialize product cards
+    initializeProductCards();
+    
+    // Apply global image error handler if available
+    if (window.ImageService && typeof window.ImageService.applyImageErrorHandler === 'function') {
+        window.ImageService.applyImageErrorHandler();
     }
 } 

@@ -19,6 +19,121 @@ const PLACEHOLDER_IMAGES = {
 // Default image path - use a path that exists in the project
 const DEFAULT_IMAGE = '/images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png';
 
+// Maximum number of retry attempts
+const MAX_RETRY_ATTEMPTS = 2;
+
+/**
+ * Global image error handler to prevent endless loading loops
+ * @param {HTMLImageElement} imgElement - The image element that failed to load
+ * @param {string} fallbackSrc - The fallback image source to use if retries fail
+ * @param {number} maxRetries - Maximum number of retry attempts
+ */
+function handleImageError(imgElement, fallbackSrc, maxRetries = MAX_RETRY_ATTEMPTS) {
+    // Skip if no image element provided
+    if (!imgElement) return;
+    
+    // Get current retry count or initialize to 0
+    const currentRetryCount = parseInt(imgElement.dataset.retryCount || '0');
+    
+    // If we haven't reached max retries, try again
+    if (currentRetryCount < maxRetries) {
+        // Increment retry count
+        imgElement.dataset.retryCount = (currentRetryCount + 1).toString();
+        
+        // Log retry attempt
+        console.log(`Retrying image load (${currentRetryCount + 1}/${maxRetries}): ${imgElement.src}`);
+        
+        // Add cache-busting parameter to force reload
+        const originalSrc = imgElement.src.split('?')[0];
+        const newSrc = `${originalSrc}?retry=${Date.now()}`;
+        
+        // Try again after a short delay
+        setTimeout(() => {
+            imgElement.src = newSrc;
+        }, 1000);
+    } else {
+        // Max retries reached, use fallback image
+        console.log('Max retries reached, using fallback image');
+        imgElement.src = fallbackSrc || PLACEHOLDER_IMAGES.default;
+        imgElement.onerror = null; // Prevent further retries
+    }
+}
+
+/**
+ * Apply the image error handler to all images on the page
+ */
+function applyImageErrorHandler() {
+    // Get all images on the page
+    const images = document.querySelectorAll('img');
+    
+    // Apply error handler to each image
+    images.forEach(img => {
+        // Skip images that already have our error handler
+        if (img.hasAttribute('data-error-handled')) return;
+        
+        // Mark image as handled
+        img.setAttribute('data-error-handled', 'true');
+        
+        // Get appropriate fallback based on image classes or parent elements
+        let fallbackSrc = PLACEHOLDER_IMAGES.default;
+        
+        // Check if image is in a product card with a category
+        const productCard = img.closest('[data-category]');
+        if (productCard) {
+            const category = productCard.getAttribute('data-category');
+            fallbackSrc = getCategoryPlaceholder(category);
+        }
+        
+        // Set error handler
+        img.onerror = function() {
+            handleImageError(this, fallbackSrc);
+        };
+    });
+}
+
+// Apply error handler to all images when DOM is loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyImageErrorHandler);
+} else {
+    applyImageErrorHandler();
+}
+
+// Apply error handler to new images added to the DOM
+const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+        if (mutation.type === 'childList') {
+            mutation.addedNodes.forEach(node => {
+                // Check if the added node is an element
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    // If it's an image, apply error handler
+                    if (node.tagName === 'IMG') {
+                        if (!node.hasAttribute('data-error-handled')) {
+                            node.setAttribute('data-error-handled', 'true');
+                            node.onerror = function() {
+                                handleImageError(this, PLACEHOLDER_IMAGES.default);
+                            };
+                        }
+                    }
+                    
+                    // Check for images inside the added node
+                    const images = node.querySelectorAll('img');
+                    images.forEach(img => {
+                        if (!img.hasAttribute('data-error-handled')) {
+                            img.setAttribute('data-error-handled', 'true');
+                            img.onerror = function() {
+                                handleImageError(this, PLACEHOLDER_IMAGES.default);
+                            };
+                        }
+                    });
+                }
+            });
+        }
+    });
+});
+
+// Start observing the document
+observer.observe(document.body, { childList: true, subtree: true });
+
 /**
  * Get product image URL with proper handling of various formats
  * @param {Object|Array|String} image - The image data from the product
@@ -162,5 +277,7 @@ function getCategoryPlaceholder(category) {
 window.ImageService = {
     getProductImage,
     processImagePath,
-    getCategoryPlaceholder
+    getCategoryPlaceholder,
+    handleImageError,
+    applyImageErrorHandler
 }; 

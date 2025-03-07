@@ -324,15 +324,15 @@ async function loadProductDetails(productId) {
                 <div class="product-images">
                     ${product.isNew || product.isFeatured ? `<div class="premium-badge">${product.isNew ? 'Yeni' : 'Premium'}</div>` : ''}
                     <div class="main-image">
-                        <img src="${getProductImage(product)}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/600x800?text=Ürün+Görseli'; this.onerror=null;">
+                        <img src="${getProductImage(product)}" alt="${product.name}">
                     </div>
                     <div class="thumbnail-container">
                         <div class="thumbnail active">
-                            <img src="${getProductImage(product)}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/80x80?text=Ürün'; this.onerror=null;">
+                            <img src="${getProductImage(product)}" alt="${product.name}">
                         </div>
                         ${product.images && Array.isArray(product.images) && product.images.slice(1).map((img, index) => `
                             <div class="thumbnail">
-                                <img src="${getProductImage(img)}" alt="${product.name} - ${index + 2}" onerror="this.src='https://via.placeholder.com/80x80?text=Ürün'; this.onerror=null;">
+                                <img src="${getProductImage(img)}" alt="${product.name} - ${index + 2}">
                             </div>
                         `).join('') || ''}
                     </div>
@@ -470,6 +470,11 @@ async function loadProductDetails(productId) {
         // Load related products
         loadRelatedProducts(product.category);
         
+        // Apply global image error handler if available
+        if (window.ImageService && typeof window.ImageService.applyImageErrorHandler === 'function') {
+            window.ImageService.applyImageErrorHandler();
+        }
+        
     } catch (error) {
         console.error('Error loading product details:', error);
         
@@ -493,7 +498,7 @@ async function loadProductDetails(productId) {
                     
                     <div class="basic-product-details">
                         <div class="basic-product-image">
-                            <img src="https://via.placeholder.com/400x500?text=Urun+Gorseli" alt="Ürün Görseli">
+                            <img src="/images/placeholder-product.jpg" alt="Ürün Görseli">
                         </div>
                         <div class="basic-product-content">
                             <h2>Ürün #${productId}</h2>
@@ -516,6 +521,11 @@ async function loadProductDetails(productId) {
             retryButton.addEventListener('click', () => {
                 loadProductDetails(productId);
             });
+        }
+        
+        // Apply global image error handler to error page images if available
+        if (window.ImageService && typeof window.ImageService.applyImageErrorHandler === 'function') {
+            window.ImageService.applyImageErrorHandler();
         }
     }
 }
@@ -583,21 +593,6 @@ function updateProductImages(template, product) {
     mainImageElement.src = mainImageSrc;
     mainImageElement.alt = product.name;
     
-    // Add onerror handler to main image with retry limit
-    mainImageElement.onerror = function() {
-        if (!this.dataset.retryCount || this.dataset.retryCount < 2) {
-            this.dataset.retryCount = this.dataset.retryCount ? parseInt(this.dataset.retryCount) + 1 : 1;
-            console.log(`Retrying main image load (${this.dataset.retryCount}/3): ${mainImageSrc}`);
-            setTimeout(() => { 
-                this.src = `${mainImageSrc}?retry=${this.dataset.retryCount}`; 
-            }, 1000);
-        } else {
-            console.log('Max retries reached, using default image');
-            this.src = DEFAULT_PRODUCT_IMAGE;
-            this.onerror = null; // Prevent further retries
-        }
-    };
-    
     // Clear thumbnails
     thumbnailContainer.innerHTML = '';
     
@@ -605,24 +600,6 @@ function updateProductImages(template, product) {
     const mainThumbnail = document.createElement('div');
     mainThumbnail.className = 'thumbnail active';
     mainThumbnail.innerHTML = `<img src="${mainImageSrc}" alt="${product.name}">`;
-    
-    // Add onerror handler to thumbnail
-    const mainThumbnailImg = mainThumbnail.querySelector('img');
-    if (mainThumbnailImg) {
-        mainThumbnailImg.onerror = function() {
-            if (!this.dataset.retryCount || this.dataset.retryCount < 2) {
-                this.dataset.retryCount = this.dataset.retryCount ? parseInt(this.dataset.retryCount) + 1 : 1;
-                console.log(`Retrying thumbnail image load (${this.dataset.retryCount}/3): ${mainImageSrc}`);
-                setTimeout(() => { 
-                    this.src = `${mainImageSrc}?retry=${this.dataset.retryCount}`; 
-                }, 1000);
-            } else {
-                console.log('Max retries reached, using default image for thumbnail');
-                this.src = DEFAULT_PRODUCT_IMAGE;
-                this.onerror = null; // Prevent further retries
-            }
-        };
-    }
     
     thumbnailContainer.appendChild(mainThumbnail);
     
@@ -636,24 +613,6 @@ function updateProductImages(template, product) {
             const fullImagePath = getProductImage(images[i]);
             
             thumbnail.innerHTML = `<img src="${fullImagePath}" alt="${product.name} - Image ${i + 1}">`;
-            
-            // Add onerror handler to thumbnail
-            const thumbnailImg = thumbnail.querySelector('img');
-            if (thumbnailImg) {
-                thumbnailImg.onerror = function() {
-                    if (!this.dataset.retryCount || this.dataset.retryCount < 2) {
-                        this.dataset.retryCount = this.dataset.retryCount ? parseInt(this.dataset.retryCount) + 1 : 1;
-                        console.log(`Retrying thumbnail image load (${this.dataset.retryCount}/3): ${fullImagePath}`);
-                        setTimeout(() => { 
-                            this.src = `${fullImagePath}?retry=${this.dataset.retryCount}`; 
-                        }, 1000);
-                    } else {
-                        console.log('Max retries reached, using default image for thumbnail');
-                        this.src = DEFAULT_PRODUCT_IMAGE;
-                        this.onerror = null; // Prevent further retries
-                    }
-                };
-            }
             
             thumbnailContainer.appendChild(thumbnail);
         }

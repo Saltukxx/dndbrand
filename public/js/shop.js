@@ -437,6 +437,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Add refresh button
                 addRefreshButton();
+                
+                // Apply global image error handler if available
+                if (window.ImageService && typeof window.ImageService.applyImageErrorHandler === 'function') {
+                    window.ImageService.applyImageErrorHandler();
+                }
             } catch (error) {
                 console.error('Error fetching products:', error);
                 
@@ -464,6 +469,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 renderProducts();
                                 updateProductCount();
                                 showLoading(false);
+                                
+                                // Apply global image error handler after retry
+                                if (window.ImageService && typeof window.ImageService.applyImageErrorHandler === 'function') {
+                                    window.ImageService.applyImageErrorHandler();
+                                }
                             } catch (retryError) {
                                 console.error('Error retrying fetch:', retryError);
                                 showLoading(false);
@@ -1039,14 +1049,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 productCard.innerHTML = `
                     <div class="product-image">
                         ${productBadges}
-                        <img src="${productImage}" alt="${product.name}" 
-                             onerror="if (!this.dataset.retryCount || this.dataset.retryCount < 2) {
-                                 this.dataset.retryCount = this.dataset.retryCount ? parseInt(this.dataset.retryCount) + 1 : 1;
-                                 setTimeout(() => { this.src = '${productImage}?retry=' + this.dataset.retryCount; }, 1000);
-                             } else {
-                                 this.src='/images/placeholder-product.jpg';
-                                 this.onerror=null;
-                             }">
+                        <img src="${productImage}" alt="${product.name}">
                         <div class="product-overlay">
                             <a href="./product.html?id=${productId}" class="quick-view" data-id="${productId}">
                                 <i class="fas fa-eye"></i>
