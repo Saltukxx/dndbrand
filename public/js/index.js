@@ -186,6 +186,14 @@ function createProductCard(product) {
 
 // Get product image helper function
 function getProductImage(product) {
+    // Use the centralized ImageService if available
+    if (window.ImageService && typeof window.ImageService.getProductImage === 'function') {
+        return window.ImageService.getProductImage(product, { 
+            category: product.category 
+        });
+    }
+    
+    // Fallback to original implementation if ImageService is not available
     let productImage = '../img/no-image.jpg';
     
     try {

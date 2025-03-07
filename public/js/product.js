@@ -79,6 +79,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Get product image with proper handling
 function getProductImage(imagePath, useOriginal = false) {
+    // Use the centralized ImageService if available
+    if (window.ImageService && typeof window.ImageService.getProductImage === 'function') {
+        return window.ImageService.getProductImage(imagePath, { 
+            fullSize: useOriginal 
+        });
+    }
+    
+    // Fallback to original implementation if ImageService is not available
     // Handle null, undefined, or non-string values
     if (!imagePath) {
         return 'https://dndbrand-server.onrender.com/api/images/default-product.jpg';

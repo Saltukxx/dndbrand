@@ -533,12 +533,17 @@ function updateCartPreview() {
                     maximumFractionDigits: 2
                 }) : '0.00';
             
+            // Get image URL with proper handling
+            let imageUrl;
+            if (window.ImageService && typeof window.ImageService.getProductImage === 'function') {
+                imageUrl = window.ImageService.getProductImage(item.image);
+            } else {
+                imageUrl = item.image || '../images/no-image.jpg';
+            }
+            
             // Create cart preview item
             const cartPreviewItem = document.createElement('div');
             cartPreviewItem.className = 'cart-preview-item';
-            
-            // Get image URL with fallback
-            const imageUrl = item.image || '../images/no-image.jpg';
             
             cartPreviewItem.innerHTML = `
                 <div class="cart-preview-item-image">

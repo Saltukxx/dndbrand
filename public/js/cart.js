@@ -104,7 +104,12 @@ function createCartItem(item) {
         }) : '0.00';
     
     // Get image URL with fallback
-    const imageUrl = item.image || '../images/no-image.jpg';
+    let imageUrl;
+    if (window.ImageService && typeof window.ImageService.getProductImage === 'function') {
+        imageUrl = window.ImageService.getProductImage(item.image);
+    } else {
+        imageUrl = item.image || '../images/no-image.jpg';
+    }
     
     // Create variant text if color or size exists
     let variantText = '';

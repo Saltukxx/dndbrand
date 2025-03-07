@@ -746,6 +746,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Get product image
     function getProductImage(product) {
+        // Use the centralized ImageService if available
+        if (window.ImageService && typeof window.ImageService.getProductImage === 'function') {
+            return window.ImageService.getProductImage(product, { 
+                category: product.category 
+            });
+        }
+        
+        // Fallback to original implementation if ImageService is not available
         // Default image if no image is available
         let productImage = '/img/no-image.jpg';
         
@@ -776,7 +784,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (productImage && !productImage.startsWith('http')) {
                 // If it's an upload path, use it directly from the server root
                 if (productImage.includes('/uploads/')) {
-                    // Make sure we don't duplicate the /uploads/ part
+                    // Make sure we don't duplicate the /api/uploads/ part
                     if (productImage.startsWith('/api/uploads/')) {
                         productImage = productImage.replace('/api/uploads/', '/uploads/');
                     }
