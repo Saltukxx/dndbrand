@@ -16,11 +16,75 @@ const PLACEHOLDER_IMAGES = {
     default: '/images/placeholder-product.jpg'
 };
 
+// Server-side placeholder URL (production)
+const SERVER_PLACEHOLDER_URL = `${imageServiceApiUrl}/images/placeholder-product.jpg`;
+
+// Local server placeholder URL
+const LOCAL_PLACEHOLDER_URL = '/api/images/placeholder-product.jpg';
+
 // Default image path - use placeholder-product.jpg as the default fallback
 const DEFAULT_IMAGE = '/images/placeholder-product.jpg';
 
 // Maximum number of retry attempts
 const MAX_RETRY_ATTEMPTS = 2;
+
+// Track whether placeholder images are available
+let isServerPlaceholderAvailable = false;
+let isLocalPlaceholderAvailable = false;
+
+// Preload local placeholder image first
+function preloadLocalPlaceholder() {
+    const img = new Image();
+    img.onload = function() {
+        isLocalPlaceholderAvailable = true;
+        console.log('Local placeholder image loaded successfully');
+    };
+    img.onerror = function() {
+        isLocalPlaceholderAvailable = false;
+        console.warn('Local placeholder not available, will try server');
+        
+        // Try server placeholder as fallback
+        preloadServerPlaceholder();
+    };
+    img.src = LOCAL_PLACEHOLDER_URL;
+}
+
+// Preload server placeholder image as backup
+function preloadServerPlaceholder() {
+    const img = new Image();
+    img.onload = function() {
+        isServerPlaceholderAvailable = true;
+        console.log('Server placeholder image loaded successfully');
+    };
+    img.onerror = function() {
+        isServerPlaceholderAvailable = false;
+        console.warn('Server placeholder not available, will use local file fallback');
+    };
+    img.src = SERVER_PLACEHOLDER_URL;
+}
+
+// Try to preload the placeholders
+preloadLocalPlaceholder();
+
+/**
+ * Get the best available placeholder image
+ * @param {string} category - Optional category for specialized placeholders
+ * @returns {string} The best available placeholder image URL
+ */
+function getBestPlaceholder(category) {
+    // If local placeholder is available, use it (fastest)
+    if (isLocalPlaceholderAvailable) {
+        return LOCAL_PLACEHOLDER_URL;
+    }
+    
+    // If server placeholder is available, use it (reliable)
+    if (isServerPlaceholderAvailable) {
+        return SERVER_PLACEHOLDER_URL;
+    }
+    
+    // Otherwise fall back to category-specific or default local placeholder
+    return getCategoryPlaceholder(category);
+}
 
 /**
  * Global image error handler to prevent endless loading loops
@@ -54,7 +118,7 @@ function handleImageError(imgElement, fallbackSrc, maxRetries = MAX_RETRY_ATTEMP
     } else {
         // Max retries reached, use fallback image
         console.log('Max retries reached, using fallback image');
-        imgElement.src = fallbackSrc || PLACEHOLDER_IMAGES.default;
+        imgElement.src = getBestPlaceholder() || fallbackSrc || PLACEHOLDER_IMAGES.default;
         imgElement.onerror = null; // Prevent further retries
     }
 }
@@ -150,13 +214,13 @@ function getProductImage(image, options = {}) {
         
         // Handle null, undefined, or empty values
         if (!image) {
-            return getCategoryPlaceholder(category);
+            return getBestPlaceholder(category);
         }
         
         // If image is an array, use the first item
         if (Array.isArray(image)) {
             if (image.length === 0) {
-                return getCategoryPlaceholder(category);
+                return getBestPlaceholder(category);
             }
             return getProductImage(image[0], options);
         }
@@ -190,19 +254,19 @@ function getProductImage(image, options = {}) {
             }
             
             // Can't extract a string URL from the object
-            return getCategoryPlaceholder(category);
+            return getBestPlaceholder(category);
         }
         
         // Ensure image is a string at this point
         if (typeof image !== 'string') {
-            return getCategoryPlaceholder(category);
+            return getBestPlaceholder(category);
         }
         
         // Process the image path
         return processImagePath(image);
     } catch (error) {
         console.error('Error processing product image:', error);
-        return getCategoryPlaceholder(category);
+        return getBestPlaceholder(category);
     }
 }
 
@@ -278,6 +342,7 @@ window.ImageService = {
     getProductImage,
     processImagePath,
     getCategoryPlaceholder,
+    getBestPlaceholder,
     handleImageError,
     applyImageErrorHandler
 }; 

@@ -38,6 +38,28 @@ const port = process.env.PORT || 3000;
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Create a dedicated route for placeholder images
+app.get('/api/images/:imageName', (req, res) => {
+  const imageName = req.params.imageName;
+  const placeholderPath = path.join(__dirname, 'public', 'images', imageName);
+  
+  // Check if the requested placeholder exists
+  if (fs.existsSync(placeholderPath)) {
+    res.sendFile(placeholderPath);
+    logger.info(`Served local image: ${imageName}`);
+  } else {
+    // Default to placeholder-product.jpg if the specific one doesn't exist
+    const defaultPath = path.join(__dirname, 'public', 'images', 'placeholder-product.jpg');
+    if (fs.existsSync(defaultPath)) {
+      res.sendFile(defaultPath);
+      logger.info(`Served default placeholder for: ${imageName}`);
+    } else {
+      res.status(404).send('Image not found');
+      logger.error(`Image not found: ${imageName}`);
+    }
+  }
+});
+
 // CORS Proxy middleware for API requests
 app.use('/api-proxy', async (req, res) => {
   try {

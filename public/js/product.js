@@ -14,16 +14,61 @@ try {
     console.log('Config not found, using fallback API URL:', productApiUrl);
 }
 
-// Base64 encoded product placeholder for fallback
-const FALLBACK_PRODUCT_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAMAAADVRocKAAAAQlBMVEX///+qqqr09PT5+fnv7+/8/Pzr6+u0tLTc3NzR0dG5ubmurq7BwcHGxsbNzc3j4+Pn5+fZ2dnU1NT19fXw8PDg4OCF/xZ5AAADlklEQVR4nO2b2XLrIAyGwQtgvGHH7/+oJ03apGs6sRM4Z+bXRZvLfCBA6DJ1HYIgCIIgCIIgCIIgCIIgCIJ8G2JA3bYQ6Hdv5BPAH5R1MpvMZUwK30bTQB4XaXwhlzydE/guHsI8cQpAOKXGHn6CwJc9hVn8wewmywJwcx1/Y0D9JoLgcv5CVPQFAsdz+QvpYwxo3vOXDMQU3gKAuOCvXRDf4CAf6gsFB5A+4C8dkMfmQK4SejCgJg1YOZ+wDGx1Ae3i5TaEA/8mAZDLDdh4tQNzMUC6zQU0i1x3oF3kwq/47VD87oLcZcA4PuFA/MABcZcBwzqNHZ9MQBR3GTBuU49nHNCPhcgj5/NDDrCfOUb8hY8cA1UwPj73lW8dgQ8P0yLHkYm0k/tjhRj1F1swM5xBvKx3GXA9mPWrA+Jvs4ywunbgCQfESQZIqzWI4wg6bPkS7dK1Vy2gJ+ZJQK9BPDuFjAe3bHxEq3kSMOsM/HkbXodGTW+GYuRPt7ExYHgSUF8cOPV/Xdo/3/53B8ZdPwho9/kHhLTHP9+BuvpJELA0d3+AK67Z+gTCWzXMD/0ykBH3mEJQKbZT2+p+D5Q4S98C0K46OzE49YMDlhqm+ICBIG5zjUEHgLJCG/24LmRYXX/fBGjX3Y+SZ7dLaEDU0ypY+ftvR9h5sYK2sZ2kGdYpbPhqANKuc58Rqb9YqJ2RO2B2lgB5dh+9j5ER1H4RxEYA8Qbnn1Cnwk9h2LHtFATJ8Pf4CybWRd9vWQF4dDgYvZdQ+YkUyzfHsUg+53vkdKN9Xw5Qx9H9qQ5QJzL0XtZNgIHLlmPrVuAXCVDhLyCLu3qdSYCnDgGXQqSc87uXtARQt2xhsHPeApR4/PQp+uXC2QGQDpxVjFVcMvdEKIvEj+CcHPg4qTCEVl/Xzl5/jZt5yvqLHaLkotNsaJXrRmRQRaFSSYLjEsb7MVDPu1mUtpJGNbWdxlDkOJlVcK2t9wW9LCxBJQkBJAkMIZBfGw6RYJCgsCt3ASp3Acp3ATp3Acr3ATqfAOr3ARrfCOr3AWpfB6rfCKp9I2jhU7CJr8Em33ha+CRMJI+CIbCAMdCAkTDzYqQiICZfUEjQpnARCQlpZcRMQ0LCa2WU+CNSTkJDYgpmQzIqc4H/n5iOjpyQkJqQkpySlPFvJSYlJaWlpSb+B6jJiampyelJ/1Z6egRBEARBEAT5Jv4BRv9A0iXGr8MAAAAASUVORK5CYII=';
+// Server-side placeholder URL (production)
+const SERVER_PLACEHOLDER_URL = `${productApiUrl}/images/placeholder-product.jpg`;
+
+// Local server placeholder URL
+const LOCAL_PLACEHOLDER_URL = '/api/images/placeholder-product.jpg';
+
+// Default fallback image path (local file)
+const FALLBACK_PRODUCT_IMAGE = '/images/placeholder-product.jpg';
 
 // Make fallback available globally for other scripts
 window.FALLBACK_PRODUCT_IMAGE = FALLBACK_PRODUCT_IMAGE;
 
 // Set fallback product image with ImageService or direct fallback
 const DEFAULT_PRODUCT_IMAGE = window.ImageService ? 
-    window.ImageService.getProductImage('default-product.jpg') : 
-    `${productApiUrl}/images/default-product.jpg`;
+    window.ImageService.getBestPlaceholder ? window.ImageService.getBestPlaceholder() : 
+    window.ImageService.getProductImage('placeholder-product.jpg') : 
+    LOCAL_PLACEHOLDER_URL;
+
+// Track if placeholder images are available
+let isServerPlaceholderAvailable = false;
+let isLocalPlaceholderAvailable = false;
+
+// Preload local placeholder image first
+function preloadLocalPlaceholder() {
+    const img = new Image();
+    img.onload = function() {
+        isLocalPlaceholderAvailable = true;
+        console.log('Local placeholder image loaded successfully for product page');
+    };
+    img.onerror = function() {
+        isLocalPlaceholderAvailable = false;
+        console.warn('Local placeholder not available for product page, trying server');
+        
+        // Try server placeholder as fallback
+        preloadServerPlaceholder();
+    };
+    img.src = LOCAL_PLACEHOLDER_URL;
+}
+
+// Preload server placeholder image as backup
+function preloadServerPlaceholder() {
+    const img = new Image();
+    img.onload = function() {
+        isServerPlaceholderAvailable = true;
+        console.log('Server placeholder image loaded successfully for product page');
+    };
+    img.onerror = function() {
+        isServerPlaceholderAvailable = false;
+        console.warn('Server placeholder not available, using local file fallback for product page');
+    };
+    img.src = SERVER_PLACEHOLDER_URL;
+}
+
+// Try to preload the placeholders
+preloadLocalPlaceholder();
 
 document.addEventListener('DOMContentLoaded', function() {
     // Get product ID from URL
@@ -106,13 +151,13 @@ function getProductImage(imagePath, useOriginal = false) {
     // Fallback to original implementation if ImageService is not available
     // Handle null, undefined, or non-string values
     if (!imagePath) {
-        return FALLBACK_PRODUCT_IMAGE;
+        return getBestPlaceholder();
     }
     
     // If imagePath is an array, use the first item
     if (Array.isArray(imagePath)) {
         if (imagePath.length === 0) {
-            return FALLBACK_PRODUCT_IMAGE;
+            return getBestPlaceholder();
         }
         imagePath = imagePath[0];
     }
@@ -131,7 +176,7 @@ function getProductImage(imagePath, useOriginal = false) {
             imagePath = imagePath.thumbnail;
         } else {
             // Can't extract a string URL from the object
-            return FALLBACK_PRODUCT_IMAGE;
+            return getBestPlaceholder();
         }
     }
     
@@ -148,6 +193,19 @@ function getProductImage(imagePath, useOriginal = false) {
         return imagePath;
     }
     
+    // Check for placeholder or default image references
+    if (imagePath.includes('placeholder-product.jpg')) {
+        return getBestPlaceholder();
+    }
+    
+    // Check for problematic patterns and return the fallback
+    if (imagePath.includes('no-image.jpg') || 
+        imagePath.includes('undefined') || 
+        imagePath.includes('null') ||
+        imagePath.includes('default-product.jpg')) {
+        return getBestPlaceholder();
+    }
+    
     // If it's a relative path, check if it's a path to our images folder
     if (imagePath.includes('/images/')) {
         return imagePath;
@@ -160,6 +218,25 @@ function getProductImage(imagePath, useOriginal = false) {
     
     // Default to API URL
     return `${productApiUrl}${imagePath}`;
+}
+
+/**
+ * Get the best available placeholder image
+ * @returns {string} The placeholder image URL
+ */
+function getBestPlaceholder() {
+    // If local placeholder is available, use it (fastest)
+    if (isLocalPlaceholderAvailable) {
+        return LOCAL_PLACEHOLDER_URL;
+    }
+    
+    // If server placeholder is available, use it (reliable)
+    if (isServerPlaceholderAvailable) {
+        return SERVER_PLACEHOLDER_URL;
+    }
+    
+    // Otherwise fall back to local file
+    return FALLBACK_PRODUCT_IMAGE;
 }
 
 // Fetch product details from API
@@ -640,8 +717,8 @@ function updateProductImages(template, product) {
         // Format: product.imageUrl = 'image.jpg'
         images = [product.imageUrl];
     } else {
-        // No images found, use default
-        images = ['default-product.jpg'];
+        // No images found, use server placeholder if available
+        images = [getBestPlaceholder()];
     }
     
     // Set main image

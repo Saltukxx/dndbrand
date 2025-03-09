@@ -11,6 +11,10 @@ class ImageService {
         // Default placeholder image path
         this.PLACEHOLDER_PRODUCT = '/images/placeholder-product.jpg';
         
+        // Server-side placeholder URLs - try both production and local
+        this.SERVER_PLACEHOLDER_URL = 'https://dndbrand-server.onrender.com/api/images/placeholder-product.jpg';
+        this.LOCAL_PLACEHOLDER_URL = '/api/images/placeholder-product.jpg'; // New local server route
+        
         // Configuration
         this.config = {
             apiBaseUrl: window.CONFIG?.API_URL || 'https://dndbrand-server.onrender.com/api',
@@ -26,8 +30,35 @@ class ImageService {
         
         console.log('ImageService initialized with API base:', this.config.apiBaseUrl);
         
+        // Load the local placeholder image first, then try server if it fails
+        this._preloadLocalPlaceholder();
+        
         // Fix all images on the page
         this._fixAllImagesOnLoad();
+    }
+    
+    /**
+     * Preload the local placeholder image so it's cached
+     * @private
+     */
+    _preloadLocalPlaceholder() {
+        // First try the local server
+        this._preloadImage(this.LOCAL_PLACEHOLDER_URL)
+            .then(() => {
+                console.log('Local placeholder image loaded successfully');
+            })
+            .catch(err => {
+                console.warn('Local placeholder not available, trying server...', err);
+                
+                // Then try the production server
+                this._preloadImage(this.SERVER_PLACEHOLDER_URL)
+                    .then(() => {
+                        console.log('Server placeholder image loaded successfully');
+                    })
+                    .catch(err => {
+                        console.warn('Server placeholder also not available, will use local file fallback', err);
+                    });
+            });
     }
     
     /**
@@ -41,7 +72,7 @@ class ImageService {
         
         // Handle null, undefined or empty cases
         if (!imagePath) {
-            return this.PLACEHOLDER_PRODUCT;
+            return this._getPlaceholderImage();
         }
         
         // Convert to string if it's not already
@@ -54,7 +85,7 @@ class ImageService {
         
         // Check if we've already had errors with this image
         if (this.loadErrors.has(resolvedPath)) {
-            return this.PLACEHOLDER_PRODUCT;
+            return this._getPlaceholderImage();
         }
         
         // Load the image in the background to check if it exists
@@ -64,42 +95,92 @@ class ImageService {
     }
     
     /**
+     * Get the current best placeholder image
+     * @returns {string} The placeholder image URL
+     * @private
+     */
+    _getPlaceholderImage() {
+        // Check if local placeholder is already cached
+        if (this.imageCache.has(this.LOCAL_PLACEHOLDER_URL)) {
+            return this.LOCAL_PLACEHOLDER_URL;
+        }
+        
+        // Check if server placeholder is already cached
+        if (this.imageCache.has(this.SERVER_PLACEHOLDER_URL)) {
+            return this.SERVER_PLACEHOLDER_URL;
+        }
+        
+        // Try to load from local server if we haven't marked it as errored
+        if (!this.loadErrors.has(this.LOCAL_PLACEHOLDER_URL)) {
+            this._preloadImage(this.LOCAL_PLACEHOLDER_URL);
+            return this.LOCAL_PLACEHOLDER_URL;
+        }
+        
+        // Try to load from production server if we haven't marked it as errored
+        if (!this.loadErrors.has(this.SERVER_PLACEHOLDER_URL)) {
+            this._preloadImage(this.SERVER_PLACEHOLDER_URL);
+            return this.SERVER_PLACEHOLDER_URL;
+        }
+        
+        // Fallback to local placeholder file
+        return this.PLACEHOLDER_PRODUCT;
+    }
+    
+    /**
      * Preload an image and cache the result
      * @param {string} imageUrl - The image URL to preload
      * @param {number} retryCount - Current retry attempt
      * @private
      */
     _preloadImage(imageUrl, retryCount = 0) {
-        const img = new Image();
-        
-        img.onload = () => {
-            // Cache successful loads
-            this.imageCache.set(imageUrl, imageUrl);
-        };
-        
-        img.onerror = () => {
-            if (retryCount < this.config.maxRetries) {
-                // Retry with a delay
-                console.log(`Retrying image load (${retryCount + 1}/${this.config.maxRetries}): ${imageUrl}`);
-                setTimeout(() => {
-                    // Add a cache-busting parameter
-                    const retrySrc = `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}retry=${Date.now()}`;
-                    this._preloadImage(retrySrc, retryCount + 1);
-                }, this.config.retryDelay);
-            } else {
-                // Mark as failed after max retries
-                console.log('Max retries reached, using fallback image');
-                this.loadErrors.set(imageUrl, true);
-                
-                // If we're showing this image, replace it with fallback
-                const imgElements = document.querySelectorAll(`img[src="${imageUrl}"]`);
-                imgElements.forEach(element => {
-                    element.src = this.PLACEHOLDER_PRODUCT;
-                });
+        return new Promise((resolve, reject) => {
+            // Skip if already cached
+            if (this.imageCache.has(imageUrl)) {
+                return resolve(imageUrl);
             }
-        };
-        
-        img.src = imageUrl;
+            
+            // Skip if we know it's errored before
+            if (this.loadErrors.has(imageUrl)) {
+                return reject(new Error('Image previously failed to load'));
+            }
+            
+            // Create a new image element for preloading
+            const img = new Image();
+            
+            // Set up load handler
+            img.onload = () => {
+                // Cache the successful URL
+                this.imageCache.set(imageUrl, imageUrl);
+                resolve(imageUrl);
+            };
+            
+            // Set up error handler
+            img.onerror = () => {
+                if (retryCount < this.config.maxRetries) {
+                    // Retry loading after delay
+                    setTimeout(() => {
+                        this._preloadImage(imageUrl, retryCount + 1)
+                            .then(resolve)
+                            .catch(reject);
+                    }, this.config.retryDelay);
+                } else {
+                    // Mark as errored
+                    this.loadErrors.set(imageUrl, true);
+                    
+                    // If it's an actual product image (not already a fallback), replace it in the DOM
+                    if (imageUrl !== this.SERVER_PLACEHOLDER_URL && imageUrl !== this.PLACEHOLDER_PRODUCT) {
+                        const imgElements = document.querySelectorAll(`img[src="${imageUrl}"]`);
+                        imgElements.forEach(element => {
+                            element.src = this._getPlaceholderImage();
+                        });
+                    }
+                    reject(new Error(`Failed to load image after ${retryCount + 1} attempts`));
+                }
+            };
+            
+            // Start loading
+            img.src = imageUrl;
+        });
     }
     
     /**
@@ -124,43 +205,42 @@ class ImageService {
      * @private
      */
     _applyImageFixes() {
-        const problematicPatterns = [
-            'no-image.jpg',
-            'undefined',
-            'null',
-            '/images/placeholder-product.jpg',
-            'default-product.jpg'
-        ];
+        const images = document.querySelectorAll('img');
         
-        // Find all images on the page
-        const allImages = document.querySelectorAll('img');
-        allImages.forEach(img => {
+        images.forEach(img => {
             // Skip if already handled
-            if (img.hasAttribute('data-fixed-by-service')) {
-                return;
-            }
+            if (img.hasAttribute('data-fixed')) return;
             
             // Mark as handled
-            img.setAttribute('data-fixed-by-service', 'true');
+            img.setAttribute('data-fixed', 'true');
             
-            // Check if src is problematic
-            const src = img.getAttribute('src') || '';
-            const hasProblematicPattern = problematicPatterns.some(pattern => src.includes(pattern));
+            const currentSrc = img.getAttribute('src') || '';
+            
+            // Detect problematic patterns
+            const problematicPatterns = [
+                'no-image.jpg',
+                'undefined',
+                'null'
+            ];
+            
+            const hasProblematicPattern = problematicPatterns.some(pattern => 
+                currentSrc.includes(pattern)
+            );
             
             if (hasProblematicPattern) {
-                // Replace immediately with base64
-                img.src = this.PLACEHOLDER_PRODUCT;
+                // Replace immediately with placeholder
+                img.src = this._getPlaceholderImage();
             }
             
-            // Add error handler for future errors
+            // Set up error handler
             img.onerror = () => {
-                // Avoid infinite loops
+                // Prevent infinite loops
                 if (img.hasAttribute('data-fallback-applied')) {
                     return;
                 }
                 
                 img.setAttribute('data-fallback-applied', 'true');
-                img.src = this.PLACEHOLDER_PRODUCT;
+                img.src = this._getPlaceholderImage();
             };
         });
     }
@@ -176,7 +256,7 @@ class ImageService {
         if (Array.isArray(imagePath)) {
             return imagePath.length > 0 
                 ? this._resolveImagePath(imagePath[0]) 
-                : this.PLACEHOLDER_PRODUCT;
+                : this._getPlaceholderImage();
         }
         
         // Handle object input
@@ -187,7 +267,7 @@ class ImageService {
                     return this._resolveImagePath(imagePath[prop]);
                 }
             }
-            return this.PLACEHOLDER_PRODUCT;
+            return this._getPlaceholderImage();
         }
         
         // Ensure string
@@ -211,12 +291,12 @@ class ImageService {
         ];
         
         if (problematicPatterns.some(pattern => imagePath.includes(pattern))) {
-            return this.PLACEHOLDER_PRODUCT;
+            return this._getPlaceholderImage();
         }
         
         // If it already refers to placeholder-product.jpg, return it directly
         if (imagePath.includes('placeholder-product.jpg')) {
-            return '/images/placeholder-product.jpg';
+            return this._getPlaceholderImage();
         }
         
         // Just a filename, add API path
@@ -233,7 +313,7 @@ class ImageService {
      * @returns {string} Fallback image URL
      */
     getFallbackImage() {
-        return this.PLACEHOLDER_PRODUCT;
+        return this._getPlaceholderImage();
     }
     
     /**
