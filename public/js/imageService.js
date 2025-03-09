@@ -5,11 +5,14 @@
 
 class ImageService {
     constructor() {
+        // Base64 encoded 1x1 gray pixel as absolute fallback
+        this.BASE64_FALLBACK = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAQlBMVEX///+qqqr09PT5+fnv7+/8/Pzr6+u0tLTc3NzR0dG5ubmurq7BwcHGxsbNzc3j4+Pn5+fZ2dnU1NT19fXw8PDg4OCF/xZ5AAADlklEQVR4nO2b2XLrIAyGwQtgvGHH7/+oJ03apGs6sRM4Z+bXRZvLfCBA6DJ1HYIgCIIgCIIgCIIgCIIgCIJ8G2JA3bYQ6Hdv5BPAH5R1MpvMZUwK30bTQB4XaXwhlzydE/guHsI8cQpAOKXGHn6CwJc9hVn8wewmywJwcx1/Y0D9JoLgcv5CVPQFAsdz+QvpYwxo3vOXDMQU3gKAuOCvXRDf4CAf6gsFB5A+4C8dkMfmQK4SejCgJg1YOZ+wDGx1Ae3i5TaEA/8mAZDLDdh4tQNzMUC6zQU0i1x3oF3kwq/47VD87oLcZcA4PuFA/MABcZcBwzqNHZ9MQBR3GTBuU49nHNCPhcgj5/NDDrCfOUb8hY8cA1UwPj73lW8dgQ8P0yLHkYm0k/tjhRj1F1swM5xBvKx3GXA9mPWrA+Jvs4ywunbgCQfESQZIqzWI4wg6bPkS7dK1Vy2gJ+ZJQK9BPDuFjAe3bHxEq3kSMOsM/HkbXodGTW+GYuRPt7ExYHgSUF8cOPV/Xdo/3/53B8ZdPwho9/kHhLTHP9+BuvpJELA0d3+AK67Z+gTCWzXMD/0ykBH3mEJQKbZT2+p+D5Q4S98C0K46OzE49YMDlhqm+ICBIG5zjUEHgLJCG/24LmRYXX/fBGjX3Y+SZ7dLaEDU0ypY+ftvR9h5sYK2sZ2kGdYpbPhqANKuc58Rqb9YqJ2RO2B2lgB5dh+9j5ER1H4RxEYA8Qbnn1Cnwk9h2LHtFATJ8Pf4CybWRd9vWQF4dDgYvZdQ+YkUyzfHsUg+53vkdKN9Xw5Qx9H9qQ5QJzL0XtZNgIHLlmPrVuAXCVDhLyCLu3qdSYCnDgGXQqSc87uXtARQt2xhsHPeApR4/PQp+uXC2QGQDpxVjFVcMvdEKIvEj+CcHPg4qTCEVl/Xzl5/jZt5yvqLHaLkotNsaJXrRmRQRaFSSYLjEsb7MVDPu1mUtpJGNbWdxlDkOJlVcK2t9wW9LCxBJQkBJAkMIZBfGw6RYJCgsCt3ASp3Acp3ATp3Acr3ATqfAOr3ARrfCOr3AWpfB6rfCKp9I2jhU7CJr8Em33ha+CRMJI+CIbCAMdCAkTDzYqQiICZfUEjQpnARCQlpZcRMQ0LCa2WU+CNSTkJDYgpmQzIqc4H/n5iOjpyQkJqQkpySlPFvJSYlJaWlpSb+B6jJiampyelJ/1Z6egRBEARBEAT5Jv4BRv9A0iXGr8MAAAAASUVORK5CYII=';
+        
         // Configuration
         this.config = {
             apiBaseUrl: window.CONFIG?.API_URL || 'https://dndbrand-server.onrender.com/api',
-            fallbackImage: '/images/placeholder-product.jpg',
-            localFallbackImage: '/images/placeholder-product.jpg',
+            fallbackImage: '../images/placeholder-product.jpg', // Relative path
+            localFallbackImage: '../images/placeholder-product.jpg', // Relative path
             maxRetries: 2,
             retryDelay: 1000
         };
@@ -103,6 +106,7 @@ class ImageService {
      * @private
      */
     _preloadFallbackImage() {
+        // Try the first fallback image
         const fallbackImg = new Image();
         fallbackImg.onload = () => {
             console.log('Fallback image loaded successfully');
@@ -112,11 +116,22 @@ class ImageService {
         
         fallbackImg.onerror = () => {
             console.warn('Fallback image failed to load, using absolute path instead');
-            // If local fallback fails, update to absolute URL
-            this.config.localFallbackImage = window.location.origin + '/images/placeholder-product.jpg';
             
-            // Try with absolute path
+            // Try a second fallback with an absolute path
+            this.config.localFallbackImage = window.location.origin + '/images/placeholder-product.jpg';
             const absoluteFallbackImg = new Image();
+            
+            absoluteFallbackImg.onload = () => {
+                console.log('Absolute fallback image loaded successfully');
+                this.imageCache.set(this.config.localFallbackImage, this.config.localFallbackImage);
+            };
+            
+            absoluteFallbackImg.onerror = () => {
+                console.warn('Absolute fallback image also failed, using base64 fallback');
+                // Just use the base64 fallback as the last resort
+                this.config.localFallbackImage = this.BASE64_FALLBACK;
+            };
+            
             absoluteFallbackImg.src = this.config.localFallbackImage;
         };
         
@@ -151,14 +166,18 @@ class ImageService {
         // Ensure string
         imagePath = String(imagePath);
         
+        // Return the base64 data URL as is
+        if (imagePath.startsWith('data:')) {
+            return imagePath;
+        }
+        
         // Already a full URL
         if (imagePath.startsWith('http')) {
             return imagePath;
         }
         
-        // Local image from images folder
+        // Local image from images folder - make sure it's an absolute path
         if (imagePath.startsWith('/images/') || imagePath.includes('/images/')) {
-            // Make sure it's an absolute path
             if (imagePath.startsWith('/')) {
                 return window.location.origin + imagePath;
             }
@@ -179,8 +198,31 @@ class ImageService {
      * @returns {string} Fallback image URL
      */
     getFallbackImage() {
-        // Use absolute path for local fallback
-        return window.location.origin + this.config.localFallbackImage.replace(/^\//, '');
+        // If we've determined that the base64 fallback is our only option, use it
+        if (this.config.localFallbackImage === this.BASE64_FALLBACK) {
+            return this.BASE64_FALLBACK;
+        }
+        
+        // Check if we have a cached fallback image
+        if (this.imageCache.has(this.config.localFallbackImage)) {
+            return this.config.localFallbackImage;
+        }
+        
+        // Try the original fallback location
+        const fallbackImage = this.config.localFallbackImage;
+        
+        // Make sure it's an absolute path if it's not the base64
+        if (fallbackImage.startsWith('/')) {
+            return window.location.origin + fallbackImage;
+        } else if (!fallbackImage.startsWith('http') && !fallbackImage.startsWith('data:')) {
+            // If it's not absolute, base64, or http, resolve it relative to origin
+            if (fallbackImage.startsWith('../')) {
+                return window.location.origin + '/' + fallbackImage.replace('../', '');
+            }
+            return window.location.origin + '/' + fallbackImage;
+        }
+        
+        return fallbackImage;
     }
     
     /**
