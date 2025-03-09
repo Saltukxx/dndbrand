@@ -1,5 +1,5 @@
 /**
- * Script to upload placeholder image directly to database
+ * Script to upload placeholder image directly to your MongoDB Atlas database
  * This is a one-time script to ensure the placeholder image is available from the server
  * 
  * Instructions:
@@ -11,9 +11,9 @@ const fs = require('fs');
 const path = require('path');
 const { MongoClient, GridFSBucket } = require('mongodb');
 
-// MongoDB connection settings
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/dndbrand';
-const DB_NAME = process.env.DB_NAME || 'dndbrand';
+// MongoDB connection settings - using your actual connection string from .env
+const MONGO_URI = 'mongodb+srv://saltukgogebakan:KJhn7BJw4QBmwTpU@dndbrand-cluster.gn38h.mongodb.net/dndbrand?retryWrites=true&w=majority&appName=DnDBrand-Cluster';
+const DB_NAME = 'dndbrand';
 
 // Path to the placeholder image
 const PLACEHOLDER_IMAGE_PATH = path.join(__dirname, 'public', 'images', 'placeholder-product.jpg');
@@ -33,20 +33,20 @@ async function uploadPlaceholderToGridFS() {
       throw new Error(`Placeholder image not found at ${PLACEHOLDER_IMAGE_PATH}`);
     }
 
-    console.log('Connecting to MongoDB...');
-    client = new MongoClient(MONGO_URI, { useUnifiedTopology: true });
+    console.log('Connecting to MongoDB Atlas...');
+    client = new MongoClient(MONGO_URI);
     await client.connect();
-    console.log('Connected to MongoDB');
+    console.log('Connected to MongoDB Atlas');
 
     const db = client.db(DB_NAME);
     
-    // Create GridFS bucket
+    // Create GridFS bucket with the same bucket name as your server ('uploads')
     const bucket = new GridFSBucket(db, {
-      bucketName: 'images'
+      bucketName: 'uploads'
     });
 
     // Check if file already exists in GridFS
-    const existingFiles = await db.collection('images.files').find({ 
+    const existingFiles = await db.collection('uploads.files').find({ 
       filename: PLACEHOLDER_FILENAME 
     }).toArray();
 
@@ -61,12 +61,13 @@ async function uploadPlaceholderToGridFS() {
 
     console.log('Uploading placeholder image to GridFS...');
     
-    // Create upload stream
+    // Create upload stream with proper metadata to match your server's upload pattern
     const uploadStream = bucket.openUploadStream(PLACEHOLDER_FILENAME, {
       metadata: {
         contentType: 'image/jpeg',
         isPlaceholder: true,
-        uploadDate: new Date()
+        uploadDate: new Date(),
+        original: true
       }
     });
 
@@ -88,9 +89,9 @@ async function uploadPlaceholderToGridFS() {
     
     console.log('Placeholder image uploaded successfully to GridFS');
     console.log(`File ID: ${uploadStream.id}`);
-    console.log(`Access URL: /api/images/${PLACEHOLDER_FILENAME}`);
+    console.log(`Access URL: https://dndbrand-server.onrender.com/api/uploads/image/${PLACEHOLDER_FILENAME}`);
 
-    // Update image settings collection (if it exists)
+    // Update image settings collection to register this as the default placeholder
     try {
       await db.collection('settings').updateOne(
         { key: 'defaultPlaceholderImage' },
@@ -98,7 +99,8 @@ async function uploadPlaceholderToGridFS() {
           $set: { 
             key: 'defaultPlaceholderImage', 
             value: PLACEHOLDER_FILENAME,
-            path: `/api/images/${PLACEHOLDER_FILENAME}`,
+            path: `/api/uploads/image/${PLACEHOLDER_FILENAME}`,
+            url: `https://dndbrand-server.onrender.com/api/uploads/image/${PLACEHOLDER_FILENAME}`,
             updatedAt: new Date()
           }
         },
@@ -116,7 +118,7 @@ async function uploadPlaceholderToGridFS() {
   } finally {
     if (client) {
       await client.close();
-      console.log('Disconnected from MongoDB');
+      console.log('Disconnected from MongoDB Atlas');
     }
   }
 }
@@ -133,10 +135,10 @@ async function uploadPlaceholderToImagesCollection() {
       throw new Error(`Placeholder image not found at ${PLACEHOLDER_IMAGE_PATH}`);
     }
 
-    console.log('Connecting to MongoDB...');
-    client = new MongoClient(MONGO_URI, { useUnifiedTopology: true });
+    console.log('Connecting to MongoDB Atlas...');
+    client = new MongoClient(MONGO_URI);
     await client.connect();
-    console.log('Connected to MongoDB');
+    console.log('Connected to MongoDB Atlas');
 
     const db = client.db(DB_NAME);
     
@@ -179,9 +181,9 @@ async function uploadPlaceholderToImagesCollection() {
     }
     
     console.log('Placeholder image uploaded successfully to images collection');
-    console.log(`Access URL: /api/images/${PLACEHOLDER_FILENAME}`);
+    console.log(`Access URL: https://dndbrand-server.onrender.com/api/images/${PLACEHOLDER_FILENAME}`);
     
-    // Update image settings collection (if it exists)
+    // Update image settings collection
     try {
       await db.collection('settings').updateOne(
         { key: 'defaultPlaceholderImage' },
@@ -190,6 +192,7 @@ async function uploadPlaceholderToImagesCollection() {
             key: 'defaultPlaceholderImage', 
             value: PLACEHOLDER_FILENAME,
             path: `/api/images/${PLACEHOLDER_FILENAME}`,
+            url: `https://dndbrand-server.onrender.com/api/images/${PLACEHOLDER_FILENAME}`,
             updatedAt: new Date()
           }
         },
@@ -207,7 +210,7 @@ async function uploadPlaceholderToImagesCollection() {
   } finally {
     if (client) {
       await client.close();
-      console.log('Disconnected from MongoDB');
+      console.log('Disconnected from MongoDB Atlas');
     }
   }
 }
@@ -215,11 +218,17 @@ async function uploadPlaceholderToImagesCollection() {
 // Try both methods sequentially (GridFS first, then direct collection if GridFS fails)
 async function uploadPlaceholder() {
   try {
-    // Try GridFS upload first
+    // Try GridFS upload first (matching your server's upload system)
     await uploadPlaceholderToGridFS();
     console.log('----- PLACEHOLDER IMAGE UPLOAD SUCCESSFUL -----');
-    console.log('The placeholder image has been uploaded to the database.');
-    console.log('It should now be available at: https://dndbrand-server.onrender.com/api/images/placeholder-product.jpg');
+    console.log('The placeholder image has been uploaded to your MongoDB Atlas database.');
+    console.log('It should now be available at: https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg');
+    
+    // Update local imageService.js files to use this URL
+    console.log('\nTo use this placeholder in your application, update these configuration values:');
+    console.log('1. In public/js/imageService.js: this.SERVER_PLACEHOLDER_URL = "https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg"');
+    console.log('2. In public/js/services/imageService.js: SERVER_PLACEHOLDER_URL = "https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg"');
+    console.log('3. In public/js/product.js: SERVER_PLACEHOLDER_URL = "https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg"');
   } catch (gridFsError) {
     console.warn('GridFS upload failed, trying direct collection upload...', gridFsError.message);
     
@@ -229,6 +238,12 @@ async function uploadPlaceholder() {
       console.log('----- PLACEHOLDER IMAGE UPLOAD SUCCESSFUL (DIRECT COLLECTION) -----');
       console.log('The placeholder image has been uploaded to the database using direct collection method.');
       console.log('It should now be available at: https://dndbrand-server.onrender.com/api/images/placeholder-product.jpg');
+      
+      // Update local imageService.js files to use this URL
+      console.log('\nTo use this placeholder in your application, update these configuration values:');
+      console.log('1. In public/js/imageService.js: this.SERVER_PLACEHOLDER_URL = "https://dndbrand-server.onrender.com/api/images/placeholder-product.jpg"');
+      console.log('2. In public/js/services/imageService.js: SERVER_PLACEHOLDER_URL = "https://dndbrand-server.onrender.com/api/images/placeholder-product.jpg"');
+      console.log('3. In public/js/product.js: SERVER_PLACEHOLDER_URL = "https://dndbrand-server.onrender.com/api/images/placeholder-product.jpg"');
     } catch (collectionError) {
       console.error('All upload methods failed:');
       console.error('GridFS Error:', gridFsError.message);

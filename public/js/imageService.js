@@ -12,8 +12,8 @@ class ImageService {
         this.PLACEHOLDER_PRODUCT = '/images/placeholder-product.jpg';
         
         // Server-side placeholder URLs - try both production and local
-        this.SERVER_PLACEHOLDER_URL = 'https://dndbrand-server.onrender.com/api/images/placeholder-product.jpg';
-        this.LOCAL_PLACEHOLDER_URL = '/api/images/placeholder-product.jpg'; // New local server route
+        this.SERVER_PLACEHOLDER_URL = 'https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg';
+        this.LOCAL_PLACEHOLDER_URL = '/api/images/placeholder-product.jpg'; // Local server route
         
         // Configuration
         this.config = {

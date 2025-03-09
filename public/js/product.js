@@ -15,7 +15,7 @@ try {
 }
 
 // Server-side placeholder URL (production)
-const SERVER_PLACEHOLDER_URL = `${productApiUrl}/images/placeholder-product.jpg`;
+const SERVER_PLACEHOLDER_URL = `https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg`;
 
 // Local server placeholder URL
 const LOCAL_PLACEHOLDER_URL = '/api/images/placeholder-product.jpg';
