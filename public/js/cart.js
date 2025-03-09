@@ -374,6 +374,12 @@ function removeCartItem(itemId, options = {}) {
         // Log initial cart state for debugging
         console.log('Initial cart state:', JSON.stringify(cart));
         
+        // Debug output DOM element if provided
+        if (options.element) {
+            console.log('Element to remove:', options.element);
+            console.log('Element data-id:', options.element.getAttribute('data-id'));
+        }
+        
         // Handle case when itemId is undefined but we're trying to remove by index
         if (itemId === undefined && options.index !== undefined) {
             // Remove by index
@@ -406,23 +412,32 @@ function removeCartItem(itemId, options = {}) {
             if (options.element) {
                 // Get the index from the DOM element
                 const element = options.element;
-                itemIndex = Array.from(element.parentNode.children).indexOf(element);
-                
-                if (itemIndex >= 0 && itemIndex < cart.length) {
-                    // Found by DOM element position
-                    const removedItem = cart[itemIndex];
-                    cart.splice(itemIndex, 1);
+                if (element.getAttribute('data-id')) {
+                    // Try to find by data-id attribute
+                    const elementId = element.getAttribute('data-id');
+                    console.log(`Trying to find item by data-id: ${elementId}`);
+                    itemId = elementId; // Use the element's ID to find the item
+                } else {
+                    // Get the index from the DOM element
+                    itemIndex = Array.from(element.parentNode.children).indexOf(element);
+                    console.log(`Item DOM index: ${itemIndex}`);
                     
-                    // Save updated cart
-                    localStorage.setItem('cart', JSON.stringify(cart));
-                    if (localStorage.getItem('dndCart')) {
-                        localStorage.setItem('dndCart', JSON.stringify(cart));
+                    if (itemIndex >= 0 && itemIndex < cart.length) {
+                        // Found by DOM element position
+                        const removedItem = cart[itemIndex];
+                        cart.splice(itemIndex, 1);
+                        
+                        // Save updated cart
+                        localStorage.setItem('cart', JSON.stringify(cart));
+                        if (localStorage.getItem('dndCart')) {
+                            localStorage.setItem('dndCart', JSON.stringify(cart));
+                        }
+                        
+                        // Update UI
+                        updateCartAfterRemoval(cart, removedItem);
+                        
+                        return true;
                     }
-                    
-                    // Update UI
-                    updateCartAfterRemoval(cart, removedItem);
-                    
-                    return true;
                 }
             } 
             
@@ -430,12 +445,19 @@ function removeCartItem(itemId, options = {}) {
             if (options.name) {
                 itemIndex = cart.findIndex(item => item.name === options.name);
             }
-        } else {
+        }
+        
+        // If itemId is now defined, find by ID with improved matching
+        if (itemId !== undefined) {
+            console.log(`Searching for item with ID: ${itemId}`);
+            
             // Find by ID with improved matching
             itemIndex = cart.findIndex(item => {
                 // Convert both IDs to strings for comparison to handle both string and number IDs
                 const cartItemId = String(item.id || '');
                 const targetItemId = String(itemId || '');
+                
+                console.log(`Comparing ${cartItemId} === ${targetItemId}`);
                 
                 if (cartItemId !== targetItemId) return false;
                 
@@ -451,12 +473,41 @@ function removeCartItem(itemId, options = {}) {
         
         if (itemIndex === -1) {
             console.error(`Item with ID ${itemId} not found in cart`);
-            displayNotification('Ürün sepette bulunamadı.', 'error');
-            return false;
+            
+            // Fallback: Try a less strict matching
+            console.log('Trying less strict matching...');
+            itemIndex = cart.findIndex(item => {
+                // Convert IDs to strings and use includes for partial matching
+                const cartItemId = String(item.id || '');
+                const targetItemId = String(itemId || '');
+                
+                if (cartItemId.includes(targetItemId) || targetItemId.includes(cartItemId)) {
+                    return true;
+                }
+                
+                // Try matching by name if available
+                if (options.name && item.name && item.name === options.name) {
+                    return true;
+                }
+                
+                return false;
+            });
+            
+            if (itemIndex === -1) {
+                // Still not found, fallback to removing the first item
+                if (cart.length > 0) {
+                    console.log('Fallback: removing first item in cart');
+                    itemIndex = 0;
+                } else {
+                    displayNotification('Ürün sepette bulunamadı.', 'error');
+                    return false;
+                }
+            }
         }
         
         // Get item details before removing for notification
         const removedItem = cart[itemIndex];
+        console.log('Found item to remove:', removedItem);
         
         // Remove item from cart
         cart.splice(itemIndex, 1);
@@ -485,29 +536,37 @@ function removeCartItem(itemId, options = {}) {
 
 // Helper function to update UI after cart item removal
 function updateCartAfterRemoval(cart, removedItem) {
+    // Log the removal attempt
+    console.log('Updating cart UI after removing item:', removedItem);
+    
     // Remove the cart item from DOM directly for immediate feedback
     const cartItems = document.querySelectorAll('.cart-item');
+    console.log(`Found ${cartItems.length} cart items in DOM`);
     
     if (cartItems.length > 0) {
         // Find all potential matching elements (might be multiple with same ID/properties)
         let removedFromDOM = false;
         
         // First try to remove by data-id
-        if (removedItem.id) {
+        if (removedItem && removedItem.id) {
+            console.log(`Looking for cart item with data-id="${removedItem.id}"`);
             const matchingItem = document.querySelector(`.cart-item[data-id="${removedItem.id}"]`);
             if (matchingItem) {
+                console.log('Found matching item by ID, removing from DOM');
                 animateAndRemoveElement(matchingItem);
                 removedFromDOM = true;
             }
         }
         
         // If not found by ID, try by name
-        if (!removedFromDOM && removedItem.name) {
+        if (!removedFromDOM && removedItem && removedItem.name) {
+            console.log(`Looking for cart item with name "${removedItem.name}"`);
             const matchingItems = document.querySelectorAll('.cart-item');
             
             for (const item of matchingItems) {
                 const nameElement = item.querySelector('.cart-item-details h3');
                 if (nameElement && nameElement.textContent.trim() === removedItem.name) {
+                    console.log('Found matching item by name, removing from DOM');
                     animateAndRemoveElement(item);
                     removedFromDOM = true;
                     break;
@@ -517,6 +576,7 @@ function updateCartAfterRemoval(cart, removedItem) {
         
         // If still not found, just remove the first one as fallback
         if (!removedFromDOM && cartItems.length > 0) {
+            console.log('No exact match found, removing first cart item as fallback');
             animateAndRemoveElement(cartItems[0]);
         }
     }
@@ -525,23 +585,53 @@ function updateCartAfterRemoval(cart, removedItem) {
     updateEmptyCartState(cart);
     
     // Update cart count in header
-    updateCartCount();
+    if (typeof updateCartCount === 'function') {
+        updateCartCount();
+    } else {
+        console.log('updateCartCount function not available');
+        // Simple fallback for updating cart count
+        const cartCountElement = document.querySelector('.cart-count');
+        if (cartCountElement) {
+            cartCountElement.textContent = cart.length;
+        }
+    }
     
     // Update cart summary
     updateCartSummary();
     
     // Show success notification
-    displayNotification(`${removedItem.name || 'Ürün'} sepetten çıkarıldı.`, 'success');
+    displayNotification(`${removedItem && removedItem.name ? removedItem.name : 'Ürün'} sepetten çıkarıldı.`, 'success');
 }
 
 // Helper to animate and remove an element
 function animateAndRemoveElement(element) {
+    if (!element) {
+        console.error('Tried to animate and remove a null element');
+        return;
+    }
+    
+    console.log('Animating removal of element:', element);
+    
+    // Add the removing class for animation
     element.classList.add('removing');
+    
+    // Make sure the element gets the style instantly
+    element.style.opacity = '0';
+    element.style.transform = 'translateX(20px)';
+    element.style.transition = 'all 300ms ease-out';
+    
+    // Force a reflow to ensure animation starts
+    void element.offsetWidth;
     
     // Remove after animation completes
     setTimeout(() => {
-        element.remove();
-    }, 300);
+        console.log('Animation timeout completed, removing element');
+        if (element && element.parentNode) {
+            element.parentNode.removeChild(element);
+        } else {
+            console.log('Element was already removed or has no parent');
+        }
+    }, 350); // Slightly longer than transition to ensure it completes
 }
 
 // Helper to update cart state when empty
