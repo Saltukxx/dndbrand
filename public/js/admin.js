@@ -25,61 +25,196 @@ let adminAuthenticated = sessionStorage.getItem('adminAuthenticated') === 'true'
 // Auto-refresh interval (30 seconds)
 const ADMIN_REFRESH_INTERVAL = 30000;
 
-// Placeholder image status cache
+// Global placeholder status object
 const placeholderStatus = {
+    defaultAvailable: false,
     defaultTested: false,
-    defaultAvailable: false
+    localAvailable: false,
+    localTested: false,
+    localPath: window.location.origin + '/images/placeholder.jpg'
 };
 
-// Test if the default placeholder is available
-function testPlaceholderAvailability() {
-    if (!placeholderStatus.defaultTested) {
-        const img = new Image();
-        img.onload = function() {
+// Test if a placeholder image is available
+function testPlaceholderAvailability(url) {
+    // Create a new image to test
+    const img = new Image();
+    
+    // Set up handlers
+    img.onload = function() {
+        if (url === '/images/product-placeholder.jpg') {
             placeholderStatus.defaultAvailable = true;
             placeholderStatus.defaultTested = true;
             console.log('Default placeholder image is available');
-        };
-        img.onerror = function() {
+        } else {
+            placeholderStatus.localAvailable = true;
+            placeholderStatus.localTested = true;
+            placeholderStatus.localPath = url;
+            console.log('Local placeholder image is available at:', url);
+        }
+    };
+    
+    img.onerror = function() {
+        if (url === '/images/product-placeholder.jpg') {
             placeholderStatus.defaultAvailable = false;
             placeholderStatus.defaultTested = true;
-            console.log('Default placeholder image is not available, will use local fallback');
-        };
-        img.src = DEFAULT_PLACEHOLDER_URL;
-    }
+            console.log('Default placeholder image is not available');
+            
+            // Test the local path if default fails
+            if (!placeholderStatus.localTested) {
+                testPlaceholderAvailability(placeholderStatus.localPath);
+            }
+        } else {
+            placeholderStatus.localAvailable = false;
+            placeholderStatus.localTested = true;
+            console.log('Local placeholder image is not available at:', url);
+        }
+    };
+    
+    // Start loading the image
+    img.src = url.startsWith('/') ? window.location.origin + url : url;
 }
 
 // Initialize placeholder test
-testPlaceholderAvailability();
+testPlaceholderAvailability('/images/product-placeholder.jpg');
 
 /**
  * Get best available placeholder image
  * @returns {string} URL to the best available placeholder image
  */
 function getBestPlaceholderImage() {
-    if (placeholderStatus.defaultAvailable) {
+    // Default placeholder URL
+    const DEFAULT_PLACEHOLDER_URL = '/images/product-placeholder.jpg';
+    
+    // First try: Use the default placeholder if we've verified it works
+    if (placeholderStatus.defaultTested && placeholderStatus.defaultAvailable) {
         return DEFAULT_PLACEHOLDER_URL;
     }
-    return LOCAL_PLACEHOLDER_URL;
+    
+    // Second try: Use local placeholder if we've verified it works
+    if (placeholderStatus.localTested && placeholderStatus.localAvailable) {
+        return placeholderStatus.localPath;
+    }
+    
+    // If we haven't tested the default placeholder yet, test it now
+    if (!placeholderStatus.defaultTested) {
+        testPlaceholderAvailability(DEFAULT_PLACEHOLDER_URL);
+        // While testing, return the local path if available, or go to fallback
+        if (placeholderStatus.localTested && placeholderStatus.localAvailable) {
+            return placeholderStatus.localPath;
+        }
+    }
+    
+    // Final fallback: Embedded SVG data URI
+    return 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZWVlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmaWxsPSIjMzMzMzMzIj5SZXNpbSBCdWx1bmFtYWTEsQo8L3RleHQ+PC9zdmc+';
+}
+
+// Handle image loading errors with improved placeholders
+function handleImageError(img) {
+    // Prevent infinite error loops by checking if error has already been handled
+    if (img.getAttribute('data-error-handled') === 'true') {
+        return;
+    }
+    
+    // Mark the image as error-handled
+    img.setAttribute('data-error-handled', 'true');
+    
+    // Log the error for debugging
+    console.warn('Image failed to load:', img.src);
+    
+    // Try to get the placeholder image
+    const placeholderUrl = getBestPlaceholderImage();
+    
+    // Only set the source if it's different from the current source
+    // This prevents infinite error loops
+    if (img.src !== placeholderUrl) {
+        img.src = placeholderUrl;
+        
+        // Add a CSS class to indicate it's a placeholder
+        img.classList.add('placeholder-image');
+        
+        // Add a title attribute to inform users that the original image failed to load
+        img.title = 'Ürün görüntüsü yüklenemedi';
+    }
 }
 
 /**
- * Handle image loading errors with proper fallback
- * @param {HTMLImageElement} imgElement - The image element that failed to load
+ * Apply image error handlers to all images in a specific container
+ * @param {HTMLElement} container - Container to search for images
  */
-function handleImageError(imgElement) {
-    if (!imgElement) return;
+function applyImageErrorHandlersToContainer(container = document) {
+    const images = container.querySelectorAll('img:not([data-error-handled])');
     
-    // Use the best placeholder image
-    imgElement.src = getBestPlaceholderImage();
-    
-    // Remove error handler to prevent loops
-    imgElement.onerror = null;
+    images.forEach(img => {
+        // Skip images that already have error handling
+        if (img.getAttribute('data-error-handled') === 'true') {
+            return;
+        }
+        
+        // Mark as handled to prevent duplicate handlers
+        img.setAttribute('data-error-handled', 'true');
+        
+        // Add error handler
+        img.addEventListener('error', function() {
+            handleImageError(this);
+        });
+    });
 }
+
+// Set up MutationObserver to monitor for dynamically added images
+function setupImageErrorObserver() {
+    // Create a MutationObserver to watch for DOM changes
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            // If nodes were added, check if any are images or contain images
+            if (mutation.addedNodes.length) {
+                mutation.addedNodes.forEach(node => {
+                    // If it's an element node
+                    if (node.nodeType === 1) {
+                        // If it's an image
+                        if (node.tagName === 'IMG') {
+                            if (!node.getAttribute('data-error-handled')) {
+                                node.setAttribute('data-error-handled', 'true');
+                                node.addEventListener('error', function() {
+                                    handleImageError(this);
+                                });
+                            }
+                        } 
+                        // If it might contain images
+                        else {
+                            applyImageErrorHandlersToContainer(node);
+                        }
+                    }
+                });
+            }
+        });
+    });
+    
+    // Start observing the document with the configured parameters
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    // Return the observer in case we need to disconnect it later
+    return observer;
+}
+
+// Initial application of error handlers and observer setup
+document.addEventListener('DOMContentLoaded', function() {
+    // Apply error handlers to all existing images
+    applyImageErrorHandlersToContainer();
+    
+    // Set up the observer for future images
+    window.imageErrorObserver = setupImageErrorObserver();
+});
 
 // Helper function to make API requests with CORS handling
 async function fetchWithCORS(endpoint, options = {}) {
     try {
+        // Check if we're in demo mode (only use if explicitly set)
+        const isDemo = sessionStorage.getItem('useDemo') === 'true';
+        
+        // For real API calls (default behavior)
         // Use CONFIG.fetchAPI if available
         if (window.CONFIG && typeof window.CONFIG.fetchAPI === 'function') {
             console.log('Using CONFIG.fetchAPI for endpoint:', endpoint);
@@ -92,10 +227,24 @@ async function fetchWithCORS(endpoint, options = {}) {
             }
             
             // Use CONFIG.fetchAPI for the request
-            return await window.CONFIG.fetchAPI(fullEndpoint, {
-                ...options,
-                headers
-            });
+            try {
+                return await window.CONFIG.fetchAPI(fullEndpoint, {
+                    ...options,
+                    headers
+                });
+            } catch (error) {
+                // If the error indicates unauthorized and we're accessing admin resources
+                if ((error.message && error.message.includes('401')) || 
+                    (error.message && error.message.includes('auth')) || 
+                    (error.status === 401)) {
+                    
+                    // For non-login endpoints, alert user about auth issues
+                    if (!endpoint.includes('login')) {
+                        handleAuthError(401);
+                    }
+                }
+                throw error;
+            }
         }
         
         // If CONFIG.fetchAPI is not available, use direct fetch
@@ -124,31 +273,7 @@ async function fetchWithCORS(endpoint, options = {}) {
         
         // Try multiple CORS approaches in sequence
         
-        // 1. Try direct fetch with no credentials first (least restrictive)
-        try {
-            console.log('Attempting direct fetch with no credentials:', url);
-            const directResponse = await fetch(url, {
-                ...fetchOptions,
-                credentials: 'omit',
-                mode: 'cors',
-                signal: AbortSignal.timeout(8000) // 8 second timeout
-            });
-            
-            if (directResponse.ok) {
-                return await directResponse.json();
-            }
-            
-            if (directResponse.status === 403 || directResponse.status === 401) {
-                // Handle authentication errors
-                handleAuthError(directResponse.status);
-            }
-            
-            console.warn(`Direct fetch failed with status: ${directResponse.status}`);
-        } catch (directError) {
-            console.warn(`Direct fetch failed: ${directError.message}`);
-        }
-        
-        // 2. Try with credentials included (for authenticated requests)
+        // 1. Try direct fetch with credentials first for authenticated requests
         try {
             console.log('Attempting fetch with credentials included:', url);
             const withCredentialsResponse = await fetch(url, {
@@ -164,12 +289,66 @@ async function fetchWithCORS(endpoint, options = {}) {
             
             if (withCredentialsResponse.status === 403 || withCredentialsResponse.status === 401) {
                 // Handle authentication errors
-                handleAuthError(withCredentialsResponse.status);
+                if (!endpoint.includes('login')) {
+                    handleAuthError(withCredentialsResponse.status);
+                } else {
+                    console.warn('Login authentication failed');
+                }
+                throw new Error(`Authentication error: ${withCredentialsResponse.status}`);
             }
             
             console.warn(`Fetch with credentials failed with status: ${withCredentialsResponse.status}`);
+            
+            // If response is not OK, throw an error with the status
+            throw new Error(`API request failed with status: ${withCredentialsResponse.status}`);
         } catch (withCredentialsError) {
             console.warn(`Fetch with credentials failed: ${withCredentialsError.message}`);
+            
+            // Continue to next attempt if it's a network error, otherwise rethrow
+            if (!withCredentialsError.message.includes('Failed to fetch') && 
+                !withCredentialsError.message.includes('NetworkError') &&
+                !withCredentialsError.message.includes('timeout')) {
+                throw withCredentialsError;
+            }
+        }
+        
+        // 2. Try direct fetch with no credentials as fallback
+        try {
+            console.log('Attempting direct fetch with no credentials:', url);
+            const directResponse = await fetch(url, {
+                ...fetchOptions,
+                credentials: 'omit',
+                mode: 'cors',
+                signal: AbortSignal.timeout(8000) // 8 second timeout
+            });
+            
+            if (directResponse.ok) {
+                return await directResponse.json();
+            }
+            
+            if (directResponse.status === 403 || directResponse.status === 401) {
+                // Handle authentication errors
+                if (!endpoint.includes('login')) {
+                    handleAuthError(directResponse.status);
+                } else {
+                    console.warn('Login authentication failed');
+                }
+                throw new Error(`Authentication error: ${directResponse.status}`);
+            }
+            
+            console.warn(`Direct fetch failed with status: ${directResponse.status}`);
+            
+            // If response is not OK, throw an error with the status
+            throw new Error(`API request failed with status: ${directResponse.status}`);
+        } catch (directError) {
+            console.warn(`Direct fetch failed: ${directError.message}`);
+            
+            // Continue to next attempt if it's a network error, otherwise rethrow
+            if (!directError.message.includes('Failed to fetch') && 
+                !directError.message.includes('NetworkError') &&
+                !directError.message.includes('timeout')) {
+                throw directError;
+            }
         }
         
         // 3. Try using a proxy if available
@@ -185,25 +364,13 @@ async function fetchWithCORS(endpoint, options = {}) {
             if (proxyResponse.ok) {
                 return await proxyResponse.json();
             }
+            
             console.warn(`Local proxy request failed with status: ${proxyResponse.status}`);
+            throw new Error(`API request via proxy failed with status: ${proxyResponse.status}`);
         } catch (proxyError) {
             console.warn(`Local proxy request failed: ${proxyError.message}`);
+            throw proxyError;
         }
-        
-        // If all methods failed and we're in demo mode, use mock data as last resort
-        const isDemo = authToken && authToken.startsWith('demo_token_');
-        
-        if (isDemo) {
-            console.log('Using demo mode as fallback, providing mock data');
-            const mockData = getMockData(endpoint, options);
-            if (mockData) {
-                console.log('Returning mock data for endpoint:', endpoint);
-                return mockData;
-            }
-        }
-        
-        // All approaches failed
-        throw new Error(`Sunucuya erişilemiyor (${url}). Lütfen internet bağlantınızı kontrol edin.`);
     } catch (error) {
         console.error('Error in fetchWithCORS:', error);
         throw error; // Rethrow the error to be handled by the caller
@@ -216,9 +383,16 @@ function handleAuthError(statusCode) {
     
     // Check if we're on the admin login page
     if (!window.location.href.includes('admin-login.html')) {
-        alert('Oturum süresi doldu veya yetkiniz yok. Lütfen tekrar giriş yapın.');
+        // Clear any existing auth tokens
         sessionStorage.removeItem('adminToken');
         sessionStorage.removeItem('adminAuthenticated');
+        sessionStorage.removeItem('adminName');
+        sessionStorage.removeItem('adminEmail');
+        
+        // Alert the user
+        alert('Oturum süresi dolmuş veya yetkiniz yok. Lütfen tekrar giriş yapın.');
+        
+        // Redirect to login page
         window.location.href = 'admin-login.html';
     }
     throw new Error(`Yetkilendirme hatası: ${statusCode}`);
@@ -231,52 +405,143 @@ function handleAuthError(statusCode) {
  * @returns {Object|null} - Mock data or null if not supported
  */
 function getMockData(endpoint, options) {
+    // Basic mock data for common endpoints
+    const method = options?.method || 'GET';
+    
+    // Dashboard stats
     if (endpoint === 'admin/stats' || endpoint === 'stats') {
         return {
             totalSales: 12450,
             totalOrders: 38,
             totalCustomers: 56,
-            totalProducts: 8
+            totalProducts: 8,
+            newOrders: 5
         };
     }
     
-    if (endpoint === 'admin/products' || endpoint === 'products') {
-        if (options.method === 'GET') {
-            return [
-                {
-                    _id: 'demo_product_1',
-                    id: 'demo_product_1',
-                    name: 'Demo Ürün 1',
-                    price: 199.99,
-                    sku: 'DEMO001',
-                    category: 'men',
-                    description: 'Bu bir demo ürün açıklamasıdır.',
-                    stock: 15,
-                    status: 'active',
-                    featured: true,
-                    createdAt: new Date().toISOString(),
-                    images: []
-                },
-                {
-                    _id: 'demo_product_2',
-                    id: 'demo_product_2',
-                    name: 'Demo Ürün 2',
-                    price: 129.99,
-                    sku: 'DEMO002',
-                    category: 'women',
-                    description: 'Bu bir demo ürün açıklamasıdır.',
-                    stock: 8,
-                    status: 'active',
-                    featured: false,
-                    createdAt: new Date().toISOString(),
-                    images: []
-                }
-            ];
-        }
+    // Recent orders
+    if (endpoint === 'admin/orders/recent' || endpoint.includes('recent')) {
+        return [
+            {
+                _id: 'demo_order_1',
+                orderNumber: 'DND10001',
+                customer: { name: 'Mehmet Yılmaz', email: 'mehmet@example.com' },
+                date: new Date(Date.now() - 86400000).toISOString(),
+                total: 499.99,
+                status: 'processing'
+            },
+            {
+                _id: 'demo_order_2',
+                orderNumber: 'DND10002',
+                customer: { name: 'Ayşe Demir', email: 'ayse@example.com' },
+                date: new Date(Date.now() - 172800000).toISOString(),
+                total: 329.99,
+                status: 'shipped'
+            },
+            {
+                _id: 'demo_order_3',
+                orderNumber: 'DND10003',
+                customer: { name: 'Ali Kaya', email: 'ali@example.com' },
+                date: new Date(Date.now() - 259200000).toISOString(),
+                total: 149.99,
+                status: 'completed'
+            }
+        ];
+    }
+    
+    // Products list
+    if ((endpoint === 'admin/products' || endpoint === 'products') && method === 'GET') {
+        return [
+            {
+                _id: 'demo_product_1',
+                id: 'demo_product_1',
+                name: 'Premium T-Shirt',
+                price: 199.99,
+                sku: 'TS-001',
+                category: 'men',
+                description: 'Yüksek kaliteli pamuktan üretilmiş premium t-shirt.',
+                stock: 15,
+                status: 'active',
+                featured: true,
+                createdAt: new Date(Date.now() - 1000000000).toISOString(),
+                images: [DEFAULT_PLACEHOLDER_URL]
+            },
+            {
+                _id: 'demo_product_2',
+                id: 'demo_product_2',
+                name: 'Slim Fit Jeans',
+                price: 299.99,
+                sku: 'JN-002',
+                category: 'men',
+                description: 'Modern kesim, yüksek kaliteli kot pantolon.',
+                stock: 8,
+                status: 'active',
+                featured: false,
+                createdAt: new Date(Date.now() - 2000000000).toISOString(),
+                images: [DEFAULT_PLACEHOLDER_URL]
+            },
+            {
+                _id: 'demo_product_3',
+                id: 'demo_product_3',
+                name: 'Kadın Bluz',
+                price: 159.99,
+                sku: 'BL-003',
+                category: 'women',
+                description: 'Şık ve rahat günlük bluz.',
+                stock: 12,
+                status: 'active',
+                featured: true,
+                createdAt: new Date(Date.now() - 3000000000).toISOString(),
+                images: [DEFAULT_PLACEHOLDER_URL]
+            },
+            {
+                _id: 'demo_product_4',
+                id: 'demo_product_4',
+                name: 'Deri Cüzdan',
+                price: 89.99,
+                sku: 'ACC-004',
+                category: 'accessories',
+                description: 'Hakiki deri, el yapımı cüzdan.',
+                stock: 0,
+                status: 'active',
+                featured: false,
+                createdAt: new Date(Date.now() - 4000000000).toISOString(),
+                images: [DEFAULT_PLACEHOLDER_URL]
+            }
+        ];
+    }
+    
+    // Single product details
+    if (endpoint.match(/products\/[a-zA-Z0-9_]+$/) && method === 'GET') {
+        const productId = endpoint.split('/').pop();
+        
+        // Create a mock product based on ID
+        return {
+            _id: productId,
+            id: productId,
+            name: productId.includes('1') ? 'Premium T-Shirt' : 
+                  productId.includes('2') ? 'Slim Fit Jeans' : 
+                  productId.includes('3') ? 'Kadın Bluz' : 'Deri Cüzdan',
+            price: productId.includes('1') ? 199.99 : 
+                   productId.includes('2') ? 299.99 : 
+                   productId.includes('3') ? 159.99 : 89.99,
+            sku: productId.includes('1') ? 'TS-001' : 
+                 productId.includes('2') ? 'JN-002' : 
+                 productId.includes('3') ? 'BL-003' : 'ACC-004',
+            category: productId.includes('1') || productId.includes('2') ? 'men' : 
+                      productId.includes('3') ? 'women' : 'accessories',
+            description: 'Demo ürün açıklaması. Bu bir örnek ürün açıklamasıdır.',
+            stock: productId.includes('4') ? 0 : (parseInt(productId.charAt(productId.length - 1)) * 5 || 10),
+            status: 'active',
+            featured: productId.includes('1') || productId.includes('3'),
+            createdAt: new Date(Date.now() - 1000000000).toISOString(),
+            updatedAt: new Date(Date.now() - 500000000).toISOString(),
+            images: [DEFAULT_PLACEHOLDER_URL]
+        };
     }
     
     // For product creation
-    if (endpoint === 'products' && options.method === 'POST') {
+    if (endpoint === 'products' && method === 'POST') {
         try {
             const productData = JSON.parse(options.body);
             return {
@@ -288,12 +553,16 @@ function getMockData(endpoint, options) {
                 message: 'Ürün başarıyla oluşturuldu (Demo)'
             };
         } catch (e) {
-            return null;
+            return {
+                success: false,
+                message: 'Ürün oluşturulurken bir hata oluştu',
+                error: e.message
+            };
         }
     }
     
     // For product updates
-    if (endpoint.startsWith('products/') && options.method === 'PUT') {
+    if (endpoint.startsWith('products/') && method === 'PUT') {
         try {
             const productData = JSON.parse(options.body);
             return {
@@ -305,20 +574,133 @@ function getMockData(endpoint, options) {
                 message: 'Ürün başarıyla güncellendi (Demo)'
             };
         } catch (e) {
-            return null;
+            return {
+                success: false,
+                message: 'Ürün güncellenirken bir hata oluştu',
+                error: e.message
+            };
         }
     }
     
     // For product deletion
-    if (endpoint.startsWith('products/') && options.method === 'DELETE') {
+    if (endpoint.startsWith('products/') && method === 'DELETE') {
         return {
             success: true,
-            message: 'Ürün başarıyla silindi (Demo)'
+            message: 'Ürün başarıyla silindi (Demo Mode)'
         };
+    }
+    
+    // All Orders 
+    if (endpoint === 'admin/orders' || endpoint === 'orders') {
+        return [
+            {
+                _id: 'demo_order_1',
+                orderNumber: 'DND10001',
+                customer: { name: 'Mehmet Yılmaz', email: 'mehmet@example.com' },
+                date: new Date(Date.now() - 86400000).toISOString(),
+                total: 499.99,
+                status: 'processing',
+                items: [
+                    { product: { name: 'Premium T-Shirt' }, quantity: 2, price: 199.99 },
+                    { product: { name: 'Deri Cüzdan' }, quantity: 1, price: 89.99 }
+                ]
+            },
+            {
+                _id: 'demo_order_2',
+                orderNumber: 'DND10002',
+                customer: { name: 'Ayşe Demir', email: 'ayse@example.com' },
+                date: new Date(Date.now() - 172800000).toISOString(),
+                total: 329.99,
+                status: 'shipped',
+                items: [
+                    { product: { name: 'Kadın Bluz' }, quantity: 1, price: 159.99 },
+                    { product: { name: 'Slim Fit Jeans' }, quantity: 1, price: 169.99 }
+                ]
+            },
+            {
+                _id: 'demo_order_3',
+                orderNumber: 'DND10003',
+                customer: { name: 'Ali Kaya', email: 'ali@example.com' },
+                date: new Date(Date.now() - 259200000).toISOString(),
+                total: 149.99,
+                status: 'completed',
+                items: [
+                    { product: { name: 'Deri Cüzdan' }, quantity: 1, price: 89.99 },
+                    { product: { name: 'T-Shirt' }, quantity: 1, price: 59.99 }
+                ]
+            }
+        ];
+    }
+    
+    // Customers
+    if (endpoint === 'admin/customers' || endpoint === 'customers') {
+        return [
+            {
+                _id: 'demo_customer_1',
+                name: 'Mehmet Yılmaz',
+                email: 'mehmet@example.com',
+                phone: '+90 555 123 4567',
+                registeredDate: new Date(Date.now() - 2592000000).toISOString(),
+                orderCount: 3
+            },
+            {
+                _id: 'demo_customer_2',
+                name: 'Ayşe Demir',
+                email: 'ayse@example.com',
+                phone: '+90 555 987 6543',
+                registeredDate: new Date(Date.now() - 5184000000).toISOString(),
+                orderCount: 2
+            },
+            {
+                _id: 'demo_customer_3',
+                name: 'Ali Kaya',
+                email: 'ali@example.com',
+                phone: '+90 555 456 7890',
+                registeredDate: new Date(Date.now() - 7776000000).toISOString(),
+                orderCount: 1
+            }
+        ];
     }
     
     // Default case: no mock data available
     return null;
+}
+
+// Extract product image URL with fallback
+function getProductImageUrl(product) {
+    let imageUrl;
+    
+    // First attempt: Use ImageService if available
+    if (window.ImageService && typeof window.ImageService.getProductImage === 'function') {
+        if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+            return window.ImageService.getProductImage(product.images[0]);
+        } else if (product.image) {
+            return window.ImageService.getProductImage(product.image);
+        }
+    }
+    
+    // Second attempt: Try to resolve image from product data
+    if (product.images && Array.isArray(product.images) && product.images.length > 0 && product.images[0]) {
+        imageUrl = product.images[0];
+    } else if (product.image && typeof product.image === 'string') {
+        imageUrl = product.image;
+    } else {
+        // No image found, use placeholder
+        return getBestPlaceholderImage();
+    }
+    
+    // Handle remote URLs correctly
+    if (imageUrl.startsWith('http')) {
+        return imageUrl;
+    }
+    
+    // Handle relative paths to ensure they point to the correct location
+    if (imageUrl.startsWith('/')) {
+        return window.location.origin + imageUrl;
+    }
+    
+    // For other paths, assume it's relative to the API
+    return `${adminApiUrl}/${imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl}`;
 }
 
 // Check if admin is authenticated
@@ -332,12 +714,6 @@ function checkAdminAuth() {
         return false;
     }
     
-    // Check if using demo mode
-    const isDemo = adminToken.startsWith('demo_token_');
-    if (isDemo) {
-        console.log('Using demo admin mode');
-    }
-    
     return true;
 }
 
@@ -346,61 +722,58 @@ async function loginAdmin(email, password) {
     try {
         console.log('Attempting admin login for:', email);
         
-        // For local development/testing only - hardcoded demo credentials
-        // This allows login even when the backend is unreachable
-        if (email === 'admin@dndbrand.com' && password === 'admin123') {
-            console.log('Using demo admin credentials');
+        // Try to login via server with better error handling
+        try {
+            const loginResponse = await fetchWithCORS('admin/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
             
-            // Store authentication data in session storage
-            const demoToken = 'demo_token_' + Math.random().toString(36).substring(2);
-            sessionStorage.setItem('adminToken', demoToken);
-            sessionStorage.setItem('adminAuthenticated', 'true');
-            sessionStorage.setItem('adminName', 'Demo Admin');
-            sessionStorage.setItem('adminEmail', email);
+            console.log('Login response:', loginResponse);
             
-            // Redirect to admin dashboard
-            window.location.href = 'admin.html';
-            return { success: true };
-        }
-        
-        // Try to login via server
-        const loginResponse = await fetchWithCORS('admin/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email, password })
-        });
-        
-        console.log('Login response:', loginResponse);
-        
-        if (loginResponse && (loginResponse.token || loginResponse.data?.token)) {
-            // Extract token (handle different API response formats)
-            const token = loginResponse.token || loginResponse.data?.token;
+            if (loginResponse && (loginResponse.token || loginResponse.data?.token)) {
+                // Extract token (handle different API response formats)
+                const token = loginResponse.token || loginResponse.data?.token;
+                
+                // Store authentication data in session storage
+                sessionStorage.setItem('adminToken', token);
+                sessionStorage.setItem('adminAuthenticated', 'true');
+                sessionStorage.setItem('adminName', loginResponse.user?.name || loginResponse.data?.user?.name || 'Admin');
+                sessionStorage.setItem('adminEmail', email);
+                
+                // Redirect to admin dashboard
+                window.location.href = 'admin.html';
+                
+                return { success: true };
+            } else {
+                console.error('Invalid login response:', loginResponse);
+                return { 
+                    success: false, 
+                    message: loginResponse.message || 'Invalid credentials. Please try again.'
+                };
+            }
+        } catch (error) {
+            console.error('Server login error:', error);
             
-            // Store authentication data in session storage
-            sessionStorage.setItem('adminToken', token);
-            sessionStorage.setItem('adminAuthenticated', 'true');
-            sessionStorage.setItem('adminName', loginResponse.user?.name || loginResponse.data?.user?.name || 'Admin');
-            sessionStorage.setItem('adminEmail', email);
+            // Check specifically for 401/403 errors
+            if (error.message && (error.message.includes('401') || error.message.includes('403'))) {
+                return { 
+                    success: false, 
+                    message: 'Incorrect email or password. Please try again.'
+                };
+            }
             
-            // Redirect to admin dashboard
-            window.location.href = 'admin.html';
-            
-            return { success: true };
-        } else {
-            console.error('Invalid login response:', loginResponse);
-            return { 
-                success: false, 
-                message: 'Invalid credentials. Please try again.'
-            };
+            throw error; // Re-throw other errors
         }
     } catch (error) {
         console.error('Login error:', error);
         
         return { 
             success: false, 
-            message: 'Server error. Please try again later or use demo credentials.'
+            message: 'Connection error. Please check your internet connection and try again.'
         };
     }
 }
@@ -836,39 +1209,37 @@ async function loadProducts() {
     await attemptFetch();
 }
 
-// Extract product image URL with fallback
-function getProductImageUrl(product) {
-    let imageUrl;
-    
-    // First attempt: Use ImageService if available
-    if (window.ImageService && typeof window.ImageService.getProductImage === 'function') {
-        if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-            return window.ImageService.getProductImage(product.images[0]);
-        } else if (product.image) {
-            return window.ImageService.getProductImage(product.image);
-        }
-    }
-    
-    // Second attempt: Try to resolve image from product data
-    if (product.images && Array.isArray(product.images) && product.images.length > 0 && product.images[0]) {
-        imageUrl = product.images[0];
-    } else if (product.image && typeof product.image === 'string') {
-        imageUrl = product.image;
-    } else {
-        // No image found, use placeholder
-        return getBestPlaceholderImage();
-    }
-    
-    // Check if the image URL is relative and add API URL if needed
-    if (!imageUrl.startsWith('http') && !imageUrl.startsWith('data:') && !imageUrl.startsWith('/')) {
-        imageUrl = `${adminApiUrl}/${imageUrl}`;
-    }
-    
-    return imageUrl;
-}
-
 // Extract the product display logic to a separate function
 function displayProducts(products, tableBody) {
+    if (!Array.isArray(products) || products.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="7">
+                    <div class="empty-state">
+                        <i class="fas fa-box-open"></i>
+                        <p>Henüz ürün bulunmamaktadır.</p>
+                        <button id="addFirstProductBtn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> İlk Ürünü Ekle
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        
+        // Add event listener to the add first product button
+        const addFirstProductBtn = document.getElementById('addFirstProductBtn');
+        if (addFirstProductBtn) {
+            addFirstProductBtn.addEventListener('click', function() {
+                const addProductBtn = document.getElementById('addProductBtn');
+                if (addProductBtn) {
+                    addProductBtn.click();
+                }
+            });
+        }
+        
+        return;
+    }
+    
     // Clear table body
     tableBody.innerHTML = '';
     
@@ -899,18 +1270,25 @@ function displayProducts(products, tableBody) {
             maximumFractionDigits: 2
         });
         
+        const stock = typeof product.stock === 'number' ? product.stock : 
+                     (typeof product.stock === 'string' ? parseInt(product.stock, 10) : 0);
+        
+        const status = product.status || 'active';
+        const statusText = status === 'inactive' ? 'Pasif' : stock > 0 ? 'Aktif' : 'Stokta Yok';
+        const statusClass = status === 'inactive' ? 'inactive' : stock > 0 ? 'active' : 'out-of-stock';
+        
         row.innerHTML = `
         <td class="product-cell">
             <div class="product-info">
-                <img src="${imageUrl}" alt="${product.name}" onerror="handleImageError(this)">
-                <span>${product.name}</span>
+                <img src="${imageUrl}" alt="${product.name}" data-error-handled="true" onerror="handleImageError(this)">
+                <span>${product.name || 'İsimsiz Ürün'}</span>
             </div>
         </td>
         <td>${product.sku || '-'}</td>
         <td>${product.category || '-'}</td>
         <td>₺${formattedPrice}</td>
-        <td>${product.stock}</td>
-        <td><span class="status-badge ${product.status === 'inactive' ? 'inactive' : product.stock > 0 ? 'active' : 'out-of-stock'}">${product.status === 'inactive' ? 'Pasif' : product.stock > 0 ? 'Aktif' : 'Stokta Yok'}</span></td>
+        <td>${stock}</td>
+        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
         <td class="actions-cell">
             <button class="action-btn view-btn" data-id="${productId}" title="Görüntüle">
                 <i class="fas fa-eye"></i>
@@ -2703,13 +3081,51 @@ function setupSettingsForms() {
     }
 }
 
+// Initialize admin panel with content
+async function initializeAdmin() {
+    try {
+        // Check authentication first
+        const isAuthenticated = await checkAdminAuth();
+        
+        if (!isAuthenticated) {
+            return;
+        }
+        
+        // Show user info
+        updateAdminUserInfo();
+        
+        // Initialize the dashboard stats
+        initializeDashboardStats();
+        
+        // Get the current tab from URL or default to 'dashboard'
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentTab = urlParams.get('tab') || 'dashboard';
+        
+        // Set the active tab
+        setActiveTab(currentTab);
+        
+        // Load products
+        loadProducts();
+        
+        // Load orders
+        loadOrders();
+        
+        // Set up tab navigation
+        setupAdminNavigation();
+        
+        // Set up refresh interval
+        setupDataRefreshInterval();
+        
+    } catch (error) {
+        console.error('Error initializing admin panel:', error);
+        showNotification('Admin paneli yüklenirken bir hata oluştu. Lütfen tekrar deneyin.', 'error');
+    }
+}
+
 // Document ready function
 document.addEventListener('DOMContentLoaded', function() {
-    // Check if admin is authenticated
-    if (!checkAdminAuth()) return;
-    
-    // Initialize dashboard
-    initializeAdminDashboard();
+    // Initialize the admin panel with all components
+    initializeAdmin();
     
     // Set up add product button
     setupAddProductButton();
@@ -2717,6 +3133,120 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up settings forms
     setupSettingsForms();
     
-    console.log('Admin dashboard initialized');
+    console.log('Admin panel initialized');
 }); 
+
+// Set up admin navigation to manage tabs and sections
+function setupAdminNavigation() {
+    // Call the existing setupNavigation function
+    setupNavigation();
+    
+    // Also set up the mobile sidebar for responsive layouts
+    setupMobileSidebar();
+    
+    // Set up search functionality
+    setupSearch();
+    
+    console.log('Admin navigation initialized');
+}
+
+// Set up navigation between admin sections
+
+// Set up data refresh interval for real-time updates
+function setupDataRefreshInterval() {
+    // Clear any existing intervals
+    if (window.adminRefreshInterval) {
+        clearInterval(window.adminRefreshInterval);
+    }
+    
+    // Set up a new interval (refresh every 30 seconds)
+    window.adminRefreshInterval = setInterval(() => {
+        // Get current active section
+        const activeSection = document.querySelector('.admin-section.active');
+        if (!activeSection) return;
+        
+        const sectionId = activeSection.id;
+        
+        // Refresh data based on current section
+        switch(sectionId) {
+            case 'dashboard':
+                // Refresh dashboard stats without full page reload
+                loadDashboardStats();
+                loadRecentOrders();
+                break;
+                
+            case 'products':
+                // Reload products data
+                loadProducts();
+                break;
+                
+            case 'orders':
+                // Reload orders data
+                loadOrders();
+                break;
+                
+            case 'customers':
+                // Reload customers data
+                loadCustomers();
+                break;
+        }
+    }, ADMIN_REFRESH_INTERVAL);
+    
+    console.log('Data refresh interval set up');
+}
+
+// Update the admin user info in the header
+function updateAdminUserInfo() {
+    const adminName = document.getElementById('adminName');
+    const adminAvatar = document.getElementById('adminAvatar');
+    
+    if (adminName) {
+        // Get admin name from session storage or use default
+        const name = sessionStorage.getItem('adminName') || 'Admin';
+        adminName.textContent = name;
+    }
+    
+    if (adminAvatar) {
+        // Set avatar with error handling
+        adminAvatar.setAttribute('data-error-handled', 'true');
+        adminAvatar.addEventListener('error', function() {
+            handleImageError(this);
+        });
+    }
+}
+
+// Set the active navigation tab and show corresponding section
+function setActiveTab(tabId) {
+    // Remove active class from all tabs
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    // Add active class to selected tab
+    const selectedTab = document.querySelector(`.nav-link[data-section="${tabId}"]`);
+    if (selectedTab) {
+        selectedTab.classList.add('active');
+    }
+    
+    // Show corresponding section
+    const sections = document.querySelectorAll('.admin-section');
+    sections.forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    const selectedSection = document.getElementById(tabId);
+    if (selectedSection) {
+        selectedSection.classList.add('active');
+    }
+}
+
+// Initialize dashboard statistics
+function initializeDashboardStats() {
+    // Load dashboard statistics
+    loadDashboardStats();
+    
+    // Load recent orders for dashboard
+    loadRecentOrders();
+}
 
