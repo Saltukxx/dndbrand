@@ -30,7 +30,7 @@ const CONFIG = {
         DEBUG_MODE: true, // Enable for more detailed logging
         FORCE_HTTPS: false, // Disabled to prevent redirect loops
         USE_CORS_PROXY: true, // Enable CORS proxy by default until server CORS is fixed
-        USE_MOCK_DATA: true // Use mock data as last resort fallback
+        USE_MOCK_DATA: false // MOCK DATA IS DISABLED - MUST REMAIN FALSE
     },
     
     // Security settings
@@ -52,11 +52,11 @@ const CONFIG = {
         },
         
         // Retry settings for failed requests
-        RETRY_COUNT: 3,
-        RETRY_DELAY: 1000, // 1 second
+        RETRY_COUNT: 5, // Increased from 3 to 5
+        RETRY_DELAY: 2000, // Increased from 1000 to 2000 (2 seconds)
         
         // Proxy settings
-        PROXY_TIMEOUT: 10000 // 10 seconds
+        PROXY_TIMEOUT: 30000 // Increased from 10000 to 30000 (30 seconds)
     }
 };
 
@@ -106,11 +106,11 @@ async function fetchAPI(endpoint, options = {}) {
     
     // If all else fails, try no-cors mode with mock data fallback
     if (CONFIG.FEATURES.USE_MOCK_DATA) {
-        console.log('All API requests failed. Using mock data as fallback.');
+        console.log('All API requests failed. Unable to fetch data.');
         
-        // Extract resource type from URL (e.g., 'products' from '/api/products')
-        const resource = url.split('/').pop().split('?')[0];
-        return getMockData(resource);
+        // Return empty data rather than trying to call undefined getMockData function
+        console.warn('Mock data functionality is not available. Returning empty data.');
+        return { error: 'Failed to fetch data', data: [] };
     }
     
     // If we get here, all approaches failed
@@ -133,7 +133,7 @@ CONFIG.fetchAPI = async function(endpoint, options = {}) {
     
     // Create a new AbortSignal with timeout if not provided
     if (!options.signal && !fetchOptions.signal) {
-        fetchOptions.signal = AbortSignal.timeout(15000); // 15 second timeout
+        fetchOptions.signal = AbortSignal.timeout(CONFIG.API_REQUEST.PROXY_TIMEOUT); // Use the configured timeout
     }
     
     // Log the request if debug mode is enabled
@@ -141,16 +141,20 @@ CONFIG.fetchAPI = async function(endpoint, options = {}) {
         console.log(`API Request: ${url}`, fetchOptions);
     }
     
-    // Try different approaches in sequence
-    let lastError = null;
+    // Implement retry logic for direct requests
+    let retryCount = 0;
+    const maxRetries = CONFIG.API_REQUEST.RETRY_COUNT;
+    const retryDelay = CONFIG.API_REQUEST.RETRY_DELAY;
     
-    // 1. Try direct request first if we're not on file:// protocol
-    if (window.location.protocol !== 'file:') {
+    // Function to delay execution
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+    
+    // Try direct request with retries
+    while (retryCount <= maxRetries) {
         try {
-            console.log('Attempting direct API request to:', url);
+            console.log(`Attempting direct API request to ${url} (attempt ${retryCount + 1}/${maxRetries + 1})`);
             
             // For Render-hosted backends, ensure we're not sending credentials
-            // which can cause CORS preflight issues
             const directFetchOptions = {
                 ...fetchOptions,
                 credentials: 'omit' // Change to 'omit' for Render
@@ -164,16 +168,36 @@ CONFIG.fetchAPI = async function(endpoint, options = {}) {
                 return data;
             } else {
                 console.warn(`Direct API request failed with status: ${response.status}`);
-                lastError = new Error(`API request failed with status ${response.status}`);
+                
+                // If we get a 404, don't retry
+                if (response.status === 404) {
+                    throw new Error(`Resource not found (404): ${url}`);
+                }
+                
+                // If we get a 401 or 403, don't retry
+                if (response.status === 401 || response.status === 403) {
+                    throw new Error(`Authentication error (${response.status}): ${url}`);
+                }
             }
         } catch (error) {
-            console.warn('Direct API request failed:', error);
-            lastError = error;
+            console.warn(`Direct API request attempt ${retryCount + 1} failed:`, error);
+            
+            // If this was our last retry, throw the error
+            if (retryCount === maxRetries) {
+                throw new Error(`Failed to fetch data after ${maxRetries + 1} attempts: ${error.message}`);
+            }
         }
+        
+        // Increment retry count and wait before next attempt
+        retryCount++;
+        console.log(`Waiting ${retryDelay}ms before retry ${retryCount}...`);
+        await delay(retryDelay);
     }
     
-    // 2. Try CORS proxies if enabled
+    // If direct requests fail, try CORS proxies
     if (CONFIG.FEATURES.USE_CORS_PROXY) {
+        console.log('Direct API requests failed, trying CORS proxies...');
+        
         // Try each proxy in sequence
         for (const proxyUrl of CONFIG.CORS_PROXIES) {
             try {
@@ -203,146 +227,14 @@ CONFIG.fetchAPI = async function(endpoint, options = {}) {
                 }
             } catch (proxyError) {
                 console.warn(`CORS proxy (${proxyUrl}) request failed:`, proxyError);
-                lastError = proxyError;
                 // Continue to next proxy
             }
         }
     }
     
-    // 3. Try no-cors mode as a last resort (will return opaque response)
-    try {
-        console.log('Attempting no-cors mode request as last resort');
-        const noCorsOptions = {
-            ...fetchOptions,
-            mode: 'no-cors',
-            credentials: 'omit'
-        };
-        
-        await fetch(url, noCorsOptions);
-        console.log('No-cors request completed (opaque response)');
-        
-        // Since we can't read the response with no-cors, use mock data
-        if (CONFIG.FEATURES.USE_MOCK_DATA) {
-            console.log('Using mock data due to CORS restrictions');
-            return getMockData(endpoint);
-        }
-    } catch (noCorsError) {
-        console.warn('No-cors request failed:', noCorsError);
-        lastError = noCorsError;
-    }
-    
-    // If all approaches failed, throw the last error
-    if (lastError) {
-        console.error('All API request approaches failed');
-        
-        // Return mock data if enabled
-        if (CONFIG.FEATURES.USE_MOCK_DATA) {
-            console.log('Using mock data as fallback after all approaches failed');
-            return getMockData(endpoint);
-        }
-        
-        throw lastError;
-    }
+    // If we get here, all approaches failed
+    throw new Error(`Failed to fetch data from ${url} after trying all available methods`);
 };
-
-// Helper function to get mock data based on endpoint
-function getMockData(endpoint) {
-    // Extract the resource type from the endpoint
-    const resource = endpoint.split('/')[0].toLowerCase();
-    
-    // Mock data for different resources
-    const mockData = {
-        products: [
-            {
-                id: 1,
-                name: 'Premium Pamuklu T-Shirt',
-                category: 'men',
-                price: 349.99,
-                oldPrice: 499.99,
-                image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['black', 'white', 'blue'],
-                sizes: ['s', 'm', 'l', 'xl'],
-                isNew: true,
-                isSale: true,
-                featured: true
-            },
-            {
-                id: 2,
-                name: 'Slim Fit Denim Pantolon',
-                category: 'men',
-                price: 599.99,
-                image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['blue', 'black'],
-                sizes: ['s', 'm', 'l', 'xl', 'xxl'],
-                isNew: false,
-                isSale: false
-            },
-            {
-                id: 3,
-                name: 'Oversize Sweatshirt',
-                category: 'women',
-                price: 449.99,
-                oldPrice: 599.99,
-                image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['gray', 'black', 'white'],
-                sizes: ['xs', 's', 'm', 'l'],
-                isNew: false,
-                isSale: true
-            },
-            {
-                id: 4,
-                name: 'Slim Fit Blazer Ceket',
-                category: 'men',
-                price: 1299.99,
-                image: 'https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['black', 'navy'],
-                sizes: ['s', 'm', 'l', 'xl'],
-                isNew: true,
-                isSale: false,
-                featured: true
-            },
-            {
-                id: 5,
-                name: 'Kadın Deri Ceket',
-                category: 'women',
-                price: 1899.99,
-                image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['black', 'brown'],
-                sizes: ['xs', 's', 'm', 'l'],
-                isNew: true,
-                isSale: false
-            },
-            {
-                id: 6,
-                name: 'Deri Kemer',
-                category: 'accessories',
-                price: 299.99,
-                image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['black', 'brown'],
-                sizes: ['universal'],
-                isNew: false,
-                isSale: false
-            }
-        ],
-        categories: [
-            { id: 1, name: 'men', displayName: 'Erkek' },
-            { id: 2, name: 'women', displayName: 'Kadın' },
-            { id: 3, name: 'accessories', displayName: 'Aksesuarlar' }
-        ],
-        orders: [],
-        users: []
-    };
-    
-    // Return appropriate mock data based on the resource
-    if (resource === 'products') {
-        return { data: mockData.products }; // Match the expected API response format
-    } else if (resource === 'categories') {
-        return { data: mockData.categories }; // Match the expected API response format
-    } else {
-        // Default mock data
-        return { message: 'Mock data not available for this endpoint' };
-    }
-}
 
 // Enforce HTTPS in production environments - DISABLED to prevent redirect loops
 (function() {

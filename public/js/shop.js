@@ -19,6 +19,8 @@ let autoRefreshInterval = null;
 const REFRESH_INTERVAL = 60000; // Refresh every 60 seconds
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Shop page loaded');
+    
     // Initialize variables
     let products = [];
     let filteredProducts = [];
@@ -116,253 +118,91 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fetch products from API
     async function fetchProducts() {
+        console.log('Fetching products from API...');
+        console.log('API URL:', `${shopApiUrl}/products`);
+        
+        // Add a timestamp to prevent caching
+        const timestamp = new Date().getTime();
+        
         try {
-            console.log('Fetching products from API...');
-            console.log('API URL:', `${shopApiUrl}/products`);
-            
-            // Add a timestamp to prevent caching
-            const timestamp = new Date().getTime();
-            
             // Use the improved fetchAPI function from config.js
             if (window.CONFIG && window.CONFIG.fetchAPI) {
-                try {
-                    console.log('Using CONFIG.fetchAPI for products...');
-                    const data = await CONFIG.fetchAPI(`products?_t=${timestamp}`);
-                    console.log('Successfully fetched data via CONFIG.fetchAPI!');
-                    
-                    // Process the data as usual
-                    if (Array.isArray(data)) {
-                        console.log(`Found ${data.length} products in the response (direct array)`);
-                        return data;
-                    } else if (data && data.products && Array.isArray(data.products)) {
-                        console.log(`Found ${data.products.length} products in the response (products property)`);
-                        return data.products;
-                    } else if (data && data.data && Array.isArray(data.data)) {
-                        console.log(`Found ${data.data.length} products in the response (data property)`);
-                        return data.data;
-                    } else if (data && data.results && Array.isArray(data.results)) {
-                        console.log(`Found ${data.results.length} products in the response (results property)`);
-                        return data.results;
-                    } else if (data && data.value && Array.isArray(data.value)) {
-                        console.log(`Found ${data.value.length} products in the response (value property)`);
-                        return data.value;
-                    }
-                    
-                    // If we get here, the data format is unexpected
-                    console.warn('Unexpected data format from API:', data);
-                    throw new Error('Unexpected data format from API');
-                } catch (error) {
-                    console.error('Error using CONFIG.fetchAPI:', error);
-                    // Continue to fallback methods
-                }
-            }
-            
-            // Fallback to direct fetch if CONFIG.fetchAPI is not available or failed
-            try {
-                console.log('Falling back to direct fetch...');
+                console.log('Using CONFIG.fetchAPI for products...');
+                const data = await CONFIG.fetchAPI(`products?_t=${timestamp}`);
+                console.log('Successfully fetched data via CONFIG.fetchAPI!');
                 
-                // For Render-hosted backends, ensure we're not sending credentials
+                // Process the data
+                if (Array.isArray(data)) {
+                    console.log(`Found ${data.length} products in the response (direct array)`);
+                    return data;
+                } else if (data && data.products && Array.isArray(data.products)) {
+                    console.log(`Found ${data.products.length} products in the response (products property)`);
+                    return data.products;
+                } else if (data && data.data && Array.isArray(data.data)) {
+                    console.log(`Found ${data.data.length} products in the response (data property)`);
+                    return data.data;
+                } else if (data && data.results && Array.isArray(data.results)) {
+                    console.log(`Found ${data.results.length} products in the response (results property)`);
+                    return data.results;
+                } else if (data && data.value && Array.isArray(data.value)) {
+                    console.log(`Found ${data.value.length} products in the response (value property)`);
+                    return data.value;
+                } else {
+                    // If we get here, the data format is unexpected
+                    console.error('Unexpected data format from API:', data);
+                    throw new Error('API returned data in an unexpected format. Please check the server response.');
+                }
+            } else {
+                // Fallback to direct fetch if CONFIG.fetchAPI is not available
+                console.log('CONFIG.fetchAPI not available, using direct fetch');
+                
                 const response = await fetch(`${shopApiUrl}/products?_t=${timestamp}`, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json'
                     },
-                    credentials: 'omit' // Changed from 'include' to 'omit' to avoid CORS issues
+                    credentials: 'omit',
+                    // Add a longer timeout
+                    signal: AbortSignal.timeout(30000) // 30 seconds
                 });
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('Successfully fetched data via direct fetch!');
-                    
-                    // Process the data as usual
-                    if (Array.isArray(data)) {
-                        console.log(`Found ${data.length} products in the response (direct array)`);
-                        return data;
-                    } else if (data && data.products && Array.isArray(data.products)) {
-                        console.log(`Found ${data.products.length} products in the response (products property)`);
-                        return data.products;
-                    } else if (data && data.data && Array.isArray(data.data)) {
-                        console.log(`Found ${data.data.length} products in the response (data property)`);
-                        return data.data;
-                    } else if (data && data.results && Array.isArray(data.results)) {
-                        console.log(`Found ${data.results.length} products in the response (results property)`);
-                        return data.results;
-                    }
-                    
-                    // If we get here, the data format is unexpected
-                    console.warn('Unexpected data format from API:', data);
-                    throw new Error('Unexpected data format from API');
-                } else {
-                    console.error('API request failed with status:', response.status);
+                if (!response.ok) {
                     throw new Error(`API request failed with status ${response.status}`);
                 }
-            } catch (error) {
-                console.error('Error fetching products:', error);
                 
-                // Show error notification to user
-                if (typeof showNotification === 'function') {
-                    showNotification('Ürünler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 'error');
+                const data = await response.json();
+                console.log('Raw API response:', data);
+                
+                // Process the data
+                if (Array.isArray(data)) {
+                    console.log(`Found ${data.length} products in the response (direct array)`);
+                    return data;
+                } else if (data && data.products && Array.isArray(data.products)) {
+                    console.log(`Found ${data.products.length} products in the response (products property)`);
+                    return data.products;
+                } else if (data && data.data && Array.isArray(data.data)) {
+                    console.log(`Found ${data.data.length} products in the response (data property)`);
+                    return data.data;
+                } else if (data && data.results && Array.isArray(data.results)) {
+                    console.log(`Found ${data.results.length} products in the response (results property)`);
+                    return data.results;
+                } else {
+                    // If we get here, the data format is unexpected
+                    console.error('Unexpected data format from API:', data);
+                    throw new Error('API returned data in an unexpected format. Please check the server response.');
                 }
-                
-                // Use mock data as a fallback
-                console.log('Using mock data as fallback...');
-                return getMockProducts();
             }
         } catch (error) {
-            console.error('Error in fetchProducts:', error);
+            console.error('Error fetching products:', error);
             
             // Show error notification to user
             if (typeof showNotification === 'function') {
-                showNotification('Ürünler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 'error');
+                showNotification(`API Bağlantı Hatası: ${error.message}`, 'error');
             }
             
-            // Use mock data as a fallback
-            console.log('Using mock data as fallback...');
-            return getMockProducts();
+            // Rethrow the error to be handled by the caller
+            throw new Error(`Failed to fetch products: ${error.message}`);
         }
-    }
-
-    // Mock products for demo
-    function getMockProducts() {
-        return [
-            {
-                id: 1,
-                name: 'Premium Pamuklu T-Shirt',
-                category: 'men',
-                price: 349.99,
-                oldPrice: 499.99,
-                image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['black', 'white', 'blue'],
-                sizes: ['s', 'm', 'l', 'xl'],
-                isNew: true,
-                isSale: true
-            },
-            {
-                id: 2,
-                name: 'Slim Fit Denim Pantolon',
-                category: 'men',
-                price: 599.99,
-                image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['blue', 'black'],
-                sizes: ['s', 'm', 'l', 'xl', 'xxl'],
-                isNew: false,
-                isSale: false
-            },
-            {
-                id: 3,
-                name: 'Oversize Sweatshirt',
-                category: 'women',
-                price: 449.99,
-                oldPrice: 599.99,
-                image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['white', 'gray', 'black'],
-                sizes: ['xs', 's', 'm', 'l'],
-                isNew: false,
-                isSale: true
-            },
-            {
-                id: 4,
-                name: 'Deri Ceket',
-                category: 'women',
-                price: 1299.99,
-                image: 'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['black', 'brown'],
-                sizes: ['s', 'm', 'l'],
-                isNew: true,
-                isSale: false
-            },
-            {
-                id: 5,
-                name: 'Premium Deri Kemer',
-                category: 'accessories',
-                price: 249.99,
-                image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['black', 'brown'],
-                sizes: ['s', 'm', 'l'],
-                isNew: false,
-                isSale: false
-            },
-            {
-                id: 6,
-                name: 'Minimalist Saat',
-                category: 'accessories',
-                price: 899.99,
-                oldPrice: 1199.99,
-                image: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['black', 'silver', 'gold'],
-                sizes: [],
-                isNew: false,
-                isSale: true
-            },
-            {
-                id: 7,
-                name: 'Yün Palto',
-                category: 'men',
-                price: 1499.99,
-                image: 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['gray', 'navy', 'black'],
-                sizes: ['m', 'l', 'xl'],
-                isNew: true,
-                isSale: false
-            },
-            {
-                id: 8,
-                name: 'Yüksek Bel Jean',
-                category: 'women',
-                price: 499.99,
-                image: 'https://images.unsplash.com/photo-1475180098004-ca77a66827be?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['blue', 'black'],
-                sizes: ['xs', 's', 'm', 'l'],
-                isNew: false,
-                isSale: false
-            },
-            {
-                id: 9,
-                name: 'Güneş Gözlüğü',
-                category: 'accessories',
-                price: 349.99,
-                oldPrice: 449.99,
-                image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['black', 'brown', 'tortoise'],
-                sizes: [],
-                isNew: false,
-                isSale: true
-            },
-            {
-                id: 10,
-                name: 'Spor Ayakkabı',
-                category: 'men',
-                price: 799.99,
-                image: 'https://images.unsplash.com/photo-1491553895911-0055eca6402d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['white', 'black', 'gray'],
-                sizes: ['40', '41', '42', '43', '44'],
-                isNew: true,
-                isSale: false
-            },
-            {
-                id: 11,
-                name: 'Midi Elbise',
-                category: 'women',
-                price: 699.99,
-                oldPrice: 899.99,
-                image: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['red', 'black', 'navy'],
-                sizes: ['xs', 's', 'm', 'l'],
-                isNew: false,
-                isSale: true
-            },
-            {
-                id: 12,
-                name: 'Deri Çanta',
-                category: 'accessories',
-                price: 1099.99,
-                image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-                colors: ['black', 'brown', 'tan'],
-                sizes: [],
-                isNew: true,
-                isSale: false
-            }
-        ];
     }
 
     // Initialize shop
@@ -442,6 +282,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (window.ImageService && typeof window.ImageService.applyImageErrorHandler === 'function') {
                     window.ImageService.applyImageErrorHandler();
                 }
+                
+                // Show success notification
+                showNotification('Ürünler başarıyla yüklendi.', 'success');
             } catch (error) {
                 console.error('Error fetching products:', error);
                 
@@ -451,8 +294,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     productsContainer.innerHTML = `
                         <div class="error-message">
                             <i class="fas fa-exclamation-circle"></i>
-                            <h3>Ürünler yüklenirken bir hata oluştu</h3>
-                            <p>Lütfen daha sonra tekrar deneyin veya yeniden yüklemeyi deneyin.</p>
+                            <h3>API Bağlantı Hatası</h3>
+                            <p>${error.message}</p>
+                            <p>Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.</p>
                             <button id="retry-fetch" class="btn">Yeniden Dene</button>
                         </div>
                     `;
@@ -463,21 +307,58 @@ document.addEventListener('DOMContentLoaded', function() {
                         retryButton.addEventListener('click', async () => {
                             try {
                                 showLoading(true);
+                                
+                                // Clear error message
+                                productsContainer.innerHTML = '';
+                                
+                                // Retry fetching products
                                 products = await fetchProducts();
+                                console.log(`Fetched ${products.length} products on retry`);
+                                
+                                // Apply initial filters
                                 filteredProducts = [...products];
                                 applyFilters();
+                                
+                                // Render products
                                 renderProducts();
+                                
+                                // Update product count
                                 updateProductCount();
-                                showLoading(false);
                                 
                                 // Apply global image error handler after retry
                                 if (window.ImageService && typeof window.ImageService.applyImageErrorHandler === 'function') {
                                     window.ImageService.applyImageErrorHandler();
                                 }
+                                
+                                // Show success notification
+                                showNotification('Ürünler başarıyla yüklendi.', 'success');
                             } catch (retryError) {
                                 console.error('Error retrying fetch:', retryError);
+                                
+                                // Show error message again
+                                productsContainer.innerHTML = `
+                                    <div class="error-message">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        <h3>API Bağlantı Hatası</h3>
+                                        <p>${retryError.message}</p>
+                                        <p>Lütfen daha sonra tekrar deneyin.</p>
+                                        <button id="retry-fetch" class="btn">Yeniden Dene</button>
+                                    </div>
+                                `;
+                                
+                                // Add retry button event listener again
+                                const newRetryButton = document.getElementById('retry-fetch');
+                                if (newRetryButton) {
+                                    newRetryButton.addEventListener('click', () => {
+                                        // Reload the page
+                                        window.location.reload();
+                                    });
+                                }
+                                
+                                // Show error notification
+                                showNotification(`API Bağlantı Hatası: ${retryError.message}`, 'error');
+                            } finally {
                                 showLoading(false);
-                                showNotification('Ürünler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 'error');
                             }
                         });
                     }
@@ -492,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Show error notification
             if (typeof showNotification === 'function') {
-                showNotification('Sayfa yüklenirken bir hata oluştu. Lütfen sayfayı yenileyin.', 'error');
+                showNotification(`Sayfa yüklenirken bir hata oluştu: ${error.message}`, 'error');
             }
         }
     }
@@ -935,8 +816,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p><i class="fas fa-search"></i></p>
                     <p>Aradığınız kriterlere uygun ürün bulunamadı.</p>
                     <p>Lütfen filtrelerinizi değiştirerek tekrar deneyin.</p>
+                    <button id="reset-all-filters" class="btn btn-primary">Tüm Filtreleri Sıfırla</button>
                 </div>
             `;
+            
+            // Add event listener to reset filters button
+            const resetAllFiltersBtn = document.getElementById('reset-all-filters');
+            if (resetAllFiltersBtn) {
+                resetAllFiltersBtn.addEventListener('click', function() {
+                    resetAllFilters();
+                    showNotification('Tüm filtreler sıfırlandı.', 'info');
+                });
+            }
             
             // Hide pagination
             pagination.innerHTML = '';
@@ -1033,6 +924,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const productCard = document.createElement('div');
                 productCard.className = 'product-card';
                 productCard.setAttribute('data-id', productId);
+                productCard.setAttribute('data-category', product.category || '');
                 
                 // Make the entire product card clickable
                 productCard.addEventListener('click', function(e) {
@@ -1058,33 +950,28 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-shopping-cart"></i>
                             </a>
                             <a href="#" class="add-to-wishlist" data-id="${productId}">
-                                <i class="fas fa-heart"></i>
+                                <i class="far fa-heart"></i>
                             </a>
                         </div>
                     </div>
                     <div class="product-info">
-                        <h3><a href="./product.html?id=${productId}">${product.name}</a></h3>
-                        <p class="brand">${categoryName}</p>
-                        <div class="price">
-                            ${oldPriceHtml}
-                            <span class="current-price">${price} ₺</span>
-                        </div>
+                        <div class="product-category">${categoryName}</div>
+                        <h3 class="product-title">${product.name}</h3>
+                        <div class="product-price">${oldPriceHtml} ${price} ₺</div>
                     </div>
                 `;
                 
-                // Add to products container
+                // Add product card to container
                 productsContainer.appendChild(productCard);
             } catch (error) {
-                console.error(`Error rendering product at index ${i}:`, error);
-                // Continue to the next product if there's an error
-                continue;
+                console.error('Error rendering product:', error);
             }
         }
         
         // Render pagination
         renderPagination(totalPages);
         
-        // Add event listeners to product actions
+        // Add event listeners to product action buttons
         addProductActionListeners();
     }
 
@@ -1794,8 +1681,76 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Function to get color code from color name
+    function getColorCode(colorName) {
+        const colorMap = {
+            'black': '#000000',
+            'white': '#ffffff',
+            'red': '#ff0000',
+            'blue': '#0000ff',
+            'green': '#008000',
+            'yellow': '#ffff00',
+            'purple': '#800080',
+            'pink': '#ffc0cb',
+            'orange': '#ffa500',
+            'brown': '#a52a2a',
+            'gray': '#808080',
+            'grey': '#808080',
+            'navy': '#000080',
+            'silver': '#c0c0c0',
+            'gold': '#ffd700',
+            'tan': '#d2b48c',
+            'beige': '#f5f5dc',
+            'cream': '#fffdd0',
+            'olive': '#808000',
+            'maroon': '#800000',
+            'khaki': '#f0e68c',
+            'lavender': '#e6e6fa',
+            'teal': '#008080',
+            'coral': '#ff7f50',
+            'turquoise': '#40e0d0',
+            'indigo': '#4b0082',
+            'violet': '#ee82ee',
+            'magenta': '#ff00ff',
+            'cyan': '#00ffff',
+            'lime': '#00ff00',
+            'tortoise': '#704214'
+        };
+        
+        return colorMap[colorName.toLowerCase()] || '#000000';
+    }
+
     // Initialize shop
-    initShop();
+    initShop().catch(error => {
+        console.error('Failed to initialize shop:', error);
+        
+        // Show error notification
+        if (typeof showNotification === 'function') {
+            showNotification(`Sayfa yüklenirken bir hata oluştu: ${error.message}`, 'error');
+        }
+        
+        // Show error message in the products container
+        const productsContainer = document.getElementById('products-container');
+        if (productsContainer) {
+            productsContainer.innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <h3>Sayfa Yüklenirken Hata Oluştu</h3>
+                    <p>${error.message}</p>
+                    <p>Lütfen sayfayı yenileyin veya daha sonra tekrar deneyin.</p>
+                    <button id="reload-page" class="btn">Sayfayı Yenile</button>
+                </div>
+            `;
+            
+            // Add reload button event listener
+            const reloadButton = document.getElementById('reload-page');
+            if (reloadButton) {
+                reloadButton.addEventListener('click', () => {
+                    window.location.reload();
+                });
+            }
+        }
+    });
     
     // Update cart count on page load
     updateCartCount();

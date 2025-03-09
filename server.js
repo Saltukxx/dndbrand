@@ -25,12 +25,13 @@ app.use('/api-proxy', async (req, res) => {
     // Choose http or https module based on URL
     const httpModule = targetUrl.startsWith('https') ? https : http;
     
-    // Forward the request
+    // Forward the request - copy over all original headers
     const proxyReq = httpModule.request(
       targetUrl,
       {
         method: req.method,
         headers: {
+          ...req.headers,
           'User-Agent': 'DnDBrand-LocalServer',
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -46,38 +47,45 @@ app.use('/api-proxy', async (req, res) => {
         });
         
         // Set CORS headers
-        res.setHeader('Access-Control-Allow-Origin', origin);
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
         res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
         
         // Pipe the response data
         proxyRes.pipe(res);
       }
     );
     
+    // Handle request body if present
+    if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
+      // Handle the request body stream
+      req.pipe(proxyReq);
+    } else {
+      // End the request for methods without body
+      proxyReq.end();
+    }
+    
     // Handle errors
     proxyReq.on('error', (error) => {
       console.error('Proxy request error:', error);
-      res.status(500).send('Proxy request failed');
+      res.status(500).send(`Proxy request failed: ${error.message}`);
     });
-    
-    // End the request
-    proxyReq.end();
     
   } catch (error) {
     console.error('Proxy error:', error);
-    res.status(500).send('Proxy error');
+    res.status(500).send(`Proxy error: ${error.message}`);
   }
 });
 
 // Add OPTIONS pre-flight handler for the proxy
 app.options('/api-proxy/*', (req, res) => {
-  const origin = req.headers.origin || '*';
-  res.header('Access-Control-Allow-Origin', origin);
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
   res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
   res.status(200).end();
 });
 

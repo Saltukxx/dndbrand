@@ -151,68 +151,73 @@ function getProductImage(imagePath, useOriginal = false) {
 // Fetch product details from API
 async function fetchProductDetails(productId) {
     try {
-        // Add timestamp to prevent caching
-        const timestamp = new Date().getTime();
-        const apiUrl = 'https://dndbrand-server.onrender.com/api';
-        const url = `${apiUrl}/products/${productId}?_=${timestamp}`;
+        console.log(`Fetching product details for ID: ${productId}`);
         
-        console.log('Fetching product from:', url);
-        
-        // Try multiple CORS proxies with different timeouts
-        const corsProxies = [
-            'https://api.cors.sh/',
-            'https://corsproxy.io/?',
-            'https://cors-proxy.htmldriven.com/?url=',
-            'https://api.allorigins.win/raw?url=',
-            'https://crossorigin.me/'
-        ];
-        
-        // Create a timeout promise
-        const timeout = (ms) => new Promise((_, reject) => 
-            setTimeout(() => reject(new Error(`Request timed out after ${ms}ms`)), ms)
-        );
-        
-        // Try each CORS proxy with a timeout
-        for (const proxy of corsProxies) {
-            try {
-                console.log('Trying CORS proxy:', proxy);
-                const proxyUrl = `${proxy}${encodeURIComponent(url)}`;
-                
-                // Race between fetch and timeout
-                const response = await Promise.race([
-                    fetch(proxyUrl, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json'
-                        },
-                        credentials: 'omit'
-                    }),
-                    timeout(5000) // 5 second timeout
-                ]);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('Proxy request successful:', data);
-                    
-                    // Check for different response formats
-                    if (data.success && data.data) {
-                        return data.data;
-                    } else if (data._id) {
-                        return data;
-                    } else if (data.product) {
-                        return data.product;
-                    } else if (Array.isArray(data)) {
-                        return data.find(product => product._id === productId || product.id === productId);
-                    }
-                }
-                console.warn(`Proxy request failed with status: ${response.status} for proxy: ${proxy}`);
-            } catch (proxyError) {
-                console.warn(`Proxy request failed: ${proxyError.message} for proxy: ${proxy}`);
+        // Use CONFIG.fetchAPI if available
+        if (window.CONFIG && window.CONFIG.fetchAPI) {
+            console.log('Using CONFIG.fetchAPI for product details');
+            const data = await CONFIG.fetchAPI(`products/${productId}`);
+            
+            // Check for different response formats
+            if (data && data._id) {
+                return data;
+            } else if (data && data.product) {
+                return data.product;
+            } else if (data && data.data) {
+                return data.data;
+            } else if (Array.isArray(data)) {
+                return data.find(product => product._id === productId || product.id === productId);
+            } else {
+                console.warn('Unexpected data format from API:', data);
+                throw new Error('API returned data in an unexpected format');
             }
         }
         
-        // If all proxy requests fail, try the fallback approach
+        // Fallback to original implementation if CONFIG.fetchAPI is not available
+        // Add timestamp to prevent caching
+        const timestamp = new Date().getTime();
+        const apiUrl = productApiUrl || 'https://dndbrand-server.onrender.com/api';
+        const url = `${apiUrl}/products/${productId}?_=${timestamp}`;
+        
+        console.log('Fallback: Fetching product from:', url);
+        
+        // Try the local proxy first
+        const localProxy = window.location.origin + '/api-proxy/';
+        try {
+            console.log('Trying local CORS proxy:', localProxy);
+            const proxyUrl = `${localProxy}${encodeURIComponent(url)}`;
+            
+            const response = await fetch(proxyUrl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                credentials: 'omit',
+                signal: AbortSignal.timeout(10000) // 10 second timeout
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Local proxy request successful:', data);
+                
+                // Check for different response formats
+                if (data && data._id) {
+                    return data;
+                } else if (data && data.product) {
+                    return data.product;
+                } else if (data && data.data) {
+                    return data.data;
+                } else if (Array.isArray(data)) {
+                    return data.find(product => product._id === productId || product.id === productId);
+                }
+            }
+        } catch (localProxyError) {
+            console.warn(`Local proxy request failed: ${localProxyError.message}`);
+        }
+        
+        // Fallback to all products approach
         return await fetchAllProductsAndFindById(productId);
+        
     } catch (error) {
         console.error('Error fetching product details:', error);
         
@@ -224,67 +229,104 @@ async function fetchProductDetails(productId) {
 // Fallback function to fetch all products and find by ID
 async function fetchAllProductsAndFindById(productId) {
     try {
-        const apiUrl = 'https://dndbrand-server.onrender.com/api';
-        const url = `${apiUrl}/products`;
+        console.log('Fetching all products as fallback to find product by ID');
         
-        console.log('Fetching all products as fallback from:', url);
-        
-        // Try multiple CORS proxies with different timeouts
-        const corsProxies = [
-            'https://api.cors.sh/',
-            'https://corsproxy.io/?',
-            'https://cors-proxy.htmldriven.com/?url=',
-            'https://api.allorigins.win/raw?url=',
-            'https://crossorigin.me/'
-        ];
-        
-        // Create a timeout promise
-        const timeout = (ms) => new Promise((_, reject) => 
-            setTimeout(() => reject(new Error(`Request timed out after ${ms}ms`)), ms)
-        );
-        
-        // Try each CORS proxy with a timeout
-        for (const proxy of corsProxies) {
+        // Use CONFIG.fetchAPI if available
+        if (window.CONFIG && window.CONFIG.fetchAPI) {
+            console.log('Using CONFIG.fetchAPI for fetching all products');
             try {
-                console.log('Trying CORS proxy for all products:', proxy);
-                const proxyUrl = `${proxy}${encodeURIComponent(url)}`;
+                const data = await CONFIG.fetchAPI('products');
                 
-                // Race between fetch and timeout
-                const response = await Promise.race([
-                    fetch(proxyUrl, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json'
-                        },
-                        credentials: 'omit'
-                    }),
-                    timeout(5000) // 5 second timeout
-                ]);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('Proxy request for all products successful');
-                    
-                    let products = [];
-                    if (data.success && Array.isArray(data.data)) {
-                        products = data.data;
-                    } else if (Array.isArray(data)) {
-                        products = data;
-                    }
-                    
-                    return products.find(product => product._id === productId || product.id === productId);
+                let products = [];
+                if (Array.isArray(data)) {
+                    products = data;
+                } else if (data && Array.isArray(data.data)) {
+                    products = data.data;
+                } else if (data && Array.isArray(data.products)) {
+                    products = data.products;
+                } else if (data && Array.isArray(data.results)) {
+                    products = data.results;
                 }
-                console.warn(`Proxy request for all products failed with status: ${response.status} for proxy: ${proxy}`);
-            } catch (proxyError) {
-                console.warn(`Proxy request for all products failed: ${proxyError.message} for proxy: ${proxy}`);
+                
+                console.log(`Found ${products.length} products, searching for ID: ${productId}`);
+                const product = products.find(p => p._id === productId || p.id === productId);
+                
+                if (product) {
+                    console.log('Product found in all products response');
+                    return product;
+                } else {
+                    console.warn('Product not found in all products response');
+                    throw new Error('Product not found');
+                }
+            } catch (error) {
+                console.error('Error using CONFIG.fetchAPI:', error);
+                throw error;
             }
         }
         
-        // If all approaches fail, throw an error
-        throw new Error('Could not fetch product data from any source');
-    } catch (fallbackError) {
-        console.error('All product fetch approaches failed:', fallbackError);
-        throw fallbackError;
+        // Fallback to local proxy if CONFIG.fetchAPI is not available
+        const apiUrl = productApiUrl || 'https://dndbrand-server.onrender.com/api';
+        const url = `${apiUrl}/products`;
+        const localProxy = window.location.origin + '/api-proxy/';
+        
+        console.log('Using local proxy for all products:', localProxy);
+        try {
+            const proxyUrl = `${localProxy}${encodeURIComponent(url)}`;
+            
+            const response = await fetch(proxyUrl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                credentials: 'omit',
+                signal: AbortSignal.timeout(15000) // 15 second timeout
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Local proxy request for all products successful');
+                
+                let products = [];
+                if (Array.isArray(data)) {
+                    products = data;
+                } else if (data && Array.isArray(data.data)) {
+                    products = data.data;
+                } else if (data && Array.isArray(data.products)) {
+                    products = data.products;
+                } else if (data && Array.isArray(data.results)) {
+                    products = data.results;
+                }
+                
+                console.log(`Found ${products.length} products, searching for ID: ${productId}`);
+                const product = products.find(p => p._id === productId || p.id === productId);
+                
+                if (product) {
+                    console.log('Product found in all products response');
+                    return product;
+                } else {
+                    console.warn('Product not found in all products response');
+                    throw new Error('Product not found');
+                }
+            } else {
+                console.warn(`Local proxy request failed with status: ${response.status}`);
+                throw new Error(`Failed to fetch all products: ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Error fetching all products:', error);
+            throw error;
+        }
+    } catch (error) {
+        console.error('All fallback approaches failed:', error);
+        // Return empty product with error message for UI handling
+        return {
+            _id: productId,
+            id: productId,
+            name: 'Ürün Bulunamadı',
+            price: 0,
+            description: 'Bu ürün bilgilerine erişilemedi. Lütfen daha sonra tekrar deneyin.',
+            error: true,
+            errorMessage: error.message
+        };
     }
 }
 
