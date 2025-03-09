@@ -16,8 +16,8 @@ const PLACEHOLDER_IMAGES = {
     default: '/images/placeholder-product.jpg'
 };
 
-// Default image path - use a path that exists in the project
-const DEFAULT_IMAGE = '/images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png';
+// Default image path - use placeholder-product.jpg as the default fallback
+const DEFAULT_IMAGE = '/images/placeholder-product.jpg';
 
 // Maximum number of retry attempts
 const MAX_RETRY_ATTEMPTS = 2;

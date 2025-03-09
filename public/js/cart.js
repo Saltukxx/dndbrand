@@ -113,7 +113,7 @@ function createCartItem(item) {
     if (window.ImageService && typeof window.ImageService.getProductImage === 'function') {
         imageUrl = window.ImageService.getProductImage(item.image);
     } else {
-        imageUrl = item.image || '../images/placeholder-product.jpg';
+        imageUrl = item.image || '/images/placeholder-product.jpg';
     }
     
     // Create variant text if color or size exists

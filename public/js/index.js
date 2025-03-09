@@ -199,7 +199,7 @@ function getProductImage(product) {
     }
     
     // Fallback to original implementation if ImageService is not available
-    let productImage = '../img/no-image.jpg';
+    let productImage = '/images/placeholder-product.jpg';
     
     try {
         // Check for images array
@@ -232,18 +232,18 @@ function getProductImage(product) {
             // Use placeholder images based on product category
             const category = product.category ? product.category.toLowerCase() : '';
             if (category.includes('men') || category.includes('erkek')) {
-                productImage = 'https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';
+                productImage = '/images/placeholder-men.jpg';
             } else if (category.includes('women') || category.includes('kadin') || category.includes('kadın')) {
-                productImage = 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';
+                productImage = '/images/placeholder-women.jpg';
             } else if (category.includes('accessories') || category.includes('aksesuar')) {
-                productImage = 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';
+                productImage = '/images/placeholder-accessories.jpg';
             } else {
-                productImage = 'https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';
+                productImage = '/images/placeholder-product.jpg';
             }
         }
     } catch (error) {
         console.error(`Error processing image for product ${product.name}:`, error);
-        productImage = 'https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80';
+        productImage = '/images/placeholder-product.jpg';
     }
     
     return productImage;

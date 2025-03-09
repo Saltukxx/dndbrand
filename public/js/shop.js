@@ -769,7 +769,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // For demo/testing, use placeholder images if the image path doesn't exist
-            if (productImage === '/img/no-image.jpg' || 
+            if (!productImage || 
+                productImage === '/img/no-image.jpg' || 
                 productImage === `${shopApiUrl}/img/no-image.jpg` ||
                 productImage === 'undefined' ||
                 productImage === 'null') {
