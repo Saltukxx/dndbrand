@@ -5,8 +5,8 @@ services:
     plan: free
     buildCommand: >
       cd server && 
-      npm install && 
-      npm install node-cache winston && 
+      npm install --legacy-peer-deps && 
+      npm install node-cache winston --legacy-peer-deps && 
       npm run postinstall && 
       cd .. && 
       node apply-fixes.js &&

@@ -16,13 +16,13 @@ if not exist "public" (
 
 REM Install root dependencies
 echo Installing root dependencies...
-call npm install
+call npm install --legacy-peer-deps
 
 REM Install server dependencies
 echo Installing server dependencies...
 cd server
-call npm install
-call npm install node-cache winston --no-save
+call npm install --legacy-peer-deps
+call npm install node-cache winston --legacy-peer-deps --no-save
 
 REM Create .env file from example if it doesn't exist
 if not exist "config\.env" if exist "config\production.env.example" (

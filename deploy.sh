@@ -12,13 +12,13 @@ fi
 
 # Install root dependencies
 echo "Installing root dependencies..."
-npm install
+npm install --legacy-peer-deps
 
 # Install server dependencies
 echo "Installing server dependencies..."
 cd server
-npm install
-npm install node-cache winston --no-save
+npm install --legacy-peer-deps
+npm install node-cache winston --legacy-peer-deps --no-save
 
 # Create .env file from example if it doesn't exist
 if [ ! -f "config/.env" ] && [ -f "config/production.env.example" ]; then

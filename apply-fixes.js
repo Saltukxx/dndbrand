@@ -85,6 +85,7 @@ const serverPackageJsonPath = path.join(__dirname, 'server', 'package.json');
 const requiredDependencies = {
   'node-cache': '^5.1.2',
   'winston': '^3.8.2',
+  'multer': '^1.4.4',
   'multer-gridfs-storage': '^5.0.2',
   'gridfs-stream': '^1.1.1',
   'method-override': '^3.0.0'
@@ -109,7 +110,7 @@ try {
     // Update the postinstall script to include all required dependencies
     if (packageJson.scripts && packageJson.scripts.postinstall) {
       const requiredDepsString = Object.keys(requiredDependencies).join(' ');
-      packageJson.scripts.postinstall = `echo 'Checking for missing dependencies...' && npm install ${requiredDepsString} --no-save || true`;
+      packageJson.scripts.postinstall = `echo 'Checking for missing dependencies...' && npm install ${requiredDepsString} --legacy-peer-deps --no-save || true`;
       console.log(`${colors.yellow}Updated postinstall script with all required dependencies${colors.reset}`);
     }
     
@@ -121,12 +122,12 @@ try {
     try {
       console.log(`${colors.blue}Installing missing dependencies...${colors.reset}`);
       process.chdir(path.join(__dirname, 'server'));
-      execSync('npm install', { stdio: 'inherit' });
+      execSync('npm install --legacy-peer-deps', { stdio: 'inherit' });
       process.chdir(__dirname);
       console.log(`${colors.green}✓ Dependencies installed successfully${colors.reset}`);
     } catch (installError) {
       console.error(`${colors.red}Error installing dependencies: ${installError.message}${colors.reset}`);
-      console.log(`${colors.yellow}Please run 'cd server && npm install' manually${colors.reset}`);
+      console.log(`${colors.yellow}Please run 'cd server && npm install --legacy-peer-deps' manually${colors.reset}`);
     }
   } else {
     console.log(`${colors.green}All required dependencies are already installed${colors.reset}`);
