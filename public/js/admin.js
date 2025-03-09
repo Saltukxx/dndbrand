@@ -5,6 +5,8 @@
 
 // Default placeholder image URL (should be the same as in ImageService)
 const DEFAULT_PLACEHOLDER_URL = 'https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg';
+// Local placeholder fallback
+const LOCAL_PLACEHOLDER_URL = '/images/placeholder-product.jpg';
 
 // Get API URL from config if available
 let adminApiUrl;
@@ -22,6 +24,58 @@ let adminAuthenticated = sessionStorage.getItem('adminAuthenticated') === 'true'
 
 // Auto-refresh interval (30 seconds)
 const ADMIN_REFRESH_INTERVAL = 30000;
+
+// Placeholder image status cache
+const placeholderStatus = {
+    defaultTested: false,
+    defaultAvailable: false
+};
+
+// Test if the default placeholder is available
+function testPlaceholderAvailability() {
+    if (!placeholderStatus.defaultTested) {
+        const img = new Image();
+        img.onload = function() {
+            placeholderStatus.defaultAvailable = true;
+            placeholderStatus.defaultTested = true;
+            console.log('Default placeholder image is available');
+        };
+        img.onerror = function() {
+            placeholderStatus.defaultAvailable = false;
+            placeholderStatus.defaultTested = true;
+            console.log('Default placeholder image is not available, will use local fallback');
+        };
+        img.src = DEFAULT_PLACEHOLDER_URL;
+    }
+}
+
+// Initialize placeholder test
+testPlaceholderAvailability();
+
+/**
+ * Get best available placeholder image
+ * @returns {string} URL to the best available placeholder image
+ */
+function getBestPlaceholderImage() {
+    if (placeholderStatus.defaultAvailable) {
+        return DEFAULT_PLACEHOLDER_URL;
+    }
+    return LOCAL_PLACEHOLDER_URL;
+}
+
+/**
+ * Handle image loading errors with proper fallback
+ * @param {HTMLImageElement} imgElement - The image element that failed to load
+ */
+function handleImageError(imgElement) {
+    if (!imgElement) return;
+    
+    // Use the best placeholder image
+    imgElement.src = getBestPlaceholderImage();
+    
+    // Remove error handler to prevent loops
+    imgElement.onerror = null;
+}
 
 // Helper function to make API requests with CORS handling
 async function fetchWithCORS(endpoint, options = {}) {
@@ -58,13 +112,44 @@ async function fetchWithCORS(endpoint, options = {}) {
                 'Accept': 'application/json',
                 ...(options.headers || {})
             },
-            // Set credentials to omit to fix CORS issues
-            credentials: 'omit'
+            // Set credentials to include for all requests
+            credentials: 'include',
+            // Add mode: 'cors' for explicit CORS requests
+            mode: 'cors'
         };
         
-        // Try using the local proxy first
+        // Try to use fetch directly with CORS
         try {
-            const proxyUrl = window.location.origin + '/api-proxy/' + encodeURIComponent(url);
+            const response = await fetch(url, {
+                ...fetchOptions,
+                signal: AbortSignal.timeout(10000) // 10 second timeout
+            });
+            
+            if (response.ok) {
+                return await response.json();
+            }
+            
+            if (response.status === 403 || response.status === 401) {
+                console.error('Authentication error:', response.status);
+                
+                // Check if we're on the admin login page
+                if (!window.location.href.includes('admin-login.html')) {
+                    alert('Oturum süresi doldu. Lütfen tekrar giriş yapın.');
+                    sessionStorage.removeItem('adminToken');
+                    sessionStorage.removeItem('adminAuthenticated');
+                    window.location.href = 'admin-login.html';
+                }
+                throw new Error(`Yetkilendirme hatası: ${response.status}`);
+            }
+            
+            console.warn(`Direct fetch request failed with status: ${response.status}`);
+        } catch (directError) {
+            console.warn(`Direct fetch request failed: ${directError.message}`);
+        }
+        
+        // Try using the local proxy as a fallback
+        try {
+            const proxyUrl = window.location.origin + '/api-proxy?url=' + encodeURIComponent(url);
             console.log(`Trying local proxy: ${proxyUrl}`);
             
             const proxyResponse = await fetch(proxyUrl, {
@@ -80,38 +165,168 @@ async function fetchWithCORS(endpoint, options = {}) {
             console.warn(`Local proxy request failed: ${proxyError.message}`);
         }
         
-        // Try direct fetch as a backup
-        const response = await fetch(url, fetchOptions);
-        if (response.ok) {
-            return await response.json();
+        // If in demo mode, try to use mock data
+        const adminToken = sessionStorage.getItem('adminToken');
+        const isDemo = adminToken && adminToken.startsWith('demo_token_');
+        
+        if (isDemo) {
+            console.log('Using demo mode, attempting to provide mock data');
+            const mockData = getMockData(endpoint, options);
+            if (mockData) {
+                console.log('Returning mock data for endpoint:', endpoint);
+                return mockData;
+            }
         }
         
-        // Handle non-200 responses
-        console.error(`API request failed with status: ${response.status}`);
-        throw new Error(`API request failed with status: ${response.status}`);
+        // All approaches failed
+        throw new Error('Sunucuya erişilemiyor. Lütfen internet bağlantınızı kontrol edin.');
     } catch (error) {
         console.error('Error in fetchWithCORS:', error);
         throw error; // Rethrow the error to be handled by the caller
     }
 }
 
+/**
+ * Get mock data for demo mode
+ * @param {string} endpoint - API endpoint
+ * @param {Object} options - Request options
+ * @returns {Object|null} - Mock data or null if not supported
+ */
+function getMockData(endpoint, options) {
+    if (endpoint === 'admin/stats' || endpoint === 'stats') {
+        return {
+            totalSales: 12450,
+            totalOrders: 38,
+            totalCustomers: 56,
+            totalProducts: 8
+        };
+    }
+    
+    if (endpoint === 'admin/products' || endpoint === 'products') {
+        if (options.method === 'GET') {
+            return [
+                {
+                    _id: 'demo_product_1',
+                    id: 'demo_product_1',
+                    name: 'Demo Ürün 1',
+                    price: 199.99,
+                    sku: 'DEMO001',
+                    category: 'men',
+                    description: 'Bu bir demo ürün açıklamasıdır.',
+                    stock: 15,
+                    status: 'active',
+                    featured: true,
+                    createdAt: new Date().toISOString(),
+                    images: []
+                },
+                {
+                    _id: 'demo_product_2',
+                    id: 'demo_product_2',
+                    name: 'Demo Ürün 2',
+                    price: 129.99,
+                    sku: 'DEMO002',
+                    category: 'women',
+                    description: 'Bu bir demo ürün açıklamasıdır.',
+                    stock: 8,
+                    status: 'active',
+                    featured: false,
+                    createdAt: new Date().toISOString(),
+                    images: []
+                }
+            ];
+        }
+    }
+    
+    // For product creation
+    if (endpoint === 'products' && options.method === 'POST') {
+        try {
+            const productData = JSON.parse(options.body);
+            return {
+                ...productData,
+                _id: 'demo_product_' + Math.floor(Math.random() * 1000),
+                id: 'demo_product_' + Math.floor(Math.random() * 1000),
+                createdAt: new Date().toISOString(),
+                success: true,
+                message: 'Ürün başarıyla oluşturuldu (Demo)'
+            };
+        } catch (e) {
+            return null;
+        }
+    }
+    
+    // For product updates
+    if (endpoint.startsWith('products/') && options.method === 'PUT') {
+        try {
+            const productData = JSON.parse(options.body);
+            return {
+                ...productData,
+                _id: endpoint.split('/')[1],
+                id: endpoint.split('/')[1],
+                updatedAt: new Date().toISOString(),
+                success: true,
+                message: 'Ürün başarıyla güncellendi (Demo)'
+            };
+        } catch (e) {
+            return null;
+        }
+    }
+    
+    // For product deletion
+    if (endpoint.startsWith('products/') && options.method === 'DELETE') {
+        return {
+            success: true,
+            message: 'Ürün başarıyla silindi (Demo)'
+        };
+    }
+    
+    // Default case: no mock data available
+    return null;
+}
+
 // Check if admin is authenticated
 function checkAdminAuth() {
-    if (!sessionStorage.getItem('adminToken')) {
+    const adminToken = sessionStorage.getItem('adminToken');
+    if (!adminToken) {
         // Don't redirect automatically if we're already on the login page
         if (!window.location.href.includes('admin-login.html')) {
             window.location.href = 'admin-login.html';
         }
         return false;
     }
+    
+    // Check if using demo mode
+    const isDemo = adminToken.startsWith('demo_token_');
+    if (isDemo) {
+        console.log('Using demo admin mode');
+    }
+    
     return true;
 }
 
 // Admin login function
 async function loginAdmin(email, password) {
     try {
+        console.log('Attempting admin login for:', email);
+        
+        // For local development/testing only - hardcoded demo credentials
+        // This allows login even when the backend is unreachable
+        if (email === 'admin@dndbrand.com' && password === 'admin123') {
+            console.log('Using demo admin credentials');
+            
+            // Store authentication data in session storage
+            const demoToken = 'demo_token_' + Math.random().toString(36).substring(2);
+            sessionStorage.setItem('adminToken', demoToken);
+            sessionStorage.setItem('adminAuthenticated', 'true');
+            sessionStorage.setItem('adminName', 'Demo Admin');
+            sessionStorage.setItem('adminEmail', email);
+            
+            // Redirect to admin dashboard
+            window.location.href = 'admin.html';
+            return { success: true };
+        }
+        
         // Try to login via server
-        const loginData = await fetchWithCORS('admin/login', {
+        const loginResponse = await fetchWithCORS('admin/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -119,11 +334,16 @@ async function loginAdmin(email, password) {
             body: JSON.stringify({ email, password })
         });
         
-        if (loginData && loginData.token) {
+        console.log('Login response:', loginResponse);
+        
+        if (loginResponse && (loginResponse.token || loginResponse.data?.token)) {
+            // Extract token (handle different API response formats)
+            const token = loginResponse.token || loginResponse.data?.token;
+            
             // Store authentication data in session storage
-            sessionStorage.setItem('adminToken', loginData.token);
+            sessionStorage.setItem('adminToken', token);
             sessionStorage.setItem('adminAuthenticated', 'true');
-            sessionStorage.setItem('adminName', loginData.user?.name || 'Admin');
+            sessionStorage.setItem('adminName', loginResponse.user?.name || loginResponse.data?.user?.name || 'Admin');
             sessionStorage.setItem('adminEmail', email);
             
             // Redirect to admin dashboard
@@ -131,6 +351,7 @@ async function loginAdmin(email, password) {
             
             return { success: true };
         } else {
+            console.error('Invalid login response:', loginResponse);
             return { 
                 success: false, 
                 message: 'Invalid credentials. Please try again.'
@@ -141,7 +362,7 @@ async function loginAdmin(email, password) {
         
         return { 
             success: false, 
-            message: 'Server error. Please try again later.'
+            message: 'Server error. Please try again later or use demo credentials.'
         };
     }
 }
@@ -161,15 +382,39 @@ function showNotification(message, type = 'success') {
 
 // Initialize admin dashboard
 function initializeAdminDashboard() {
+    console.log('Initializing admin dashboard...');
+    
+    // Check if we're in demo mode
+    const adminToken = sessionStorage.getItem('adminToken');
+    const isDemo = adminToken && adminToken.startsWith('demo_token_');
+    
     // Load dashboard data if elements exist
     if (document.getElementById('totalSales') || document.getElementById('totalOrders') || 
         document.getElementById('totalCustomers') || document.getElementById('totalProducts')) {
-        loadDashboardStats();
+        // Only call API if not in demo mode
+        if (!isDemo) {
+            loadDashboardStats();
+        } else {
+            // For demo mode, set placeholder stats
+            if (document.getElementById('totalSales')) document.getElementById('totalSales').textContent = '₺12,450';
+            if (document.getElementById('totalOrders')) document.getElementById('totalOrders').textContent = '38';
+            if (document.getElementById('totalCustomers')) document.getElementById('totalCustomers').textContent = '56';
+            if (document.getElementById('totalProducts')) document.getElementById('totalProducts').textContent = '8';
+        }
     }
     
     // Only load recent orders if the element exists
     if (document.getElementById('recentOrdersList')) {
-        loadRecentOrders();
+        // Only call API if not in demo mode
+        if (!isDemo) {
+            loadRecentOrders();
+        } else {
+            // For demo mode, set empty state
+            const recentOrdersElement = document.getElementById('recentOrdersList');
+            if (recentOrdersElement) {
+                recentOrdersElement.innerHTML = '<li>Demo mode: Sample orders will appear here.</li>';
+            }
+        }
     }
     
     // Set up navigation
@@ -389,8 +634,58 @@ async function loadProducts() {
     
     // Show loading state
     const productsTable = document.getElementById('productsTable');
+    if (!productsTable) {
+        console.warn('Products table element not found');
+        return;
+    }
+    
     const tableBody = productsTable.querySelector('tbody');
     tableBody.innerHTML = '<tr><td colspan="7"><div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Ürünler yükleniyor...</div></td></tr>';
+    
+    // Check if we're in demo mode
+    const adminToken = sessionStorage.getItem('adminToken');
+    const isDemo = adminToken && adminToken.startsWith('demo_token_');
+    
+    if (isDemo) {
+        console.log('Loading demo products');
+        // Load sample products for demo mode
+        const demoProducts = [
+            { 
+                _id: 'demo1', 
+                name: 'Demo Ürün 1', 
+                sku: 'DEMO-001', 
+                category: 'T-Shirt', 
+                price: 299.99, 
+                stock: 15, 
+                status: 'active',
+                images: [DEFAULT_PLACEHOLDER_URL]
+            },
+            { 
+                _id: 'demo2', 
+                name: 'Demo Ürün 2', 
+                sku: 'DEMO-002', 
+                category: 'Hoodie', 
+                price: 499.99, 
+                stock: 8, 
+                status: 'active',
+                images: [DEFAULT_PLACEHOLDER_URL]
+            },
+            { 
+                _id: 'demo3', 
+                name: 'Demo Ürün 3', 
+                sku: 'DEMO-003', 
+                category: 'Aksesuar', 
+                price: 79.99, 
+                stock: 0, 
+                status: 'active',
+                images: [DEFAULT_PLACEHOLDER_URL]
+            }
+        ];
+        
+        // Render demo products
+        displayProducts(demoProducts, tableBody);
+        return;
+    }
     
     // Track retry attempts
     let retryCount = 0;
@@ -486,34 +781,8 @@ async function loadProducts() {
                 // Safely get product ID
                 const productId = product._id || product.id || '';
                 
-                // Safely get image URL
-                let imageUrl = DEFAULT_PLACEHOLDER_URL;
-                
-                // Use ImageService if available for consistent image handling
-                if (window.ImageService && typeof window.ImageService.getProductImage === 'function') {
-                    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-                        imageUrl = window.ImageService.getProductImage(product.images[0]);
-                    } else if (product.image) {
-                        imageUrl = window.ImageService.getProductImage(product.image);
-                    }
-                } else {
-                    // Fallback to the old method if ImageService is not available
-                    if (product.images && Array.isArray(product.images) && product.images.length > 0 && product.images[0]) {
-                        imageUrl = product.images[0];
-                        
-                        // Check if the image URL is relative and add API URL if needed
-                        if (!imageUrl.startsWith('http') && !imageUrl.startsWith('../')) {
-                            imageUrl = `${adminApiUrl}/${imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl}`;
-                        }
-                    } else if (product.image && typeof product.image === 'string') {
-                        imageUrl = product.image;
-                        
-                        // Check if the image URL is relative and add API URL if needed
-                        if (!imageUrl.startsWith('http') && !imageUrl.startsWith('../')) {
-                            imageUrl = `${adminApiUrl}/${imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl}`;
-                        }
-                    }
-                }
+                // Get product image with consistent placeholder fallback
+                const imageUrl = getProductImageUrl(product);
                 
                 // Format price with fallback for missing price
                 const price = typeof product.price === 'number' ? product.price : 
@@ -527,7 +796,7 @@ async function loadProducts() {
                 row.innerHTML = `
                 <td class="product-cell">
                     <div class="product-info">
-                        <img src="${imageUrl}" alt="${product.name}" onerror="this.onerror=null; this.src=${DEFAULT_PLACEHOLDER_URL};">
+                        <img src="${imageUrl}" alt="${product.name}" onerror="handleImageError(this)">
                         <span>${product.name}</span>
                     </div>
                 </td>
@@ -626,6 +895,122 @@ async function loadProducts() {
     await attemptFetch();
 }
 
+// Extract product image URL with fallback
+function getProductImageUrl(product) {
+    let imageUrl;
+    
+    // First attempt: Use ImageService if available
+    if (window.ImageService && typeof window.ImageService.getProductImage === 'function') {
+        if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+            return window.ImageService.getProductImage(product.images[0]);
+        } else if (product.image) {
+            return window.ImageService.getProductImage(product.image);
+        }
+    }
+    
+    // Second attempt: Try to resolve image from product data
+    if (product.images && Array.isArray(product.images) && product.images.length > 0 && product.images[0]) {
+        imageUrl = product.images[0];
+    } else if (product.image && typeof product.image === 'string') {
+        imageUrl = product.image;
+    } else {
+        // No image found, use placeholder
+        return getBestPlaceholderImage();
+    }
+    
+    // Check if the image URL is relative and add API URL if needed
+    if (!imageUrl.startsWith('http') && !imageUrl.startsWith('data:') && !imageUrl.startsWith('/')) {
+        imageUrl = `${adminApiUrl}/${imageUrl}`;
+    }
+    
+    return imageUrl;
+}
+
+// Extract the product display logic to a separate function
+function displayProducts(products, tableBody) {
+    // Clear table body
+    tableBody.innerHTML = '';
+    
+    // Sort products by newest first
+    products.sort((a, b) => {
+        if (a.createdAt && b.createdAt) {
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        }
+        return 0;
+    });
+    
+    // Add products to table
+    products.forEach(product => {
+        const row = document.createElement('tr');
+        
+        // Safely get product ID
+        const productId = product._id || product.id || '';
+        
+        // Get product image with consistent placeholder fallback
+        const imageUrl = getProductImageUrl(product);
+        
+        // Format price with fallback for missing price
+        const price = typeof product.price === 'number' ? product.price : 
+                     (typeof product.price === 'string' ? parseFloat(product.price) : 0);
+                     
+        const formattedPrice = price.toLocaleString('tr-TR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        
+        row.innerHTML = `
+        <td class="product-cell">
+            <div class="product-info">
+                <img src="${imageUrl}" alt="${product.name}" onerror="handleImageError(this)">
+                <span>${product.name}</span>
+            </div>
+        </td>
+        <td>${product.sku || '-'}</td>
+        <td>${product.category || '-'}</td>
+        <td>₺${formattedPrice}</td>
+        <td>${product.stock}</td>
+        <td><span class="status-badge ${product.status === 'inactive' ? 'inactive' : product.stock > 0 ? 'active' : 'out-of-stock'}">${product.status === 'inactive' ? 'Pasif' : product.stock > 0 ? 'Aktif' : 'Stokta Yok'}</span></td>
+        <td class="actions-cell">
+            <button class="action-btn view-btn" data-id="${productId}" title="Görüntüle">
+                <i class="fas fa-eye"></i>
+            </button>
+            <button class="action-btn edit-btn" data-id="${productId}" title="Düzenle">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button class="action-btn delete-btn" data-id="${productId}" title="Sil">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+        `;
+        
+        tableBody.appendChild(row);
+    });
+    
+    // Add event listeners to action buttons
+    addProductActionListeners();
+    
+    // Add search functionality
+    const searchInput = document.getElementById('productSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = tableBody.querySelectorAll('tr');
+            
+            rows.forEach(row => {
+                const productName = row.querySelector('.product-info span').textContent.toLowerCase();
+                const category = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                const sku = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                
+                if (productName.includes(searchTerm) || category.includes(searchTerm) || sku.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+}
+
 // Add product action listeners
 function addProductActionListeners() {
     // View product
@@ -678,11 +1063,26 @@ function viewProduct(productId) {
             imageGallery = `
                 <div class="product-gallery">
                     ${product.images.map(image => {
-                        const imageUrl = window.ImageService && typeof window.ImageService.getProductImage === 'function' 
-                            ? window.ImageService.getProductImage(image)
-                            : image;
-                        return `<img src="${imageUrl}" alt="${product.name}" onerror="this.onerror=null; this.src=${DEFAULT_PLACEHOLDER_URL};">`;
+                        // Use our consistent image loading function
+                        const imageUrl = typeof image === 'string' ? getProductImageUrl({image}) : getBestPlaceholderImage();
+                        return `<img src="${imageUrl}" alt="${product.name}" onerror="handleImageError(this)">`;
                     }).join('')}
+                </div>
+            `;
+        } else if (product.image) {
+            // Single image case
+            const imageUrl = getProductImageUrl(product);
+            imageGallery = `
+                <div class="product-gallery">
+                    <img src="${imageUrl}" alt="${product.name}" onerror="handleImageError(this)">
+                </div>
+            `;
+        } else {
+            // No images case
+            const placeholderUrl = getBestPlaceholderImage();
+            imageGallery = `
+                <div class="product-gallery">
+                    <img src="${placeholderUrl}" alt="${product.name}">
                 </div>
             `;
         }
@@ -730,12 +1130,12 @@ function viewProduct(productId) {
         // Close modal when clicking outside
         modal.addEventListener('click', function(e) {
             if (e.target === modal) {
-                    modal.remove();
+                modal.remove();
             }
         });
     })
     .catch(error => {
-        console.error('Error fetching product:', error);
+        console.error('Error fetching product details:', error);
         showNotification('Ürün detayları yüklenirken bir hata oluştu.', 'error');
     });
 }
@@ -749,9 +1149,36 @@ function editProduct(productId) {
         }
     })
     .then(product => {
-        // Create modal with product form
+        // Create modal with product details in a form
         const modal = document.createElement('div');
         modal.className = 'admin-modal';
+        
+        // Get product image with placeholder fallback
+        const imageUrl = getProductImageUrl(product);
+        
+        // Create image preview
+        const imagePreview = `
+            <div class="image-preview">
+                <img src="${imageUrl}" alt="${product.name}" onerror="handleImageError(this)">
+            </div>
+        `;
+        
+        // Format price
+        const price = typeof product.price === 'number' ? product.price : 
+                      (typeof product.price === 'string' ? parseFloat(product.price) : 0);
+        
+        const formattedPrice = price.toLocaleString('tr-TR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        
+        // Get product images as comma-separated string
+        let imagesList = '';
+        if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+            imagesList = product.images.join(', ');
+        } else if (product.image && typeof product.image === 'string') {
+            imagesList = product.image;
+        }
         
         modal.innerHTML = `
             <div class="modal-content">
@@ -760,116 +1187,244 @@ function editProduct(productId) {
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <form id="edit-product-form">
+                    <form id="editProductForm">
+                        ${imagePreview}
                         <div class="form-row">
-                            <div class="form-group col-6">
-                                <label for="name">Ürün Adı</label>
-                                <input type="text" id="name" name="name" value="${product.name}" required>
+                            <div class="form-group">
+                                <label for="name">Ürün Adı *</label>
+                                <input type="text" id="name" name="name" value="${product.name || ''}" required>
                             </div>
-                            <div class="form-group col-6">
+                            <div class="form-group">
                                 <label for="sku">SKU</label>
                                 <input type="text" id="sku" name="sku" value="${product.sku || ''}">
                             </div>
                         </div>
-                        
                         <div class="form-row">
-                            <div class="form-group col-6">
-                                <label for="category">Kategori</label>
-                                <input type="text" id="category" name="category" value="${product.category || ''}">
+                            <div class="form-group">
+                                <label for="category">Kategori *</label>
+                                <select id="category" name="category" required>
+                                    <option value="men" ${product.category === 'men' ? 'selected' : ''}>Erkek</option>
+                                    <option value="women" ${product.category === 'women' ? 'selected' : ''}>Kadın</option>
+                                    <option value="accessories" ${product.category === 'accessories' ? 'selected' : ''}>Aksesuar</option>
+                                </select>
                             </div>
-                            <div class="form-group col-6">
-                                <label for="price">Fiyat (₺)</label>
-                                <input type="number" id="price" name="price" value="${product.price}" step="0.01" required>
+                            <div class="form-group">
+                                <label for="price">Fiyat (₺) *</label>
+                                <input type="number" id="price" name="price" value="${price}" min="0" step="0.01" required>
                             </div>
                         </div>
-                        
                         <div class="form-row">
-                            <div class="form-group col-6">
+                            <div class="form-group">
                                 <label for="stock">Stok</label>
-                                <input type="number" id="stock" name="stock" value="${product.stock || 0}" min="0" required>
+                                <input type="number" id="stock" name="stock" value="${product.stock || 0}" min="0">
                             </div>
-                            <div class="form-group col-6">
+                            <div class="form-group">
                                 <label for="status">Durum</label>
                                 <select id="status" name="status">
-                                    <option value="active" ${product.status === 'active' ? 'selected' : ''}>Aktif</option>
-                                    <option value="draft" ${product.status === 'draft' ? 'selected' : ''}>Taslak</option>
-                                    <option value="archived" ${product.status === 'archived' ? 'selected' : ''}>Arşivlenmiş</option>
+                                    <option value="active" ${product.status !== 'inactive' ? 'selected' : ''}>Aktif</option>
+                                    <option value="inactive" ${product.status === 'inactive' ? 'selected' : ''}>Pasif</option>
                                 </select>
                             </div>
                         </div>
-                        
                         <div class="form-group">
-                            <label for="description">Açıklama</label>
-                            <textarea id="description" name="description" rows="4">${product.description || ''}</textarea>
+                            <label for="description">Açıklama *</label>
+                            <textarea id="description" name="description" rows="4" required>${product.description || ''}</textarea>
                         </div>
-                        
                         <div class="form-group">
-                            <label for="images">Resim URL'leri (Her satıra bir URL)</label>
-                            <textarea id="images" name="images" rows="3">${product.images ? product.images.join('\n') : ''}</textarea>
+                            <label for="images">Resim URL'leri (virgülle ayırın)</label>
+                            <textarea id="images" name="images" rows="2">${imagesList}</textarea>
+                            <small>Birden fazla resim URL'sini virgül ile ayırın. Boş bırakmak, varsayılan resmi kullanacaktır.</small>
+                        </div>
+                        <div class="form-row checkbox-row">
+                            <div class="form-group">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" id="featured" name="featured" ${product.featured ? 'checked' : ''}>
+                                    <span class="checkmark"></span>
+                                    Öne Çıkan Ürün
+                                </label>
+                            </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary close-btn">İptal</button>
-                    <button class="btn btn-danger delete-btn" data-id="${product._id || product.id}">Sil</button>
-                    <button class="btn btn-primary save-btn">Kaydet</button>
+                    <button class="btn btn-secondary close-modal-btn">İptal</button>
+                    <button class="btn btn-primary update-product-btn">Güncelle</button>
                 </div>
             </div>
         `;
         
         document.body.appendChild(modal);
         
-        // Add event listeners
+        // Show modal with animation
+        setTimeout(() => {
+            modal.style.opacity = '1';
+        }, 10);
+        
+        // Close modal on close button click
         modal.querySelector('.close-modal').addEventListener('click', () => {
+            modal.style.opacity = '0';
+            setTimeout(() => {
                 modal.remove();
+            }, 300);
         });
         
-        modal.querySelector('.close-btn').addEventListener('click', () => {
+        // Close modal on cancel button click
+        modal.querySelector('.close-modal-btn').addEventListener('click', () => {
+            modal.style.opacity = '0';
+            setTimeout(() => {
                 modal.remove();
+            }, 300);
         });
         
-        modal.querySelector('.delete-btn').addEventListener('click', function() {
-            const productId = this.getAttribute('data-id');
-            modal.remove();
-            confirmDeleteProduct(productId);
-        });
-        
-        modal.querySelector('.save-btn').addEventListener('click', function() {
-            const form = document.getElementById('edit-product-form');
-            
+        // Update product on button click
+        modal.querySelector('.update-product-btn').addEventListener('click', () => {
             // Get form data
-            const productData = {
-                name: form.name.value,
-                sku: form.sku.value,
-                category: form.category.value,
-                price: parseFloat(form.price.value),
-                stock: parseInt(form.stock.value),
-                status: form.status.value,
-                description: form.description.value,
-                images: form.images.value.split('\n').filter(url => url.trim() !== '')
-            };
+            const form = document.getElementById('editProductForm');
+            const formData = new FormData(form);
+            const productData = {};
+            
+            // Convert FormData to object
+            for (const [key, value] of formData.entries()) {
+                if (key === 'featured') {
+                    productData[key] = true;
+                } else if (key === 'images') {
+                    productData[key] = value.split(',').map(url => url.trim()).filter(url => url !== '');
+                } else {
+                    productData[key] = value;
+                }
+            }
+            
+            // If featured checkbox is not checked, set it to false
+            if (!formData.has('featured')) {
+                productData.featured = false;
+            }
             
             // Update product
             updateProduct(productId, productData, modal);
         });
         
-        // Close modal when clicking outside
-        modal.addEventListener('click', function(e) {
+        // Close modal on outside click
+        modal.addEventListener('click', (e) => {
             if (e.target === modal) {
+                modal.style.opacity = '0';
+                setTimeout(() => {
                     modal.remove();
+                }, 300);
             }
         });
     })
     .catch(error => {
-        console.error('Error fetching product:', error);
-        showNotification('Ürün detayları yüklenirken bir hata oluştu.', 'error');
+        console.error('Error fetching product for edit:', error);
+        showNotification('Ürün bilgileri yüklenirken bir hata oluştu.', 'error');
     });
 }
 
-// Update product
+// Update product with improved error handling
 async function updateProduct(productId, productData, modal) {
+    // Validation for required fields
+    const requiredFields = ['name', 'price', 'category', 'description'];
+    const missingFields = requiredFields.filter(field => !productData[field] || (productData[field].trim && productData[field].trim() === ''));
+    
+    if (missingFields.length > 0) {
+        const fieldNames = {
+            name: 'Ürün Adı',
+            price: 'Fiyat',
+            category: 'Kategori',
+            description: 'Açıklama'
+        };
+        
+        const errorMessage = `Lütfen şu alanları doldurun: ${missingFields.map(field => fieldNames[field] || field).join(', ')}`;
+        
+        // Show error in modal
+        if (modal) {
+            const form = modal.querySelector('form');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'form-error';
+            errorDiv.textContent = errorMessage;
+            
+            // Remove existing error if any
+            const existingError = form.querySelector('.form-error');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Add error message to form
+            form.prepend(errorDiv);
+            
+            // Highlight missing fields
+            missingFields.forEach(field => {
+                const input = form.querySelector(`[name="${field}"]`);
+                if (input) {
+                    input.classList.add('error');
+                    input.addEventListener('input', function() {
+                        this.classList.remove('error');
+                    }, { once: true });
+                }
+            });
+        }
+        
+        showNotification(errorMessage, 'error');
+        return;
+    }
+    
+    // Convert price to number
+    if (productData.price) {
+        productData.price = parseFloat(productData.price);
+        
+        // Validate price is a valid number
+        if (isNaN(productData.price) || productData.price < 0) {
+            const errorMessage = 'Fiyat geçerli bir pozitif sayı olmalıdır.';
+            
+            // Show error in modal
+            if (modal) {
+                const form = modal.querySelector('form');
+                const priceInput = form.querySelector('[name="price"]');
+                priceInput.classList.add('error');
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'form-error';
+                errorDiv.textContent = errorMessage;
+                
+                // Remove existing error if any
+                const existingError = form.querySelector('.form-error');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                // Add error message to form
+                form.prepend(errorDiv);
+            }
+            
+            showNotification(errorMessage, 'error');
+            return;
+        }
+    }
+    
+    // Convert stock to number
+    if (productData.stock) {
+        productData.stock = parseInt(productData.stock, 10);
+        
+        // Validate stock is a valid number
+        if (isNaN(productData.stock) || productData.stock < 0) {
+            productData.stock = 0;
+        }
+    }
+    
+    // Disable the update button and show loading state
+    if (modal) {
+        const updateButton = modal.querySelector('.update-product-btn');
+        updateButton.disabled = true;
+        updateButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Güncelleniyor...';
+    }
+    
     try {
-        await fetchWithCORS(`products/${productId}`, {
+        // Add timestamp for update
+        productData.updatedAt = new Date().toISOString();
+        
+        console.log('Updating product with data:', productData);
+        
+        // Make API request to update product
+        const response = await fetchWithCORS(`products/${productId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -877,158 +1432,245 @@ async function updateProduct(productId, productData, modal) {
             },
             body: JSON.stringify(productData)
         });
-            
-            // Close modal
-            if (modal) {
-            modal.remove();
-            }
-            
+        
+        console.log('Update product API response:', response);
+        
+        // Check for successful response
+        let success = false;
+        let message = '';
+        
+        if (response && (response.success === true || response._id || response.id)) {
+            success = true;
+            message = 'Ürün başarıyla güncellendi.';
+        } else if (response && response.error) {
+            message = response.error;
+        } else {
+            message = 'Ürün güncellenirken bir hata oluştu.';
+        }
+        
+        // Close modal
+        if (modal) {
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.remove();
+            }, 300);
+        }
+        
+        if (success) {
             // Show success notification
-            showNotification('Ürün başarıyla güncellendi.', 'success');
+            showNotification(message, 'success');
             
             // Reload products
             loadProducts();
+        } else {
+            // Show error notification
+            showNotification(message, 'error');
+        }
     } catch (error) {
         console.error('Error updating product:', error);
-        showNotification('Ürün güncellenirken bir hata oluştu.', 'error');
+        
+        // Show error notification
+        showNotification(`Ürün güncellenirken bir hata oluştu: ${error.message}`, 'error');
+        
+        // Reset button state
+        if (modal) {
+            const updateButton = modal.querySelector('.update-product-btn');
+            updateButton.disabled = false;
+            updateButton.innerHTML = 'Güncelle';
+            
+            // Add error message to modal
+            const form = modal.querySelector('form');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'form-error';
+            errorDiv.innerHTML = `<p>Sunucu hatası, lütfen tekrar deneyin.</p><small>${error.message}</small>`;
+            
+            // Remove existing error if any
+            const existingError = form.querySelector('.form-error');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Add error message to form
+            form.prepend(errorDiv);
+        }
     }
 }
 
-// Add product button functionality
+// Setup Add Product button
 function setupAddProductButton() {
     const addProductBtn = document.getElementById('addProductBtn');
-    if (addProductBtn) {
-        addProductBtn.addEventListener('click', function() {
-            // Create and show add product modal
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.id = 'addProductModal';
-            
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>Yeni Ürün Ekle</h2>
-                        <button class="close-modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="addProductForm">
-                            <div class="form-row">
-                                <div class="form-group col-6">
-                                    <label for="newProductName">Ürün Adı</label>
-                                    <input type="text" id="newProductName" name="name" required>
-                                </div>
-                                <div class="form-group col-6">
-                                    <label for="newProductPrice">Fiyat (₺)</label>
-                                    <input type="number" id="newProductPrice" name="price" step="0.01" required>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group col-6">
-                                    <label for="newProductCategory">Kategori</label>
-                                    <select id="newProductCategory" name="category" required>
-                                        <option value="men">Erkek</option>
-                                        <option value="women">Kadın</option>
-                                        <option value="accessories">Aksesuar</option>
-                                    </select>
-                                </div>
-                                <div class="form-group col-6">
-                                    <label for="newProductStock">Stok</label>
-                                    <input type="number" id="newProductStock" name="stock" value="1" required>
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group col-6">
-                                    <label for="newProductStatus">Durum</label>
-                                    <select id="newProductStatus" name="status" required>
-                                        <option value="active">Aktif</option>
-                                        <option value="inactive">Pasif</option>
-                                    </select>
-                                </div>
-                                <div class="form-group col-6">
-                                    <label for="newProductFeatured">Öne Çıkan</label>
-                                    <select id="newProductFeatured" name="featured">
-                                        <option value="false">Hayır</option>
-                                        <option value="true">Evet</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="newProductDescription">Açıklama</label>
-                                <textarea id="newProductDescription" name="description" rows="4" required></textarea>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="newProductImages">Ürün Görselleri (URL'leri virgülle ayırın)</label>
-                                <textarea id="newProductImages" name="images" rows="2"></textarea>
-                                <small>Görsel eklemek için URL'leri virgülle ayırarak girin</small>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary close-modal-btn">İptal</button>
-                        <button class="btn btn-primary add-new-product-btn">Ekle</button>
-                    </div>
+    if (!addProductBtn) return;
+    
+    addProductBtn.addEventListener('click', () => {
+        // Create modal with product form
+        const modal = document.createElement('div');
+        modal.className = 'admin-modal';
+        
+        // Get placeholder image for preview
+        const placeholderUrl = getBestPlaceholderImage();
+        
+        // Create image preview
+        const imagePreview = `
+            <div class="image-preview">
+                <img src="${placeholderUrl}" alt="Yeni Ürün">
+                <div class="preview-overlay">
+                    <i class="fas fa-image"></i>
+                    <span>Resim URL girin</span>
                 </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // Show modal
-            setTimeout(() => {
-                modal.style.display = 'flex';
-            }, 10);
-            
-            // Close modal on close button click
-            modal.querySelector('.close-modal').addEventListener('click', () => {
-                modal.style.display = 'none';
-                setTimeout(() => {
-                    modal.remove();
-                }, 300);
-            });
-            
-            // Close modal on cancel button click
-            modal.querySelector('.close-modal-btn').addEventListener('click', () => {
-                modal.style.display = 'none';
-                setTimeout(() => {
-                    modal.remove();
-                }, 300);
-            });
-            
-            // Add button click
-            modal.querySelector('.add-new-product-btn').addEventListener('click', () => {
-                const form = document.getElementById('addProductForm');
-                const formData = new FormData(form);
-                const productData = {};
-                
-                // Convert FormData to object
-                for (const [key, value] of formData.entries()) {
-                    if (key === 'featured') {
-                        productData[key] = value === 'true';
-                    } else if (key === 'images') {
-                        productData[key] = value.split(',').map(url => url.trim()).filter(url => url !== '');
-                    } else {
-                        productData[key] = value;
-                    }
-                }
-                
-                // Create product
-                createProduct(productData, modal);
-            });
-            
-            // Close modal on outside click
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.style.display = 'none';
-                    setTimeout(() => {
-                        modal.remove();
-                    }, 300);
-                }
-            });
+            </div>
+        `;
+        
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Yeni Ürün Ekle</h2>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="addProductForm">
+                        ${imagePreview}
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="name">Ürün Adı *</label>
+                                <input type="text" id="name" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="sku">SKU</label>
+                                <input type="text" id="sku" name="sku">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="category">Kategori *</label>
+                                <select id="category" name="category" required>
+                                    <option value="">Kategori Seçin</option>
+                                    <option value="men">Erkek</option>
+                                    <option value="women">Kadın</option>
+                                    <option value="accessories">Aksesuar</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="price">Fiyat (₺) *</label>
+                                <input type="number" id="price" name="price" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="stock">Stok</label>
+                                <input type="number" id="stock" name="stock" value="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="status">Durum</label>
+                                <select id="status" name="status">
+                                    <option value="active">Aktif</option>
+                                    <option value="inactive">Pasif</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Açıklama *</label>
+                            <textarea id="description" name="description" rows="4" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="images">Resim URL'leri (virgülle ayırın)</label>
+                            <textarea id="images" name="images" rows="2"></textarea>
+                            <small>Birden fazla resim URL'sini virgül ile ayırın. Boş bırakmak, varsayılan resmi kullanacaktır.</small>
+                        </div>
+                        <div class="form-row checkbox-row">
+                            <div class="form-group">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" id="featured" name="featured" value="true">
+                                    <span class="checkmark"></span>
+                                    Öne Çıkan Ürün
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal-btn">İptal</button>
+                    <button class="btn btn-primary add-new-product-btn">Ekle</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Show modal with animation
+        setTimeout(() => {
+            modal.style.opacity = '1';
+        }, 10);
+        
+        // Update image preview when image URL changes
+        const imagesInput = modal.querySelector('#images');
+        const previewImg = modal.querySelector('.image-preview img');
+        const previewOverlay = modal.querySelector('.preview-overlay');
+        
+        imagesInput.addEventListener('input', function() {
+            const imageUrls = this.value.split(',').map(url => url.trim()).filter(url => url !== '');
+            if (imageUrls.length > 0) {
+                previewImg.src = imageUrls[0];
+                previewOverlay.style.display = 'none';
+            } else {
+                previewImg.src = placeholderUrl;
+                previewOverlay.style.display = 'flex';
+            }
         });
-    }
+        
+        // Handle image loading errors
+        previewImg.addEventListener('error', function() {
+            this.src = placeholderUrl;
+            previewOverlay.style.display = 'flex';
+            previewOverlay.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>Geçersiz resim URL\'si</span>';
+        });
+        
+        // Close modal on close button click
+        modal.querySelector('.close-modal').addEventListener('click', () => {
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.remove();
+            }, 300);
+        });
+        
+        // Close modal on cancel button click
+        modal.querySelector('.close-modal-btn').addEventListener('click', () => {
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.remove();
+            }, 300);
+        });
+        
+        // Add button click
+        modal.querySelector('.add-new-product-btn').addEventListener('click', () => {
+            const form = document.getElementById('addProductForm');
+            const formData = new FormData(form);
+            const productData = {};
+            
+            // Convert FormData to object
+            for (const [key, value] of formData.entries()) {
+                if (key === 'featured') {
+                    productData[key] = value === 'true';
+                } else if (key === 'images') {
+                    productData[key] = value.split(',').map(url => url.trim()).filter(url => url !== '');
+                } else {
+                    productData[key] = value;
+                }
+            }
+            
+            // Create product
+            createProduct(productData, modal);
+        });
+        
+        // Close modal on outside click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.opacity = '0';
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            }
+        });
+    });
 }
 
 // Create product with improved validation and error handling
@@ -1241,75 +1883,67 @@ async function createProduct(productData, modal) {
     }
 }
 
-// Confirm delete product with improved UI
+// Confirm delete product
 function confirmDeleteProduct(productId) {
-    // Fetch product details first to show product name
-    fetchWithCORS(`products/${productId}`, {
+    // Fetch product details first to show what's being deleted
+    fetchWithCORS(`admin/products/${productId}`, {
         headers: {
             'Authorization': `Bearer ${authToken}`
         }
     })
-    .then(response => {
-        // Get product name with fallback
-        let productName = 'Bu ürünü';
-        let productImage = DEFAULT_PLACEHOLDER_URL;
-        
-        // Handle different response formats
-        if (response && response.name) {
-            productName = response.name;
-            
-            if (response.images && response.images.length > 0) {
-                productImage = response.images[0];
-            } else if (response.image) {
-                productImage = response.image;
-            }
-        } else if (response && response.data && response.data.name) {
-            productName = response.data.name;
-            
-            if (response.data.images && response.data.images.length > 0) {
-                productImage = response.data.images[0];
-            } else if (response.data.image) {
-                productImage = response.data.image;
-            }
-        }
-        
-        // Create and show confirmation modal
+    .then(product => {
+        // Create confirmation modal
         const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.id = 'deleteProductModal';
+        modal.className = 'admin-modal';
+        
+        // Get product image for preview
+        const imageUrl = getProductImageUrl(product);
+        
+        // Create product preview
+        const productPreview = `
+            <div class="delete-product-preview">
+                <img src="${imageUrl}" alt="${product.name}" onerror="handleImageError(this)">
+                <div class="product-info">
+                    <h3>${product.name}</h3>
+                    <p>SKU: ${product.sku || '-'}</p>
+                    <p>Kategori: ${product.category || '-'}</p>
+                    <p>Fiyat: ₺${typeof product.price === 'number' ? product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) : '0,00'}</p>
+                </div>
+            </div>
+        `;
         
         modal.innerHTML = `
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2>Ürün Silmeyi Onayla</h2>
+                    <h2>Ürünü Sil</h2>
                     <button class="close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div class="delete-product-info">
-                        <img src="${productImage}" alt="${productName}" onerror="this.src=${DEFAULT_PLACEHOLDER_URL};">
-                        <div class="delete-product-details">
-                            <h3>${productName}</h3>
-                            <p>Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
-                        </div>
-                    </div>
+                    <p class="delete-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+                    </p>
+                    ${productPreview}
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary close-modal-btn">İptal</button>
-                    <button class="btn btn-danger confirm-btn">Evet, Sil</button>
+                    <button class="btn btn-danger confirm-btn">
+                        <i class="fas fa-trash"></i> Evet, Sil
+                    </button>
                 </div>
             </div>
         `;
         
         document.body.appendChild(modal);
         
-        // Show modal
+        // Show modal with animation
         setTimeout(() => {
-            modal.style.display = 'flex';
+            modal.style.opacity = '1';
         }, 10);
         
         // Close modal on close button click
         modal.querySelector('.close-modal').addEventListener('click', () => {
-            modal.style.display = 'none';
+            modal.style.opacity = '0';
             setTimeout(() => {
                 modal.remove();
             }, 300);
@@ -1317,7 +1951,7 @@ function confirmDeleteProduct(productId) {
         
         // Close modal on cancel button click
         modal.querySelector('.close-modal-btn').addEventListener('click', () => {
-            modal.style.display = 'none';
+            modal.style.opacity = '0';
             setTimeout(() => {
                 modal.remove();
             }, 300);
@@ -1337,7 +1971,7 @@ function confirmDeleteProduct(productId) {
         // Close modal on outside click
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                modal.style.display = 'none';
+                modal.style.opacity = '0';
                 setTimeout(() => {
                     modal.remove();
                 }, 300);
@@ -1345,72 +1979,12 @@ function confirmDeleteProduct(productId) {
         });
     })
     .catch(error => {
-        console.error('Error fetching product details:', error);
+        console.error('Error fetching product for delete:', error);
         
-        // Create and show generic confirmation modal
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.id = 'deleteProductModal';
-        
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Ürün Silmeyi Onayla</h2>
-                    <button class="close-modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p>Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary close-modal-btn">İptal</button>
-                    <button class="btn btn-danger confirm-btn">Evet, Sil</button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        // Show modal
-        setTimeout(() => {
-            modal.style.display = 'flex';
-        }, 10);
-        
-        // Close modal on close button click
-        modal.querySelector('.close-modal').addEventListener('click', () => {
-            modal.style.display = 'none';
-            setTimeout(() => {
-                modal.remove();
-            }, 300);
-        });
-        
-        // Close modal on cancel button click
-        modal.querySelector('.close-modal-btn').addEventListener('click', () => {
-            modal.style.display = 'none';
-            setTimeout(() => {
-                modal.remove();
-            }, 300);
-        });
-        
-        // Delete product on confirm button click
-        modal.querySelector('.confirm-btn').addEventListener('click', () => {
-            // Disable button and show loading state
-            const confirmBtn = modal.querySelector('.confirm-btn');
-            confirmBtn.disabled = true;
-            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Siliniyor...';
-            
-            // Delete product
-            deleteProduct(productId, modal);
-        });
-        
-        // Close modal on outside click
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-                setTimeout(() => {
-                    modal.remove();
-                }, 300);
-            }
-        });
+        // If can't fetch product, just show a simple confirmation dialog
+        if (confirm('Bu ürünü silmek istediğinizden emin misiniz?')) {
+            deleteProduct(productId);
+        }
     });
 }
 
@@ -1424,6 +1998,7 @@ async function deleteProduct(productId, modal) {
         try {
             console.log(`Deleting product ${productId}, attempt: ${retryCount + 1}`);
             
+            // Make API request to delete the product
             const response = await fetchWithCORS(`products/${productId}`, {
                 method: 'DELETE',
                 headers: {
@@ -1450,7 +2025,7 @@ async function deleteProduct(productId, modal) {
             
             // Close modal if it exists
             if (modal) {
-                modal.style.display = 'none';
+                modal.style.opacity = '0';
                 setTimeout(() => {
                     modal.remove();
                 }, 300);
@@ -1487,6 +2062,13 @@ async function deleteProduct(productId, modal) {
                         const warningElement = document.createElement('p');
                         warningElement.className = 'warning-text';
                         warningElement.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Bağlantı hatası, tekrar deneniyor...`;
+                        
+                        // Remove existing warning if any
+                        const existingWarning = modalBody.querySelector('.warning-text');
+                        if (existingWarning) {
+                            existingWarning.remove();
+                        }
+                        
                         modalBody.appendChild(warningElement);
                     }
                 }
@@ -1518,6 +2100,13 @@ async function deleteProduct(productId, modal) {
                         <p>Silme işlemi başarısız oldu. Lütfen tekrar deneyin.</p>
                         <small>${error.message}</small>
                     `;
+                    
+                    // Remove existing error if any
+                    const existingError = modalBody.querySelector('.form-error');
+                    if (existingError) {
+                        existingError.remove();
+                    }
+                    
                     modalBody.appendChild(errorElement);
                     
                     // Add retry button
@@ -1528,6 +2117,13 @@ async function deleteProduct(productId, modal) {
                     retryBtn.style.marginRight = '10px';
                     
                     const modalFooter = modal.querySelector('.modal-footer');
+                    
+                    // Remove existing retry button if any
+                    const existingRetryBtn = modalFooter.querySelector('button.btn-primary');
+                    if (existingRetryBtn) {
+                        existingRetryBtn.remove();
+                    }
+                    
                     modalFooter.prepend(retryBtn);
                     
                     retryBtn.addEventListener('click', () => {
