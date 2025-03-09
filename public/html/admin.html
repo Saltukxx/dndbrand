@@ -8,11 +8,12 @@
     <link rel="stylesheet" href="../css/admin.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/png" href="../img/favicon.png">
 </head>
 <body class="admin-body">
     <div class="admin-container">
         <!-- Mobile Menu Toggle Button -->
-        <button class="mobile-menu-toggle" id="mobileMenuToggle">
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Open menu">
             <i class="fas fa-bars"></i>
         </button>
 
@@ -22,9 +23,11 @@
         <!-- Admin Sidebar -->
         <div class="admin-sidebar" id="adminSidebar">
             <div class="admin-logo">
-                <h2>DnD Brand</h2>
-                <p>Yönetim Paneli</p>
-                <button class="mobile-close-btn" id="mobileSidebarClose">
+                <div>
+                    <h2>DnD Brand</h2>
+                    <p>Yönetim Paneli</p>
+                </div>
+                <button class="mobile-close-btn" id="mobileSidebarClose" aria-label="Close menu">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -74,7 +77,7 @@
         <header class="admin-header">
             <div class="admin-search">
                 <i class="fas fa-search"></i>
-                <input type="text" placeholder="Ara...">
+                <input type="text" placeholder="Ara..." aria-label="Search">
             </div>
             <div class="admin-user">
                 <div class="admin-notifications">
@@ -95,7 +98,7 @@
             
             <!-- Dashboard Section -->
             <section class="admin-section active" id="dashboard">
-                <h2 class="section-title">Dashboard</h2>
+                <h2 class="section-title"><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
                 
                 <div class="dashboard-stats">
                     <div class="stat-card">
@@ -166,7 +169,12 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="6">Yükleniyor...</td>
+                                <td colspan="6">
+                                    <div class="loading-spinner">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <span>Yükleniyor...</span>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -175,7 +183,7 @@
             
             <!-- Products Section -->
             <section class="admin-section" id="products">
-                <h2 class="section-title">Ürünler</h2>
+                <h2 class="section-title"><i class="fas fa-box"></i> Ürünler</h2>
                 
                 <div class="admin-actions">
                     <button class="btn btn-primary" id="addProductBtn">
@@ -184,7 +192,7 @@
                     
                     <div class="admin-search">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="productSearchInput" placeholder="Ürün ara...">
+                        <input type="text" id="productSearchInput" placeholder="Ürün ara..." aria-label="Search products">
                     </div>
                 </div>
                 
@@ -203,7 +211,12 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="7">Yükleniyor...</td>
+                                <td colspan="7">
+                                    <div class="loading-spinner">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <span>Ürünler Yükleniyor...</span>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -212,12 +225,12 @@
             
             <!-- Orders Section -->
             <section class="admin-section" id="orders">
-                <h2 class="section-title">Siparişler</h2>
+                <h2 class="section-title"><i class="fas fa-shopping-cart"></i> Siparişler</h2>
                 
                 <div class="admin-actions">
                     <div class="admin-search">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="orderSearchInput" placeholder="Sipariş ara...">
+                        <input type="text" id="orderSearchInput" placeholder="Sipariş ara..." aria-label="Search orders">
                     </div>
                 </div>
                 
@@ -235,7 +248,12 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="6">Yükleniyor...</td>
+                                <td colspan="6">
+                                    <div class="loading-spinner">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <span>Siparişler Yükleniyor...</span>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -244,12 +262,12 @@
             
             <!-- Customers Section -->
             <section class="admin-section" id="customers">
-                <h2 class="section-title">Müşteriler</h2>
+                <h2 class="section-title"><i class="fas fa-users"></i> Müşteriler</h2>
                 
                 <div class="admin-actions">
                     <div class="admin-search">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="customerSearchInput" placeholder="Müşteri ara...">
+                        <input type="text" id="customerSearchInput" placeholder="Müşteri ara..." aria-label="Search customers">
                     </div>
                 </div>
                 
@@ -261,13 +279,18 @@
                                 <th>Email</th>
                                 <th>Telefon</th>
                                 <th>Kayıt Tarihi</th>
-                                <th>Sipariş Sayısı</th>
+                                <th>Toplam Sipariş</th>
                                 <th>İşlemler</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="6">Yükleniyor...</td>
+                                <td colspan="6">
+                                    <div class="loading-spinner">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <span>Müşteriler Yükleniyor...</span>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -276,12 +299,13 @@
             
             <!-- Settings Section -->
             <section class="admin-section" id="settings">
-                <h2 class="section-title">Ayarlar</h2>
+                <h2 class="section-title"><i class="fas fa-cog"></i> Ayarlar</h2>
                 
-                <div class="settings-container">
-                    <div class="settings-card">
+                <div class="table-responsive">
+                    <form id="generalSettingsForm" class="settings-form">
                         <h3>Genel Ayarlar</h3>
-                        <form id="generalSettingsForm">
+                        
+                        <div class="form-row">
                             <div class="form-group">
                                 <label for="siteName">Site Adı</label>
                                 <input type="text" id="siteName" name="siteName" value="DnD Brand">
@@ -289,88 +313,56 @@
                             
                             <div class="form-group">
                                 <label for="siteDescription">Site Açıklaması</label>
-                                <textarea id="siteDescription" name="siteDescription" rows="3">DnD Brand - Moda ve Stil</textarea>
+                                <input type="text" id="siteDescription" name="siteDescription" value="Moda ve Aksesuar">
                             </div>
-                            
+                        </div>
+                        
+                        <div class="form-row">
                             <div class="form-group">
-                                <label for="contactEmail">İletişim E-posta</label>
+                                <label for="contactEmail">İletişim Email</label>
                                 <input type="email" id="contactEmail" name="contactEmail" value="info@dndbrand.com">
                             </div>
                             
                             <div class="form-group">
                                 <label for="contactPhone">İletişim Telefon</label>
-                                <input type="text" id="contactPhone" name="contactPhone" value="+90 555 123 4567">
+                                <input type="tel" id="contactPhone" name="contactPhone" value="+90 000 000 00 00">
                             </div>
-                            
-                            <button type="submit" class="btn btn-primary">Kaydet</button>
-                        </form>
-                    </div>
-                    
-                    <div class="settings-card">
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Kaydet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="table-responsive">
+                    <form id="apiSettingsForm" class="settings-form">
                         <h3>API Ayarları</h3>
-                        <form id="apiSettingsForm">
+                        
+                        <div class="form-row">
                             <div class="form-group">
                                 <label for="apiUrl">API URL</label>
                                 <input type="text" id="apiUrl" name="apiUrl" value="https://dndbrand-server.onrender.com/api">
                             </div>
-                            
-                            <div class="form-group">
-                                <label for="useCorsProxy">CORS Proxy Kullan</label>
-                                <select id="useCorsProxy" name="useCorsProxy">
-                                    <option value="true" selected>Evet</option>
-                                    <option value="false">Hayır</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="cacheData">Veri Önbellekleme</label>
-                                <select id="cacheData" name="cacheData">
-                                    <option value="true" selected>Evet</option>
-                                    <option value="false">Hayır</option>
-                                </select>
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary">Kaydet</button>
-                        </form>
-                    </div>
-                    
-                    <div class="settings-card">
-                        <h3>Kullanıcı Ayarları</h3>
-                        <form id="userSettingsForm">
-                            <div class="form-group">
-                                <label for="adminName">Admin Adı</label>
-                                <input type="text" id="adminName" name="adminName" value="Admin">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="adminEmail">Admin E-posta</label>
-                                <input type="email" id="adminEmail" name="adminEmail" value="admin@dndbrand.com">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="currentPassword">Mevcut Şifre</label>
-                                <input type="password" id="currentPassword" name="currentPassword">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="newPassword">Yeni Şifre</label>
-                                <input type="password" id="newPassword" name="newPassword">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="confirmPassword">Şifre Tekrar</label>
-                                <input type="password" id="confirmPassword" name="confirmPassword">
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary">Kaydet</button>
-                        </form>
-                    </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Kaydet
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </section>
         </main>
     </div>
     
+    <!-- Config Script -->
     <script src="../js/config.js"></script>
+    
+    <!-- Admin Script -->
     <script src="../js/admin.js"></script>
 </body>
 </html> 

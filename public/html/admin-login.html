@@ -8,51 +8,92 @@
     <link rel="stylesheet" href="../css/admin.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/png" href="../img/favicon.png">
     <style>
+        :root {
+            --primary-color: #5a67d8;
+            --primary-light: #7f9cf5;
+            --primary-dark: #434190;
+            --secondary-color: #f7fafc;
+            --text-color: #2d3748;
+            --text-light: #718096;
+            --success-color: #48bb78;
+            --warning-color: #ed8936;
+            --danger-color: #e53e3e;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius: 8px;
+            --radius-sm: 4px;
+            --radius-lg: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         .admin-login-body {
-            background-color: #f5f7fa;
+            background: linear-gradient(135deg, #f7fafc 0%, #ebf4ff 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             font-family: 'Montserrat', sans-serif;
             padding: 20px;
+            color: var(--text-color);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
         .admin-login-container {
             width: 100%;
-            max-width: 400px;
+            max-width: 450px;
             background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
             overflow: hidden;
+            border: 1px solid var(--border-color);
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .admin-login-container:hover {
+            transform: translateY(-5px);
         }
         
         .admin-login-header {
             text-align: center;
-            padding: 30px 20px;
-            border-bottom: 1px solid #e0e0e0;
+            padding: 35px 20px;
+            background: linear-gradient(to right, var(--primary-dark), var(--primary-color));
+            color: white;
         }
         
         .admin-login-header h1 {
             font-family: 'Playfair Display', serif;
             margin: 0;
-            color: #3f51b5;
-            font-size: 28px;
+            color: white;
+            font-size: 32px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
         
         .admin-login-header p {
             margin: 10px 0 0;
-            color: #666;
-            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 15px;
+            font-weight: 300;
         }
         
         .admin-login-form {
-            padding: 30px;
+            padding: 40px 30px;
         }
         
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+            position: relative;
         }
         
         .form-group label {
@@ -60,91 +101,133 @@
             margin-bottom: 8px;
             font-weight: 500;
             font-size: 14px;
-            color: #333;
+            color: var(--text-color);
         }
         
         .form-group input {
             width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
+            padding: 12px 15px 12px 40px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
             font-size: 14px;
-            transition: all 0.2s ease;
+            transition: var(--transition);
+            background-color: var(--secondary-color);
         }
         
         .form-group input:focus {
             outline: none;
-            border-color: #3f51b5;
-            box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(126, 156, 245, 0.2);
+            background-color: white;
+        }
+        
+        .form-group i {
+            position: absolute;
+            left: 15px;
+            top: 38px;
+            color: var(--text-light);
+            font-size: 16px;
         }
         
         .login-btn {
             width: 100%;
-            padding: 12px 15px;
-            background-color: #3f51b5;
+            padding: 14px 15px;
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: var(--radius);
             font-size: 16px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s ease;
+            transition: var(--transition);
+            box-shadow: 0 2px 4px rgba(90, 103, 216, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .login-btn:hover {
-            background-color: #002984;
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .login-btn i {
+            margin-right: 8px;
         }
         
         .login-error {
-            color: #f44336;
+            color: var(--danger-color);
             text-align: center;
             margin-top: 15px;
             font-size: 14px;
             display: none;
+            background-color: rgba(229, 62, 62, 0.1);
+            padding: 10px;
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--danger-color);
         }
         
         .admin-login-footer {
             text-align: center;
             padding: 20px;
-            border-top: 1px solid #e0e0e0;
-            color: #666;
-            font-size: 12px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-light);
+            font-size: 13px;
+            background-color: var(--secondary-color);
         }
         
         .admin-login-footer a {
-            color: #3f51b5;
+            color: var(--primary-color);
             text-decoration: none;
             font-weight: 500;
+            transition: var(--transition);
         }
         
         .admin-login-footer a:hover {
-            text-decoration: underline;
+            color: var(--primary-dark);
         }
         
         .demo-credentials {
-            background-color: rgba(63, 81, 181, 0.05);
-            border-radius: 4px;
-            padding: 15px;
-            margin-top: 20px;
+            background-color: rgba(90, 103, 216, 0.05);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-top: 25px;
+            border-left: 3px solid var(--primary-color);
         }
         
         .demo-credentials h3 {
-            margin: 0 0 10px;
-            font-size: 14px;
-            color: #3f51b5;
+            margin: 0 0 12px;
+            font-size: 15px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .demo-credentials h3 i {
+            margin-right: 8px;
         }
         
         .demo-credentials p {
-            margin: 5px 0;
-            font-size: 13px;
-            color: #666;
+            margin: 8px 0;
+            font-size: 14px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .demo-credentials p i {
+            width: 20px;
+            margin-right: 8px;
+            color: var(--text-light);
         }
         
         .demo-credentials code {
-            background-color: #f5f5f5;
-            padding: 2px 5px;
-            border-radius: 3px;
+            background-color: white;
+            padding: 3px 7px;
+            border-radius: var(--radius-sm);
             font-family: monospace;
+            color: var(--primary-dark);
+            border: 1px solid var(--border-color);
         }
     </style>
 </head>
@@ -158,28 +241,32 @@
         <form class="admin-login-form" id="adminLoginForm">
             <div class="form-group">
                 <label for="email">E-posta</label>
-                <input type="email" id="email" name="email" required>
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="email" name="email" placeholder="admin@dndbrand.com" required>
             </div>
             
             <div class="form-group">
                 <label for="password">Şifre</label>
-                <input type="password" id="password" name="password" required>
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" name="password" placeholder="••••••••" required>
             </div>
             
-            <button type="submit" class="login-btn">Giriş Yap</button>
+            <button type="submit" class="login-btn">
+                <i class="fas fa-sign-in-alt"></i> Giriş Yap
+            </button>
             
             <div class="login-error" id="loginError"></div>
             
             <div class="demo-credentials">
-                <h3>Demo Giriş Bilgileri</h3>
-                <p>E-posta: <code>admin@dndbrand.com</code></p>
-                <p>Şifre: <code>admin123</code></p>
+                <h3><i class="fas fa-info-circle"></i> Demo Giriş Bilgileri</h3>
+                <p><i class="fas fa-envelope"></i> E-posta: <code>admin@dndbrand.com</code></p>
+                <p><i class="fas fa-lock"></i> Şifre: <code>admin123</code></p>
             </div>
         </form>
         
         <div class="admin-login-footer">
             <p>&copy; 2023 DnD Brand. Tüm hakları saklıdır.</p>
-            <p><a href="../index.html">Ana Sayfaya Dön</a></p>
+            <p><a href="../index.html"><i class="fas fa-home"></i> Ana Sayfaya Dön</a></p>
         </div>
     </div>
     
@@ -204,7 +291,7 @@
                 
                 // Show loading state
                 const loginBtn = document.querySelector('.login-btn');
-                loginBtn.textContent = 'Giriş Yapılıyor...';
+                loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Giriş Yapılıyor...';
                 loginBtn.disabled = true;
                 loginError.style.display = 'none';
                 
@@ -214,7 +301,7 @@
                     if (!result.success) {
                         loginError.textContent = result.message;
                         loginError.style.display = 'block';
-                        loginBtn.textContent = 'Giriş Yap';
+                        loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Giriş Yap';
                         loginBtn.disabled = false;
                     }
                     // If successful, loginAdmin will redirect to admin.html
@@ -222,7 +309,7 @@
                     console.error('Login error:', error);
                     loginError.textContent = 'Giriş sırasında bir hata oluştu. Lütfen tekrar deneyin.';
                     loginError.style.display = 'block';
-                    loginBtn.textContent = 'Giriş Yap';
+                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Giriş Yap';
                     loginBtn.disabled = false;
                 }
             });
