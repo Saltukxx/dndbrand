@@ -1190,4 +1190,81 @@ textarea.form-control {
     justify-content: flex-end;
     gap: 10px;
     margin-top: 20px;
+}
+
+/* Empty order message */
+.empty-order {
+    text-align: center;
+    padding: 40px 20px;
+    margin: 20px 0;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.empty-order-icon {
+    font-size: 48px;
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+.empty-order h3 {
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #333;
+}
+
+.empty-order p {
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.empty-order .btn {
+    display: inline-block;
+    margin-top: 15px;
+}
+
+/* Order error message */
+.order-error {
+    text-align: center;
+    padding: 30px 20px;
+    margin: 20px 0;
+    background-color: rgba(244, 67, 54, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(244, 67, 54, 0.1);
+}
+
+.order-error-icon {
+    font-size: 40px;
+    color: #f44336;
+    margin-bottom: 15px;
+}
+
+.order-error h3 {
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #333;
+}
+
+.order-error p {
+    margin-bottom: 10px;
+    color: #666;
+}
+
+.order-error .error-details {
+    font-family: monospace;
+    background-color: rgba(0, 0, 0, 0.03);
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+    color: #f44336;
+    font-size: 12px;
+    text-align: left;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.order-error .btn {
+    display: inline-block;
+    margin-top: 15px;
 } 

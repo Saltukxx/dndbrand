@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: dndbrand-server
+    env: node
+    plan: free
+    buildCommand: cd server && npm install && npm install node-cache winston && npm run postinstall
+    startCommand: cd server && node production-server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: LOG_LEVEL
+        value: info
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+  - type: static
+    name: dndbrand-frontend
+    buildCommand: echo "Static site ready"
+    staticPublishPath: ./public 

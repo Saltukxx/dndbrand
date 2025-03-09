@@ -107,6 +107,16 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Add health check endpoint near the top of your routes
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Server is healthy',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 // Health check endpoint for Render
 app.get('/healthz', (req, res) => {
   res.status(200).send('OK');

@@ -681,7 +681,7 @@ function showLoginPrompt() {
     }
 }
 
-// Load Order Summary
+// Load Order Summary with improved cart data handling
 async function loadOrderSummary() {
     try {
         console.log('Loading order summary');
@@ -690,23 +690,71 @@ async function loadOrderSummary() {
         const loadingElement = document.querySelector('.order-loading');
         if (loadingElement) loadingElement.style.display = 'block';
         
-        // Get cart from localStorage
-        let cart = localStorage.getItem('dndCart');
+        // Get cart from localStorage - Check both possible storage keys
+        let cart = localStorage.getItem('cart') || localStorage.getItem('dndCart');
         cart = cart ? JSON.parse(cart) : [];
         
         console.log('Cart items loaded for order summary:', cart);
         
+        // Ensure consistency by updating both storage locations
+        if (cart && cart.length > 0) {
+            localStorage.setItem('cart', JSON.stringify(cart));
+            localStorage.setItem('dndCart', JSON.stringify(cart));
+        }
+        
         if (!cart || cart.length === 0) {
             console.warn('No cart items found');
+            
+            // Show empty cart message
+            const orderItems = document.querySelector('.order-items');
+            if (orderItems) {
+                orderItems.innerHTML = `
+                    <div class="empty-order">
+                        <div class="empty-order-icon">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <h3>Sepetiniz Boş</h3>
+                        <p>Ödeme işlemine devam etmek için sepetinize ürün ekleyin.</p>
+                        <a href="shop.html" class="btn">Alışverişe Devam Et</a>
+                    </div>
+                `;
+            }
+            
+            // Set zero values for totals
             document.getElementById('subtotal').textContent = '0.00 TL';
             document.getElementById('tax').textContent = '0.00 TL';
             document.getElementById('shipping').textContent = '25.00 TL';
             document.getElementById('total').textContent = '25.00 TL';
-            renderOrderItems([]);
             
             // Hide loading indicator
             if (loadingElement) loadingElement.style.display = 'none';
+            
+            // Disable place order button
+            const placeOrderBtn = document.getElementById('place-order-btn');
+            if (placeOrderBtn) {
+                placeOrderBtn.disabled = true;
+                placeOrderBtn.classList.add('disabled');
+            }
+            
             return;
+        }
+        
+        // Validate cart items to ensure they have required properties
+        const validatedCart = cart.filter(item => {
+            if (!item || typeof item !== 'object') return false;
+            if (!item.id) return false;
+            if (typeof item.price === 'undefined' || item.price === null) return false;
+            if (!item.name) return false;
+            return true;
+        });
+        
+        if (validatedCart.length !== cart.length) {
+            console.warn(`Filtered out ${cart.length - validatedCart.length} invalid cart items`);
+            cart = validatedCart;
+            
+            // Update storage with validated cart
+            localStorage.setItem('cart', JSON.stringify(cart));
+            localStorage.setItem('dndCart', JSON.stringify(cart));
         }
         
         // Calculate totals
@@ -745,19 +793,45 @@ async function loadOrderSummary() {
             addressId: selectedAddressId
         };
         
+        // Enable place order button if items exist
+        const placeOrderBtn = document.getElementById('place-order-btn');
+        if (placeOrderBtn && cart.length > 0) {
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.classList.remove('disabled');
+        }
+        
         // Hide loading indicator
         if (loadingElement) loadingElement.style.display = 'none';
-        
-        return currentOrder;
     } catch (error) {
         console.error('Error loading order summary:', error);
+        
+        // Show error message
+        const orderItems = document.querySelector('.order-items');
+        if (orderItems) {
+            orderItems.innerHTML = `
+                <div class="order-error">
+                    <div class="order-error-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3>Bir hata oluştu</h3>
+                    <p>Sepet bilgileri yüklenirken bir hata oluştu. Lütfen tekrar deneyin.</p>
+                    <p class="error-details">${error.message}</p>
+                    <button class="btn reload-btn">Tekrar Dene</button>
+                </div>
+            `;
+            
+            // Add reload button functionality
+            const reloadBtn = orderItems.querySelector('.reload-btn');
+            if (reloadBtn) {
+                reloadBtn.addEventListener('click', () => {
+                    loadOrderSummary();
+                });
+            }
+        }
         
         // Hide loading indicator
         const loadingElement = document.querySelector('.order-loading');
         if (loadingElement) loadingElement.style.display = 'none';
-        
-        // Show error message
-        showError('Sipariş özeti yüklenirken bir hata oluştu');
     }
 }
 

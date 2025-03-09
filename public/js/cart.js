@@ -350,44 +350,112 @@ function updateCartItemQuantity(itemId, quantity, options = {}) {
     }
 }
 
-// Remove cart item
+// Remove cart item with improved functionality and user feedback
 function removeCartItem(itemId, options = {}) {
     try {
-        // Get cart from localStorage
-        let cart = localStorage.getItem('cart');
-        cart = cart ? JSON.parse(cart) : [];
-        
-        // Find item in cart
-        const itemIndex = cart.findIndex(item => {
-            if (item.id !== itemId) return false;
+        // Show confirmation dialog
+        if (confirm('Bu ürünü sepetten çıkarmak istediğinize emin misiniz?')) {
+            console.log(`Removing item ${itemId} from cart with options:`, options);
             
-            // Check if options match
-            if (options.color && item.color !== options.color) return false;
-            if (options.size && item.size !== options.size) return false;
+            // Get cart from localStorage - check both possible locations
+            let cart = localStorage.getItem('cart');
+            cart = cart ? JSON.parse(cart) : [];
+            
+            // Log initial cart state for debugging
+            console.log('Initial cart state:', JSON.stringify(cart));
+            
+            // Find item in cart - more permissive matching to handle different ID formats
+            const itemIndex = cart.findIndex(item => {
+                // Convert both IDs to strings for comparison to handle both string and number IDs
+                const cartItemId = String(item.id || '');
+                const targetItemId = String(itemId || '');
+                
+                if (cartItemId !== targetItemId) return false;
+                
+                // Check if options match if provided
+                if (options.color && item.color && item.color !== options.color) return false;
+                if (options.size && item.size && item.size !== options.size) return false;
+                
+                return true;
+            });
+            
+            console.log(`Item index found: ${itemIndex}`);
+            
+            if (itemIndex === -1) {
+                console.error(`Item with ID ${itemId} not found in cart`);
+                showNotification('Ürün sepette bulunamadı.', 'error');
+                return false;
+            }
+            
+            // Get item details before removing for notification
+            const removedItem = cart[itemIndex];
+            
+            // Remove item from cart
+            cart.splice(itemIndex, 1);
+            
+            // Log updated cart for debugging
+            console.log('Updated cart state:', JSON.stringify(cart));
+            
+            // Save cart to localStorage - both locations for compatibility
+            localStorage.setItem('cart', JSON.stringify(cart));
+            
+            // If old storage key is being used, update it too
+            if (localStorage.getItem('dndCart')) {
+                localStorage.setItem('dndCart', JSON.stringify(cart));
+            }
+            
+            // Remove the cart item from DOM directly for immediate feedback
+            const cartItemElement = document.querySelector(`.cart-item[data-id="${itemId}"]`);
+            if (cartItemElement) {
+                // Add removal animation
+                cartItemElement.classList.add('removing');
+                
+                // Remove after animation completes
+                setTimeout(() => {
+                    cartItemElement.remove();
+                    
+                    // Check if cart is now empty
+                    if (cart.length === 0) {
+                        const cartItemsContainer = document.querySelector('.cart-items');
+                        if (cartItemsContainer) {
+                            const emptyCartMessage = document.createElement('div');
+                            emptyCartMessage.className = 'empty-cart-message';
+                            emptyCartMessage.innerHTML = `
+                                <div class="empty-cart-icon">
+                                    <i class="fas fa-shopping-bag"></i>
+                                </div>
+                                <h3>Sepetiniz Boş</h3>
+                                <p>Sepetinizde ürün bulunmamaktadır.</p>
+                                <a href="shop.html" class="btn">Alışverişe Başla</a>
+                            `;
+                            cartItemsContainer.appendChild(emptyCartMessage);
+                            
+                            // Hide cart summary
+                            const cartSummary = document.querySelector('.cart-summary');
+                            if (cartSummary) {
+                                cartSummary.style.display = 'none';
+                            }
+                        }
+                    }
+                }, 300);
+            }
+            
+            // Update cart count in header
+            updateCartCount();
+            
+            // Update cart summary
+            updateCartSummary();
+            
+            // Show success notification
+            showNotification(`${removedItem.name || 'Ürün'} sepetten çıkarıldı.`, 'success');
             
             return true;
-        });
+        }
         
-        if (itemIndex === -1) return;
-        
-        // Remove item from cart
-        cart.splice(itemIndex, 1);
-        
-        // Save cart to localStorage
-        localStorage.setItem('cart', JSON.stringify(cart));
-        
-        // Update cart count
-        updateCartCount();
-        
-        // Reinitialize cart
-        initializeCart();
-        
-        // Show notification
-        showNotification('Ürün sepetten çıkarıldı.', 'success');
-        
-        return true;
+        return false;
     } catch (error) {
         console.error('Error removing cart item:', error);
+        showNotification(`Ürün silinirken bir hata oluştu: ${error.message}`, 'error');
         return false;
     }
 }

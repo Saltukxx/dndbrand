@@ -1,12 +1,75 @@
-const NodeCache = require('node-cache');
+let NodeCache;
+let cache;
 const logger = require('../utils/logger');
 
-// Create a new cache instance
-const cache = new NodeCache({ 
-  stdTTL: 300, // Default TTL: 5 minutes
-  checkperiod: 60, // Check for expired keys every 60 seconds
-  maxKeys: 1000 // Maximum number of keys in cache
-});
+// Try to load NodeCache, and if it fails, provide a fallback
+try {
+  NodeCache = require('node-cache');
+  // Create a new cache instance
+  cache = new NodeCache({ 
+    stdTTL: 300, // Default TTL: 5 minutes
+    checkperiod: 60, // Check for expired keys every 60 seconds
+    maxKeys: 1000 // Maximum number of keys in cache
+  });
+  logger.info('NodeCache initialized successfully');
+} catch (error) {
+  logger.warn(`NodeCache could not be loaded: ${error.message}`);
+  logger.warn('Using fallback simple cache implementation');
+  
+  // Implement a simple fallback cache
+  cache = {
+    data: new Map(),
+    timeouts: new Map(),
+    get: function(key) {
+      return this.data.get(key);
+    },
+    set: function(key, value, ttl) {
+      this.data.set(key, value);
+      
+      // Clear previous timeout if it exists
+      if (this.timeouts.has(key)) {
+        clearTimeout(this.timeouts.get(key));
+      }
+      
+      // Set a timeout to automatically delete the key after ttl seconds
+      if (ttl) {
+        const timeout = setTimeout(() => {
+          this.data.delete(key);
+          this.timeouts.delete(key);
+        }, ttl * 1000);
+        
+        this.timeouts.set(key, timeout);
+      }
+    },
+    del: function(key) {
+      this.data.delete(key);
+      if (this.timeouts.has(key)) {
+        clearTimeout(this.timeouts.get(key));
+        this.timeouts.delete(key);
+      }
+    },
+    flushAll: function() {
+      this.data.clear();
+      // Clear all timeouts
+      for (const timeout of this.timeouts.values()) {
+        clearTimeout(timeout);
+      }
+      this.timeouts.clear();
+    },
+    keys: function() {
+      return Array.from(this.data.keys());
+    },
+    getStats: function() {
+      return {
+        hits: 0,
+        misses: 0,
+        keys: this.data.size,
+        ksize: 0,
+        vsize: 0
+      };
+    }
+  };
+}
 
 /**
  * Create a middleware that caches the response of API endpoints
