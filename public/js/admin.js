@@ -87,6 +87,9 @@ async function fetchWithCORS(endpoint, options = {}) {
             
             // Add auth token to headers if present
             const headers = options.headers || {};
+            if (authToken && !headers['Authorization']) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
             
             // Use CONFIG.fetchAPI for the request
             return await window.CONFIG.fetchAPI(fullEndpoint, {
@@ -111,43 +114,65 @@ async function fetchWithCORS(endpoint, options = {}) {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 ...(options.headers || {})
-            },
-            // Set credentials to include for all requests
-            credentials: 'include',
-            // Add mode: 'cors' for explicit CORS requests
-            mode: 'cors'
+            }
         };
-        
-        // Try to use fetch directly with CORS
-        try {
-            const response = await fetch(url, {
-                ...fetchOptions,
-                signal: AbortSignal.timeout(10000) // 10 second timeout
-            });
-            
-            if (response.ok) {
-                return await response.json();
-            }
-            
-            if (response.status === 403 || response.status === 401) {
-                console.error('Authentication error:', response.status);
-                
-                // Check if we're on the admin login page
-                if (!window.location.href.includes('admin-login.html')) {
-                    alert('Oturum süresi doldu. Lütfen tekrar giriş yapın.');
-                    sessionStorage.removeItem('adminToken');
-                    sessionStorage.removeItem('adminAuthenticated');
-                    window.location.href = 'admin-login.html';
-                }
-                throw new Error(`Yetkilendirme hatası: ${response.status}`);
-            }
-            
-            console.warn(`Direct fetch request failed with status: ${response.status}`);
-        } catch (directError) {
-            console.warn(`Direct fetch request failed: ${directError.message}`);
+
+        // Add auth token to headers if not already present
+        if (authToken && !fetchOptions.headers['Authorization']) {
+            fetchOptions.headers['Authorization'] = `Bearer ${authToken}`;
         }
         
-        // Try using the local proxy as a fallback
+        // Try multiple CORS approaches in sequence
+        
+        // 1. Try direct fetch with no credentials first (least restrictive)
+        try {
+            console.log('Attempting direct fetch with no credentials:', url);
+            const directResponse = await fetch(url, {
+                ...fetchOptions,
+                credentials: 'omit',
+                mode: 'cors',
+                signal: AbortSignal.timeout(8000) // 8 second timeout
+            });
+            
+            if (directResponse.ok) {
+                return await directResponse.json();
+            }
+            
+            if (directResponse.status === 403 || directResponse.status === 401) {
+                // Handle authentication errors
+                handleAuthError(directResponse.status);
+            }
+            
+            console.warn(`Direct fetch failed with status: ${directResponse.status}`);
+        } catch (directError) {
+            console.warn(`Direct fetch failed: ${directError.message}`);
+        }
+        
+        // 2. Try with credentials included (for authenticated requests)
+        try {
+            console.log('Attempting fetch with credentials included:', url);
+            const withCredentialsResponse = await fetch(url, {
+                ...fetchOptions,
+                credentials: 'include',
+                mode: 'cors',
+                signal: AbortSignal.timeout(8000) // 8 second timeout
+            });
+            
+            if (withCredentialsResponse.ok) {
+                return await withCredentialsResponse.json();
+            }
+            
+            if (withCredentialsResponse.status === 403 || withCredentialsResponse.status === 401) {
+                // Handle authentication errors
+                handleAuthError(withCredentialsResponse.status);
+            }
+            
+            console.warn(`Fetch with credentials failed with status: ${withCredentialsResponse.status}`);
+        } catch (withCredentialsError) {
+            console.warn(`Fetch with credentials failed: ${withCredentialsError.message}`);
+        }
+        
+        // 3. Try using a proxy if available
         try {
             const proxyUrl = window.location.origin + '/api-proxy?url=' + encodeURIComponent(url);
             console.log(`Trying local proxy: ${proxyUrl}`);
@@ -165,12 +190,11 @@ async function fetchWithCORS(endpoint, options = {}) {
             console.warn(`Local proxy request failed: ${proxyError.message}`);
         }
         
-        // If in demo mode, try to use mock data
-        const adminToken = sessionStorage.getItem('adminToken');
-        const isDemo = adminToken && adminToken.startsWith('demo_token_');
+        // If all methods failed and we're in demo mode, use mock data as last resort
+        const isDemo = authToken && authToken.startsWith('demo_token_');
         
         if (isDemo) {
-            console.log('Using demo mode, attempting to provide mock data');
+            console.log('Using demo mode as fallback, providing mock data');
             const mockData = getMockData(endpoint, options);
             if (mockData) {
                 console.log('Returning mock data for endpoint:', endpoint);
@@ -179,11 +203,25 @@ async function fetchWithCORS(endpoint, options = {}) {
         }
         
         // All approaches failed
-        throw new Error('Sunucuya erişilemiyor. Lütfen internet bağlantınızı kontrol edin.');
+        throw new Error(`Sunucuya erişilemiyor (${url}). Lütfen internet bağlantınızı kontrol edin.`);
     } catch (error) {
         console.error('Error in fetchWithCORS:', error);
         throw error; // Rethrow the error to be handled by the caller
     }
+}
+
+// Handle authentication errors
+function handleAuthError(statusCode) {
+    console.error('Authentication error:', statusCode);
+    
+    // Check if we're on the admin login page
+    if (!window.location.href.includes('admin-login.html')) {
+        alert('Oturum süresi doldu veya yetkiniz yok. Lütfen tekrar giriş yapın.');
+        sessionStorage.removeItem('adminToken');
+        sessionStorage.removeItem('adminAuthenticated');
+        window.location.href = 'admin-login.html';
+    }
+    throw new Error(`Yetkilendirme hatası: ${statusCode}`);
 }
 
 /**
@@ -628,119 +666,70 @@ function viewOrder(orderId) {
     showNotification(`Sipariş #${orderId} görüntüleniyor`);
 }
 
-// Load products with enhanced error handling and retry logic
+// Load products
 async function loadProducts() {
     if (!checkAdminAuth()) return;
     
     // Show loading state
     const productsTable = document.getElementById('productsTable');
-    if (!productsTable) {
-        console.warn('Products table element not found');
-        return;
-    }
+    if (!productsTable) return;
     
     const tableBody = productsTable.querySelector('tbody');
-    tableBody.innerHTML = '<tr><td colspan="7"><div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Ürünler yükleniyor...</div></td></tr>';
-    
-    // Check if we're in demo mode
-    const adminToken = sessionStorage.getItem('adminToken');
-    const isDemo = adminToken && adminToken.startsWith('demo_token_');
-    
-    if (isDemo) {
-        console.log('Loading demo products');
-        // Load sample products for demo mode
-        const demoProducts = [
-            { 
-                _id: 'demo1', 
-                name: 'Demo Ürün 1', 
-                sku: 'DEMO-001', 
-                category: 'T-Shirt', 
-                price: 299.99, 
-                stock: 15, 
-                status: 'active',
-                images: [DEFAULT_PLACEHOLDER_URL]
-            },
-            { 
-                _id: 'demo2', 
-                name: 'Demo Ürün 2', 
-                sku: 'DEMO-002', 
-                category: 'Hoodie', 
-                price: 499.99, 
-                stock: 8, 
-                status: 'active',
-                images: [DEFAULT_PLACEHOLDER_URL]
-            },
-            { 
-                _id: 'demo3', 
-                name: 'Demo Ürün 3', 
-                sku: 'DEMO-003', 
-                category: 'Aksesuar', 
-                price: 79.99, 
-                stock: 0, 
-                status: 'active',
-                images: [DEFAULT_PLACEHOLDER_URL]
-            }
-        ];
-        
-        // Render demo products
-        displayProducts(demoProducts, tableBody);
-        return;
-    }
+    tableBody.innerHTML = '<tr><td colspan="7"><div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Ürünler Yükleniyor...</div></td></tr>';
     
     // Track retry attempts
     let retryCount = 0;
-    const maxRetries = 3;
+    const maxRetries = 2;
     
     async function attemptFetch() {
         try {
-            console.log('Fetching products, attempt:', retryCount + 1);
+            console.log(`Loading products, attempt: ${retryCount + 1}`);
             
+            // Try to fetch actual products from the server
             const response = await fetchWithCORS('products', {
                 headers: {
                     'Authorization': `Bearer ${authToken}`
                 },
-                // Add cache-busting parameter
-                signal: AbortSignal.timeout(15000) // 15 second timeout
+                signal: AbortSignal.timeout(10000) // 10 second timeout
             });
             
             console.log('Products API response:', response);
             
-            // Handle different API response formats
+            // Process the response to handle different API formats
             let products = [];
             
             if (Array.isArray(response)) {
                 // Direct array response
                 products = response;
-            } else if (response && response.success && Array.isArray(response.data)) {
-                // Success wrapper with data array
+            } else if (response && response.data && Array.isArray(response.data)) {
+                // Data property contains products
                 products = response.data;
             } else if (response && response.products && Array.isArray(response.products)) {
-                // Products container object
+                // Products property contains products
                 products = response.products;
             } else if (response && typeof response === 'object') {
-                // Object with multiple products as properties
-                const possibleArrays = Object.values(response).filter(Array.isArray);
-                if (possibleArrays.length > 0) {
-                    // Take the longest array, which is likely the products
-                    products = possibleArrays.reduce((a, b) => a.length > b.length ? a : b, []);
+                // Handle paginated results
+                const possibleArrayProps = Object.keys(response).filter(key => 
+                    Array.isArray(response[key]) && response[key].length > 0 &&
+                    typeof response[key][0] === 'object' && 
+                    (response[key][0].name || response[key][0].title)
+                );
+                
+                if (possibleArrayProps.length > 0) {
+                    products = response[possibleArrayProps[0]];
+                } else {
+                    console.warn('Unknown API response format, no product arrays found:', response);
                 }
             }
             
-            console.log('Processed products:', products);
-            
-            if (!Array.isArray(products)) {
-                console.error('Products is not an array:', products);
-                throw new Error('Invalid products data format');
-            }
-            
-            // Check if we have any products
-            if (products.length === 0) {
+            // If no products were found, show empty state
+            if (!products || products.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
                         <td colspan="7">
                             <div class="empty-state">
                                 <i class="fas fa-box-open"></i>
-                                <p>Henüz ürün bulunmamaktadır.</p>
+                                <p>Henüz ürün eklenmemiş.</p>
                                 <button id="addFirstProductBtn" class="btn btn-primary">
                                     <i class="fas fa-plus"></i> İlk Ürünü Ekle
                                 </button>
@@ -749,13 +738,22 @@ async function loadProducts() {
                     </tr>
                 `;
                 
-                // Add event listener to the add first product button
+                // Add event listener to add product button
                 const addFirstProductBtn = document.getElementById('addFirstProductBtn');
                 if (addFirstProductBtn) {
                     addFirstProductBtn.addEventListener('click', function() {
                         const addProductBtn = document.getElementById('addProductBtn');
                         if (addProductBtn) {
                             addProductBtn.click();
+                        } else {
+                            setupAddProductButton();
+                            // Create and trigger a click on the add product button
+                            const event = new MouseEvent('click', {
+                                bubbles: true,
+                                cancelable: true,
+                                view: window
+                            });
+                            document.getElementById('addProductBtn').dispatchEvent(event);
                         }
                     });
                 }
@@ -763,88 +761,14 @@ async function loadProducts() {
                 return;
             }
             
-            // Clear table body
-            tableBody.innerHTML = '';
+            // Display products
+            displayProducts(products, tableBody);
             
-            // Sort products by newest first
-            products.sort((a, b) => {
-                if (a.createdAt && b.createdAt) {
-                    return new Date(b.createdAt) - new Date(a.createdAt);
-                }
-                return 0;
-            });
-            
-            // Add products to table
-            products.forEach(product => {
-                const row = document.createElement('tr');
-                
-                // Safely get product ID
-                const productId = product._id || product.id || '';
-                
-                // Get product image with consistent placeholder fallback
-                const imageUrl = getProductImageUrl(product);
-                
-                // Format price with fallback for missing price
-                const price = typeof product.price === 'number' ? product.price : 
-                             (typeof product.price === 'string' ? parseFloat(product.price) : 0);
-                             
-                const formattedPrice = price.toLocaleString('tr-TR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-                
-                row.innerHTML = `
-                <td class="product-cell">
-                    <div class="product-info">
-                        <img src="${imageUrl}" alt="${product.name}" onerror="handleImageError(this)">
-                        <span>${product.name}</span>
-                    </div>
-                </td>
-                <td>${product.sku || '-'}</td>
-                <td>${product.category || '-'}</td>
-                <td>₺${formattedPrice}</td>
-                <td>${product.stock}</td>
-                <td><span class="status-badge ${product.status === 'inactive' ? 'inactive' : product.stock > 0 ? 'active' : 'out-of-stock'}">${product.status === 'inactive' ? 'Pasif' : product.stock > 0 ? 'Aktif' : 'Stokta Yok'}</span></td>
-                <td class="actions-cell">
-                    <button class="action-btn view-btn" data-id="${productId}" title="Görüntüle">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="action-btn edit-btn" data-id="${productId}" title="Düzenle">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-btn delete-btn" data-id="${productId}" title="Sil">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-                `;
-                
-                tableBody.appendChild(row);
-            });
-            
-            // Add event listeners to action buttons
-            addProductActionListeners();
-            
-            // Add search functionality
-            const searchInput = document.getElementById('productSearchInput');
-            if (searchInput) {
-                searchInput.addEventListener('input', function() {
-                    const searchTerm = this.value.toLowerCase();
-                    const rows = tableBody.querySelectorAll('tr');
-                    
-                    rows.forEach(row => {
-                        const productName = row.querySelector('.product-info span').textContent.toLowerCase();
-                        const category = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-                        const sku = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-                        
-                        if (productName.includes(searchTerm) || category.includes(searchTerm) || sku.includes(searchTerm)) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    });
-                });
+            // Clear retry intervals if success
+            if (window.productsRetryInterval) {
+                clearInterval(window.productsRetryInterval);
+                window.productsRetryInterval = null;
             }
-            
         } catch (error) {
             console.error('Error loading products:', error);
             
@@ -852,13 +776,20 @@ async function loadProducts() {
             if (retryCount < maxRetries) {
                 retryCount++;
                 
-                // Show retrying message
-                tableBody.innerHTML = `<tr><td colspan="7"><div class="loading-spinner"><i class="fas fa-sync fa-spin"></i> Bağlantı hatası, yeniden deneniyor (${retryCount}/${maxRetries})...</div></td></tr>`;
+                // Show retry message
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="loading-state">
+                                <i class="fas fa-sync fa-spin"></i>
+                                <p>Bağlantı hatası, yeniden deneniyor... (${retryCount}/${maxRetries})</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
                 
-                // Wait a bit longer between retries
-                await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
-                
-                // Try again
+                // Wait before retrying
+                await new Promise(resolve => setTimeout(resolve, 2000));
                 return attemptFetch();
             }
             
@@ -882,12 +813,22 @@ async function loadProducts() {
             const retryBtn = document.getElementById('retryProductsBtn');
             if (retryBtn) {
                 retryBtn.addEventListener('click', function() {
+                    // Reset retry count and try again
+                    retryCount = 0;
                     loadProducts();
                 });
             }
             
+            // Auto-retry every 30 seconds
+            if (!window.productsRetryInterval) {
+                window.productsRetryInterval = setInterval(() => {
+                    retryCount = 0;
+                    loadProducts();
+                }, 30000);
+            }
+            
             // Show notification
-            showNotification('Sunucu bağlantısı kurulamadı. Lütfen daha sonra tekrar deneyin.', 'error');
+            showNotification('Ürünler yüklenirken bir hata oluştu. Lütfen internet bağlantınızı kontrol edin.', 'error');
         }
     }
     
@@ -997,11 +938,11 @@ function displayProducts(products, tableBody) {
             const rows = tableBody.querySelectorAll('tr');
             
             rows.forEach(row => {
-                const productName = row.querySelector('.product-info span').textContent.toLowerCase();
-                const category = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-                const sku = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                const productName = row.querySelector('.product-info span')?.textContent.toLowerCase() || '';
+                const sku = row.cells[1]?.textContent.toLowerCase() || '';
+                const category = row.cells[2]?.textContent.toLowerCase() || '';
                 
-                if (productName.includes(searchTerm) || category.includes(searchTerm) || sku.includes(searchTerm)) {
+                if (productName.includes(searchTerm) || sku.includes(searchTerm) || category.includes(searchTerm)) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
@@ -1423,76 +1364,135 @@ async function updateProduct(productId, productData, modal) {
         
         console.log('Updating product with data:', productData);
         
-        // Make API request to update product
-        const response = await fetchWithCORS(`products/${productId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
-            },
-            body: JSON.stringify(productData)
-        });
+        // Track retry attempts
+        let retryCount = 0;
+        const maxRetries = 2;
         
-        console.log('Update product API response:', response);
-        
-        // Check for successful response
-        let success = false;
-        let message = '';
-        
-        if (response && (response.success === true || response._id || response.id)) {
-            success = true;
-            message = 'Ürün başarıyla güncellendi.';
-        } else if (response && response.error) {
-            message = response.error;
-        } else {
-            message = 'Ürün güncellenirken bir hata oluştu.';
-        }
-        
-        // Close modal
-        if (modal) {
-            modal.style.opacity = '0';
-            setTimeout(() => {
-                modal.remove();
-            }, 300);
-        }
-        
-        if (success) {
-            // Show success notification
-            showNotification(message, 'success');
-            
-            // Reload products
-            loadProducts();
-        } else {
-            // Show error notification
-            showNotification(message, 'error');
-        }
-    } catch (error) {
-        console.error('Error updating product:', error);
-        
-        // Show error notification
-        showNotification(`Ürün güncellenirken bir hata oluştu: ${error.message}`, 'error');
-        
-        // Reset button state
-        if (modal) {
-            const updateButton = modal.querySelector('.update-product-btn');
-            updateButton.disabled = false;
-            updateButton.innerHTML = 'Güncelle';
-            
-            // Add error message to modal
-            const form = modal.querySelector('form');
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'form-error';
-            errorDiv.innerHTML = `<p>Sunucu hatası, lütfen tekrar deneyin.</p><small>${error.message}</small>`;
-            
-            // Remove existing error if any
-            const existingError = form.querySelector('.form-error');
-            if (existingError) {
-                existingError.remove();
+        async function attemptUpdate() {
+            try {
+                console.log(`Updating product ${productId}, attempt: ${retryCount + 1}`);
+                
+                // Make API request to update product
+                const response = await fetchWithCORS(`products/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(productData),
+                    signal: AbortSignal.timeout(15000) // 15 second timeout
+                });
+                
+                console.log('Update product API response:', response);
+                
+                // Check for successful response
+                let success = false;
+                let message = '';
+                
+                if (response && (response.success === true || response._id || response.id)) {
+                    success = true;
+                    message = response.message || 'Ürün başarıyla güncellendi.';
+                } else if (response && response.error) {
+                    message = response.error;
+                    throw new Error(message);
+                } else {
+                    message = 'Ürün güncellenirken bir hata oluştu.';
+                    throw new Error(message);
+                }
+                
+                // Close modal
+                if (modal) {
+                    modal.style.opacity = '0';
+                    setTimeout(() => {
+                        modal.remove();
+                    }, 300);
+                }
+                
+                // Show success notification
+                showNotification(message, 'success');
+                
+                // Reload products
+                loadProducts();
+                
+                return true;
+            } catch (error) {
+                console.error(`Error updating product (attempt ${retryCount + 1}):`, error);
+                
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    
+                    // Update button state if modal exists
+                    if (modal) {
+                        const updateButton = modal.querySelector('.update-product-btn');
+                        if (updateButton) {
+                            updateButton.innerHTML = `<i class="fas fa-sync fa-spin"></i> Tekrar deneniyor (${retryCount}/${maxRetries})...`;
+                        }
+                        
+                        // Add warning message to form
+                        const form = modal.querySelector('form');
+                        if (form) {
+                            const warningDiv = document.createElement('div');
+                            warningDiv.className = 'form-warning';
+                            warningDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Bağlantı hatası, tekrar deneniyor...`;
+                            
+                            // Remove existing warning if any
+                            const existingWarning = form.querySelector('.form-warning');
+                            if (existingWarning) {
+                                existingWarning.remove();
+                            }
+                            
+                            form.prepend(warningDiv);
+                        }
+                    }
+                    
+                    // Wait before retrying
+                    await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
+                    
+                    // Try again
+                    return attemptUpdate();
+                }
+                
+                // Show error notification after max retries
+                showNotification(`Ürün güncellenirken bir hata oluştu: ${error.message}`, 'error');
+                
+                // Reset button state
+                if (modal) {
+                    const updateButton = modal.querySelector('.update-product-btn');
+                    if (updateButton) {
+                        updateButton.disabled = false;
+                        updateButton.innerHTML = 'Güncelle';
+                    }
+                    
+                    // Add error message to modal
+                    const form = modal.querySelector('form');
+                    if (form) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'form-error';
+                        errorDiv.innerHTML = `
+                            <p>Sunucu hatası, lütfen tekrar deneyin.</p>
+                            <small>${error.message}</small>
+                        `;
+                        
+                        // Remove existing error if any
+                        const existingError = form.querySelector('.form-error');
+                        if (existingError) {
+                            existingError.remove();
+                        }
+                        
+                        // Add error message to form
+                        form.prepend(errorDiv);
+                    }
+                }
+                
+                throw error;
             }
-            
-            // Add error message to form
-            form.prepend(errorDiv);
         }
+        
+        // Start the update attempt
+        return await attemptUpdate();
+    } catch (error) {
+        console.error('Failed to update product:', error);
+        return false;
     }
 }
 
@@ -1771,114 +1771,144 @@ async function createProduct(productData, modal) {
         }
         
         // Set status active/inactive
-        if (productData.status === 'active') {
+        if (!productData.status) {
             productData.status = 'active';
-        } else if (productData.status === 'inactive') {
-            productData.status = 'inactive';
         }
         
         // Add timestamps
         productData.createdAt = new Date().toISOString();
         productData.updatedAt = new Date().toISOString();
         
-        console.log('Sending product data:', productData);
+        console.log('Sending product data to server:', productData);
         
-        const response = await fetchWithCORS('products', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
-            },
-            body: JSON.stringify(productData)
-        });
+        // Track retry attempts
+        let retryCount = 0;
+        const maxRetries = 2;
         
-        console.log('API response for product creation:', response);
-        
-        // Check different response formats
-        let success = false;
-        let message = '';
-        let createdProduct = null;
-        
-        if (response && response.success === true) {
-            success = true;
-            message = response.message || 'Ürün başarıyla eklendi.';
-            createdProduct = response.data || response.product || null;
-        } else if (response && response._id) {
-            // Direct product response
-            success = true;
-            message = 'Ürün başarıyla eklendi.';
-            createdProduct = response;
-        } else if (response && response.id) {
-            // Direct product response with id
-            success = true;
-            message = 'Ürün başarıyla eklendi.';
-            createdProduct = response;
-        } else if (response && response.product) {
-            // Product in response.product
-            success = true;
-            message = 'Ürün başarıyla eklendi.';
-            createdProduct = response.product;
-        } else if (response && response.error) {
-            // Error in response
-            success = false;
-            message = response.error || 'Ürün eklenirken bir hata oluştu.';
-        } else {
-            // Unknown format
-            console.error('Unknown API response format:', response);
-            success = false;
-            message = 'Ürün eklenirken beklenmeyen bir cevap alındı.';
-        }
-        
-        // Close modal
-        if (modal) {
-            modal.remove();
-        }
-        
-        if (success) {
-            // Show success notification
-            showNotification(message, 'success');
-            
-            // Reload products
-            loadProducts();
-            
-            return true;
-        } else {
-            // Show error notification
-            showNotification(message, 'error');
-            return false;
-        }
-    } catch (error) {
-        console.error('Error creating product:', error);
-        
-        // Show error notification
-        showNotification(`Ürün eklenirken bir hata oluştu: ${error.message}`, 'error');
-        
-        // Reset button state
-        if (modal) {
-            const addButton = modal.querySelector('.add-new-product-btn');
-            if (addButton) {
-                addButton.disabled = false;
-                addButton.innerHTML = 'Ekle';
-            }
-            
-            // Add error message to modal
-            const form = modal.querySelector('form');
-            if (form) {
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'form-error';
-                errorDiv.textContent = `Sunucu hatası: ${error.message}`;
+        async function attemptCreate() {
+            try {
+                console.log(`Creating product, attempt: ${retryCount + 1}`);
                 
-                // Remove existing error if any
-                const existingError = form.querySelector('.form-error');
-                if (existingError) {
-                    existingError.remove();
+                const response = await fetchWithCORS('products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(productData),
+                    signal: AbortSignal.timeout(15000) // 15 second timeout
+                });
+                
+                console.log('API response for product creation:', response);
+                
+                // Check different response formats
+                let success = false;
+                let message = '';
+                let createdProduct = null;
+                
+                if (response && response.success === true) {
+                    success = true;
+                    message = response.message || 'Ürün başarıyla eklendi.';
+                    createdProduct = response.data || response.product || null;
+                } else if (response && (response._id || response.id)) {
+                    // Direct product response
+                    success = true;
+                    message = 'Ürün başarıyla eklendi.';
+                    createdProduct = response;
+                } else if (response && response.product) {
+                    // Product in response.product
+                    success = true;
+                    message = 'Ürün başarıyla eklendi.';
+                    createdProduct = response.product;
+                } else if (response && response.error) {
+                    // Error in response
+                    success = false;
+                    message = response.error || 'Ürün eklenirken bir hata oluştu.';
+                    throw new Error(message);
+                } else {
+                    // Unknown format
+                    console.error('Unknown API response format:', response);
+                    success = false;
+                    message = 'Ürün eklenirken beklenmeyen bir cevap alındı.';
+                    throw new Error(message);
                 }
                 
-                // Add error message to form
-                form.prepend(errorDiv);
+                // Close modal
+                if (modal) {
+                    modal.style.opacity = '0';
+                    setTimeout(() => {
+                        modal.remove();
+                    }, 300);
+                }
+                
+                // Show success notification
+                showNotification(message, 'success');
+                
+                // Reload products
+                loadProducts();
+                
+                return true;
+            } catch (error) {
+                console.error(`Error creating product (attempt ${retryCount + 1}):`, error);
+                
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    
+                    // Update button state if modal exists
+                    if (modal) {
+                        const addButton = modal.querySelector('.add-new-product-btn');
+                        if (addButton) {
+                            addButton.innerHTML = `<i class="fas fa-sync fa-spin"></i> Tekrar deneniyor (${retryCount}/${maxRetries})...`;
+                        }
+                    }
+                    
+                    // Wait before retrying
+                    await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
+                    
+                    // Try again
+                    return attemptCreate();
+                }
+                
+                // Show error notification after max retries
+                showNotification(`Ürün eklenirken bir hata oluştu: ${error.message}`, 'error');
+                
+                // Reset button state
+                if (modal) {
+                    const addButton = modal.querySelector('.add-new-product-btn');
+                    if (addButton) {
+                        addButton.disabled = false;
+                        addButton.innerHTML = 'Ekle';
+                    }
+                    
+                    // Add error message to modal
+                    const form = modal.querySelector('form');
+                    if (form) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'form-error';
+                        errorDiv.innerHTML = `
+                            <p>Sunucu hatası, lütfen tekrar deneyin.</p>
+                            <small>${error.message}</small>
+                        `;
+                        
+                        // Remove existing error if any
+                        const existingError = form.querySelector('.form-error');
+                        if (existingError) {
+                            existingError.remove();
+                        }
+                        
+                        // Add error message to form
+                        form.prepend(errorDiv);
+                    }
+                }
+                
+                throw error;
             }
         }
         
+        // Start the creation attempt
+        return await attemptCreate();
+    } catch (error) {
+        console.error('Failed to create product:', error);
         return false;
     }
 }
@@ -2689,3 +2719,4 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('Admin dashboard initialized');
 }); 
+
