@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 // Define colors for console output
 const colors = {
@@ -77,7 +78,64 @@ module.exports = router;`;
   console.error(`${colors.red}Error creating fixed version: ${error.message}${colors.reset}`);
 }
 
-// Fix 3: Create a .env file from example if it doesn't exist
+// Fix 3: Check for missing dependencies in server's package.json
+console.log(`\n${colors.blue}Checking for missing dependencies...${colors.reset}`);
+
+const serverPackageJsonPath = path.join(__dirname, 'server', 'package.json');
+const requiredDependencies = {
+  'node-cache': '^5.1.2',
+  'winston': '^3.8.2',
+  'multer-gridfs-storage': '^5.0.2',
+  'gridfs-stream': '^1.1.1',
+  'method-override': '^3.0.0'
+};
+
+try {
+  const packageJson = JSON.parse(fs.readFileSync(serverPackageJsonPath, 'utf8'));
+  const dependencies = packageJson.dependencies || {};
+  
+  let dependenciesAdded = false;
+  for (const [dependency, version] of Object.entries(requiredDependencies)) {
+    if (!dependencies[dependency]) {
+      console.log(`${colors.yellow}Adding missing dependency: ${dependency}@${version}${colors.reset}`);
+      dependencies[dependency] = version;
+      dependenciesAdded = true;
+    }
+  }
+  
+  if (dependenciesAdded) {
+    packageJson.dependencies = dependencies;
+    
+    // Update the postinstall script to include all required dependencies
+    if (packageJson.scripts && packageJson.scripts.postinstall) {
+      const requiredDepsString = Object.keys(requiredDependencies).join(' ');
+      packageJson.scripts.postinstall = `echo 'Checking for missing dependencies...' && npm install ${requiredDepsString} --no-save || true`;
+      console.log(`${colors.yellow}Updated postinstall script with all required dependencies${colors.reset}`);
+    }
+    
+    // Save the updated package.json
+    fs.writeFileSync(serverPackageJsonPath, JSON.stringify(packageJson, null, 2));
+    console.log(`${colors.green}✓ Updated server package.json with missing dependencies${colors.reset}`);
+    
+    // Try to install the dependencies
+    try {
+      console.log(`${colors.blue}Installing missing dependencies...${colors.reset}`);
+      process.chdir(path.join(__dirname, 'server'));
+      execSync('npm install', { stdio: 'inherit' });
+      process.chdir(__dirname);
+      console.log(`${colors.green}✓ Dependencies installed successfully${colors.reset}`);
+    } catch (installError) {
+      console.error(`${colors.red}Error installing dependencies: ${installError.message}${colors.reset}`);
+      console.log(`${colors.yellow}Please run 'cd server && npm install' manually${colors.reset}`);
+    }
+  } else {
+    console.log(`${colors.green}All required dependencies are already installed${colors.reset}`);
+  }
+} catch (error) {
+  console.error(`${colors.red}Error checking dependencies: ${error.message}${colors.reset}`);
+}
+
+// Fix 4: Create a .env file from example if it doesn't exist
 console.log(`\n${colors.blue}Checking environment configuration...${colors.reset}`);
 
 const envPath = path.join(__dirname, 'server', 'config', '.env');
@@ -94,6 +152,73 @@ if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
   console.log(`${colors.green}Environment file already exists${colors.reset}`);
 } else {
   console.error(`${colors.red}Environment example file not found at: ${envExamplePath}${colors.reset}`);
+}
+
+// Fix 5: Create fallback versions of critical middleware files
+console.log(`\n${colors.blue}Creating fallback middleware files...${colors.reset}`);
+
+// Create a simplified upload.js middleware that doesn't rely on multer-gridfs-storage
+const uploadJsPath = path.join(__dirname, 'server', 'middleware', 'upload.js.fallback');
+try {
+  const uploadJsContent = `/**
+ * Simplified upload middleware that doesn't rely on multer-gridfs-storage
+ * Used as a fallback when GridFS is not available
+ */
+const path = require('path');
+const multer = require('multer');
+const fs = require('fs');
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, '..', '..', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configure storage
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function(req, file, cb) {
+    cb(null, \`\${Date.now()}-\${file.originalname.replace(/\\s+/g, '-')}\`);
+  }
+});
+
+// Check file type
+function checkFileType(file, cb) {
+  // Allowed file extensions
+  const filetypes = /jpeg|jpg|png|gif|webp/;
+  // Check extension
+  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+  // Check mime type
+  const mimetype = filetypes.test(file.mimetype);
+
+  if (mimetype && extname) {
+    return cb(null, true);
+  } else {
+    cb(new Error('Only images are allowed'));
+  }
+}
+
+// Initialize upload middleware
+const upload = multer({
+  storage,
+  limits: { fileSize: 5000000 }, // 5MB limit
+  fileFilter: function(req, file, cb) {
+    checkFileType(file, cb);
+  }
+});
+
+module.exports = {
+  upload,
+  uploadSingle: upload.single('image'),
+  uploadMultiple: upload.array('images', 5)
+};`;
+
+  fs.writeFileSync(uploadJsPath, uploadJsContent);
+  console.log(`${colors.green}✓ Created fallback upload middleware${colors.reset}`);
+} catch (error) {
+  console.error(`${colors.red}Error creating fallback upload middleware: ${error.message}${colors.reset}`);
 }
 
 console.log(`\n${colors.magenta}Auto-Fix Complete!${colors.reset}`);

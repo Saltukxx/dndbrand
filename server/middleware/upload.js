@@ -1,59 +1,87 @@
-const multer = require('multer');
+/**
+ * File upload middleware with fallback support
+ */
 const path = require('path');
-const crypto = require('crypto');
-const { GridFsStorage } = require('multer-gridfs-storage');
-const mongoose = require('mongoose');
+const multer = require('multer');
+const fs = require('fs');
 
-// Get MongoDB connection string from environment variables
-const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/dndbrand';
+// Wrap GridFS initialization in try-catch to handle missing dependencies
+let GridFsStorage;
+let gridFsStorage;
+let gridfsMiddleware;
 
-// Create storage engine using GridFS
-const storage = new GridFsStorage({
-  url: mongoURI,
-  options: { useNewUrlParser: true, useUnifiedTopology: true },
-  file: (req, file) => {
-    return new Promise((resolve, reject) => {
-      // Generate a unique filename
-      crypto.randomBytes(16, (err, buf) => {
-        if (err) {
-          return reject(err);
-        }
-        const filename = buf.toString('hex') + path.extname(file.originalname);
-        const fileInfo = {
-          filename: filename,
-          bucketName: 'uploads' // This is the collection name for GridFS
-        };
-        resolve(fileInfo);
-      });
-    });
+try {
+  GridFsStorage = require('multer-gridfs-storage');
+  
+  // Create GridFS storage engine
+  gridFsStorage = new GridFsStorage({
+    url: process.env.MONGO_URI || 'mongodb://localhost:27017/dndbrand',
+    options: { useNewUrlParser: true, useUnifiedTopology: true },
+    file: (req, file) => {
+      return {
+        bucketName: 'uploads',
+        filename: `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`
+      };
+    }
+  });
+  
+  gridfsMiddleware = multer({
+    storage: gridFsStorage,
+    limits: { fileSize: 5000000 }, // 5MB limit
+    fileFilter: function(req, file, cb) {
+      checkFileType(file, cb);
+    }
+  });
+  
+  console.log("GridFS storage initialized successfully");
+} catch (error) {
+  console.warn(`GridFS storage initialization failed: ${error.message}`);
+  console.log("Using disk storage fallback for file uploads");
+  
+  // Create uploads directory if it doesn't exist
+  const uploadsDir = path.join(__dirname, '..', '..', 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
   }
-});
+  
+  // Configure disk storage as fallback
+  const diskStorage = multer.diskStorage({
+    destination: function(req, file, cb) {
+      cb(null, uploadsDir);
+    },
+    filename: function(req, file, cb) {
+      cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`);
+    }
+  });
+  
+  gridfsMiddleware = multer({
+    storage: diskStorage,
+    limits: { fileSize: 5000000 }, // 5MB limit
+    fileFilter: function(req, file, cb) {
+      checkFileType(file, cb);
+    }
+  });
+}
 
 // Check file type
 function checkFileType(file, cb) {
-  // Allowed MIME types
-  const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
-  // Allowed extensions
-  const allowedExts = ['.jpg', '.jpeg', '.png', '.webp'];
-  
-  const ext = path.extname(file.originalname).toLowerCase();
-  const isValidExt = allowedExts.includes(ext);
-  const isValidMime = allowedMimes.includes(file.mimetype);
-  
-  if (isValidMime && isValidExt) {
+  // Allowed file extensions
+  const filetypes = /jpeg|jpg|png|gif|webp/;
+  // Check extension
+  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+  // Check mime type
+  const mimetype = filetypes.test(file.mimetype);
+
+  if (mimetype && extname) {
     return cb(null, true);
   } else {
-    cb(new Error('Only JPG, PNG, and WebP images are allowed'));
+    cb(new Error('Only images are allowed'));
   }
 }
 
-// Initialize upload
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5000000 }, // 5MB
-  fileFilter: function (req, file, cb) {
-    checkFileType(file, cb);
-  }
-});
-
-module.exports = upload; 
+// Export middleware
+module.exports = {
+  upload: gridfsMiddleware,
+  uploadSingle: gridfsMiddleware.single('image'),
+  uploadMultiple: gridfsMiddleware.array('images', 5)
+}; 

@@ -1,26 +1,42 @@
 const express = require('express');
-const upload = require('../middleware/upload');
+const uploadMiddleware = require('../middleware/upload');
 const { protect, authorize } = require('../middleware/auth');
 const mongoose = require('mongoose');
 const path = require('path');
 const logger = require('../utils/logger');
+const fs = require('fs');
 
 const router = express.Router();
 
-// Initialize GridFS stream
+// Flag to track if we're using GridFS or disk storage
+let usingGridFS = true;
 let gfs;
-mongoose.connection.once('open', () => {
-  // Initialize stream
-  gfs = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
-    bucketName: 'uploads'
+
+// Try to initialize GridFS, fallback to disk storage if fails
+try {
+  mongoose.connection.once('open', () => {
+    try {
+      // Initialize stream
+      gfs = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+        bucketName: 'uploads'
+      });
+      logger.info('GridFS connected for file uploads');
+    } catch (error) {
+      usingGridFS = false;
+      logger.warn(`GridFS initialization failed: ${error.message}`);
+      logger.info('Using disk storage fallback for file uploads');
+    }
   });
-  logger.info('GridFS connected for file uploads');
-});
+} catch (error) {
+  usingGridFS = false;
+  logger.warn(`GridFS initialization failed: ${error.message}`);
+  logger.info('Using disk storage fallback for file uploads');
+}
 
 // @desc    Upload product images
 // @route   POST /api/uploads
 // @access  Private/Admin
-router.post('/', protect, authorize('admin'), upload.array('images', 5), (req, res) => {
+router.post('/', protect, authorize('admin'), uploadMiddleware.uploadMultiple, (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({
@@ -56,15 +72,36 @@ router.get('/image/:filename', (req, res) => {
     const filename = req.params.filename;
     logger.debug(`Retrieving image: ${filename}`);
     
-    if (!gfs) {
-      logger.error('GridFS not initialized');
-      return res.status(500).json({
-        success: false,
-        message: 'GridFS not initialized'
-      });
+    // Handle disk storage fallback
+    if (!usingGridFS || !gfs) {
+      logger.debug('Using disk storage to retrieve image');
+      const uploadsDir = path.join(__dirname, '..', '..', 'uploads');
+      const filePath = path.join(uploadsDir, filename);
+      
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        logger.warn(`File not found on disk: ${filename}`);
+        return res.status(404).json({
+          success: false,
+          message: 'No file exists'
+        });
+      }
+      
+      // Determine content type
+      const ext = path.extname(filename).toLowerCase();
+      const contentType = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp'
+      }[ext] || 'application/octet-stream';
+      
+      res.set('Content-Type', contentType);
+      return fs.createReadStream(filePath).pipe(res);
     }
     
-    // Find the file
+    // Continue with GridFS if available
     gfs.find({ filename: filename }).toArray((err, files) => {
       if (err) {
         logger.error('Error finding file:', err);
@@ -117,14 +154,16 @@ router.get('/image/:filename', (req, res) => {
 // @access  Private/Admin
 router.delete('/:id', protect, authorize('admin'), async (req, res) => {
   try {
-    if (!gfs) {
-      logger.error('GridFS not initialized');
-      return res.status(500).json({
+    // Handle disk storage fallback
+    if (!usingGridFS || !gfs) {
+      logger.warn('GridFS not initialized, cannot delete file by ID from disk storage');
+      return res.status(501).json({
         success: false,
-        message: 'GridFS not initialized'
+        message: 'Delete by ID not supported with disk storage fallback'
       });
     }
     
+    // Continue with GridFS if available
     // Convert string id to ObjectId
     const id = new mongoose.Types.ObjectId(req.params.id);
     logger.info(`Deleting file with id: ${id}`);
@@ -143,6 +182,61 @@ router.delete('/:id', protect, authorize('admin'), async (req, res) => {
     // Delete the file
     await gfs.delete(id);
     logger.info(`File deleted successfully: ${id}`);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Image deleted successfully'
+    });
+  } catch (error) {
+    logger.error('Error deleting image:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error deleting image',
+      error: error.message
+    });
+  }
+});
+
+// New route to delete image by filename (works with disk storage)
+// @desc    Delete image by filename
+// @route   DELETE /api/uploads/image/:filename
+// @access  Private/Admin
+router.delete('/image/:filename', protect, authorize('admin'), async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    
+    if (usingGridFS && gfs) {
+      // Use GridFS to delete
+      const files = await gfs.find({ filename }).toArray();
+      
+      if (!files || files.length === 0) {
+        logger.warn(`File not found with filename: ${filename}`);
+        return res.status(404).json({
+          success: false,
+          message: 'File not found'
+        });
+      }
+      
+      // Delete the file
+      await gfs.delete(files[0]._id);
+      logger.info(`File deleted successfully: ${filename}`);
+    } else {
+      // Use disk storage to delete
+      const uploadsDir = path.join(__dirname, '..', '..', 'uploads');
+      const filePath = path.join(uploadsDir, filename);
+      
+      if (!fs.existsSync(filePath)) {
+        logger.warn(`File not found on disk: ${filename}`);
+        return res.status(404).json({
+          success: false,
+          message: 'No file exists'
+        });
+      }
+      
+      // Delete the file
+      fs.unlinkSync(filePath);
+      logger.info(`File deleted from disk: ${filename}`);
+    }
     
     res.status(200).json({
       success: true,
