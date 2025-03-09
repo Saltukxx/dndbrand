@@ -23,6 +23,22 @@ const ADMIN_REFRESH_INTERVAL = 30000;
 // Helper function to make API requests with CORS handling
 async function fetchWithCORS(endpoint, options = {}) {
     try {
+        // Use CONFIG.fetchAPI if available
+        if (window.CONFIG && typeof window.CONFIG.fetchAPI === 'function') {
+            console.log('Using CONFIG.fetchAPI for endpoint:', endpoint);
+            const fullEndpoint = endpoint.startsWith('http') ? endpoint : endpoint;
+            
+            // Add auth token to headers if present
+            const headers = options.headers || {};
+            
+            // Use CONFIG.fetchAPI for the request
+            return await window.CONFIG.fetchAPI(fullEndpoint, {
+                ...options,
+                headers
+            });
+        }
+        
+        // If CONFIG.fetchAPI is not available, use direct fetch
         // Use the API URL from settings or default
         const apiUrl = adminApiUrl;
         
@@ -38,205 +54,42 @@ async function fetchWithCORS(endpoint, options = {}) {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 ...(options.headers || {})
-            }
+            },
+            // Set credentials to omit to fix CORS issues
+            credentials: 'omit'
         };
         
-        // Try direct fetch first
+        // Try using the local proxy first
         try {
-            const response = await fetch(url, fetchOptions);
-            if (response.ok) {
-                return await response.json();
+            const proxyUrl = window.location.origin + '/api-proxy/' + encodeURIComponent(url);
+            console.log(`Trying local proxy: ${proxyUrl}`);
+            
+            const proxyResponse = await fetch(proxyUrl, {
+                ...fetchOptions,
+                signal: AbortSignal.timeout(10000) // 10 second timeout
+            });
+            
+            if (proxyResponse.ok) {
+                return await proxyResponse.json();
             }
-        } catch (error) {
-            console.warn('Direct fetch failed:', error);
+            console.warn(`Local proxy request failed with status: ${proxyResponse.status}`);
+        } catch (proxyError) {
+            console.warn(`Local proxy request failed: ${proxyError.message}`);
         }
         
-        // If direct fetch fails, use mock data as fallback
-        console.log('Using mock data for endpoint:', endpoint);
-        return getMockDataForEndpoint(endpoint);
+        // Try direct fetch as a backup
+        const response = await fetch(url, fetchOptions);
+        if (response.ok) {
+            return await response.json();
+        }
+        
+        // Handle non-200 responses
+        console.error(`API request failed with status: ${response.status}`);
+        throw new Error(`API request failed with status: ${response.status}`);
     } catch (error) {
         console.error('Error in fetchWithCORS:', error);
-        return getMockDataForEndpoint(endpoint);
+        throw error; // Rethrow the error to be handled by the caller
     }
-}
-
-// Helper function to get mock data based on endpoint
-function getMockDataForEndpoint(endpoint) {
-    if (endpoint.includes('admin/stats')) {
-        return getMockStats();
-    } else if (endpoint.includes('orders')) {
-        return getMockOrders();
-    } else if (endpoint.includes('products')) {
-        return getMockProducts();
-    } else if (endpoint.includes('customers')) {
-        return getMockCustomers();
-    } else if (endpoint.includes('login')) {
-        // For login, return success
-        return {
-            token: 'mock-token-' + Date.now(),
-            user: {
-                name: 'Demo Admin',
-                email: 'admin@dndbrand.com',
-                role: 'admin'
-            }
-        };
-    }
-    
-    // Default empty array for other endpoints
-    return [];
-}
-
-// Mock data functions
-function getMockStats() {
-    return {
-        totalSales: 24500,
-        totalCustomers: 120,
-        totalProducts: 45,
-        newOrders: 8
-    };
-}
-
-function getMockOrders() {
-    return [
-        {
-            id: '1',
-            _id: '1',
-            orderNumber: 'ORD10001',
-            createdAt: new Date(2023, 5, 15),
-            total: 1250.00,
-            status: 'completed',
-            customer: {
-                name: 'Ahmet Yılmaz'
-            }
-        },
-        {
-            id: '2',
-            _id: '2',
-            orderNumber: 'ORD10002',
-            createdAt: new Date(2023, 5, 18),
-            total: 850.50,
-            status: 'processing',
-            customer: {
-                name: 'Ayşe Demir'
-            }
-        },
-        {
-            id: '3',
-            _id: '3',
-            orderNumber: 'ORD10003',
-            createdAt: new Date(2023, 5, 20),
-            total: 2100.75,
-            status: 'shipped',
-            customer: {
-                name: 'Mehmet Kaya'
-            }
-        },
-        {
-            id: '4',
-            _id: '4',
-            orderNumber: 'ORD10004',
-            createdAt: new Date(2023, 5, 22),
-            total: 450.25,
-            status: 'cancelled',
-            customer: {
-                name: 'Zeynep Şahin'
-            }
-        }
-    ];
-}
-
-function getMockProducts() {
-    return [
-        {
-            id: '1',
-            _id: '1',
-            name: 'Premium T-Shirt',
-            sku: 'DND-CL-123',
-            category: 'clothing',
-            price: 249.99,
-            stock: 45,
-            status: 'active',
-            description: 'Premium quality t-shirt with DnD Brand logo.',
-            images: ['https://via.placeholder.com/150x150.png?text=T-Shirt']
-        },
-        {
-            id: '2',
-            _id: '2',
-            name: 'Leather Wallet',
-            sku: 'DND-AC-456',
-            category: 'accessories',
-            price: 349.99,
-            stock: 20,
-            status: 'active',
-            description: 'Genuine leather wallet with multiple compartments.',
-            images: ['https://via.placeholder.com/150x150.png?text=Wallet']
-        },
-        {
-            id: '3',
-            _id: '3',
-            name: 'Classic Sneakers',
-            sku: 'DND-FW-789',
-            category: 'footwear',
-            price: 599.99,
-            stock: 15,
-            status: 'active',
-            description: 'Comfortable and stylish sneakers for everyday wear.',
-            images: ['https://via.placeholder.com/150x150.png?text=Sneakers']
-        },
-        {
-            id: '4',
-            _id: '4',
-            name: 'Silver Bracelet',
-            sku: 'DND-JW-101',
-            category: 'jewelry',
-            price: 799.99,
-            stock: 8,
-            status: 'draft',
-            description: 'Elegant silver bracelet with minimalist design.',
-            images: ['https://via.placeholder.com/150x150.png?text=Bracelet']
-        }
-    ];
-}
-
-function getMockCustomers() {
-    return [
-        {
-            id: '1',
-            _id: '1',
-            name: 'Ahmet Yılmaz',
-            email: 'ahmet@example.com',
-            phone: '+90 555 123 4567',
-            createdAt: new Date(2023, 1, 15),
-            orderCount: 5
-        },
-        {
-            id: '2',
-            _id: '2',
-            name: 'Ayşe Demir',
-            email: 'ayse@example.com',
-            phone: '+90 555 234 5678',
-            createdAt: new Date(2023, 2, 20),
-            orderCount: 3
-        },
-        {
-            id: '3',
-            _id: '3',
-            name: 'Mehmet Kaya',
-            email: 'mehmet@example.com',
-            phone: '+90 555 345 6789',
-            createdAt: new Date(2023, 3, 10),
-            orderCount: 2
-        },
-        {
-            id: '4',
-            _id: '4',
-            name: 'Zeynep Şahin',
-            email: 'zeynep@example.com',
-            phone: '+90 555 456 7890',
-            createdAt: new Date(2023, 4, 5),
-            orderCount: 1
-        }
-    ];
 }
 
 // Check if admin is authenticated
@@ -374,180 +227,154 @@ function initializeAdminDashboard() {
     });
 }
 
-// Load dashboard statistics
+// Load dashboard stats
 async function loadDashboardStats() {
     if (!checkAdminAuth()) return;
     
+    // Get stats elements
+    const salesElement = document.getElementById('totalSales');
+    const customersElement = document.getElementById('totalCustomers');
+    const productsElement = document.getElementById('totalProducts');
+    const ordersElement = document.getElementById('newOrders');
+    
     try {
-        // Try to fetch real data
-        let stats = null;
-        try {
-            const response = await fetchWithCORS('admin/stats', {
-                headers: {
-                    'Authorization': `Bearer ${authToken}`
-                }
-            });
-            stats = response || {};
-        } catch (error) {
-            console.log('Using mock stats data due to API error:', error);
-            stats = getMockStats();
-        }
+        // Show loading state
+        salesElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        customersElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        productsElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        ordersElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         
-        // Update dashboard stats with fallbacks for missing values
-        document.getElementById('totalSales').textContent = typeof stats.totalSales === 'number' ? 
-            '₺' + stats.totalSales.toLocaleString('tr-TR', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }) : '₺0.00';
-            
-        document.getElementById('totalCustomers').textContent = stats.totalCustomers || 0;
-        document.getElementById('totalProducts').textContent = stats.totalProducts || 0;
-        document.getElementById('newOrders').textContent = stats.newOrders || 0;
+        // Fetch stats from API
+        const stats = await fetchWithCORS('admin/stats', {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        // Update UI with stats
+        salesElement.textContent = stats.totalSales ? `₺${stats.totalSales.toLocaleString('tr-TR')}` : '₺0';
+        customersElement.textContent = stats.totalCustomers || '0';
+        productsElement.textContent = stats.totalProducts || '0';
+        ordersElement.textContent = stats.newOrders || '0';
+        
     } catch (error) {
         console.error('Error loading dashboard stats:', error);
         
+        // Show error state
+        salesElement.textContent = 'Hata';
+        customersElement.textContent = 'Hata';
+        productsElement.textContent = 'Hata';
+        ordersElement.textContent = 'Hata';
+        
         // Show notification
         showNotification('İstatistikler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 'error');
-        
-        // Use mock data as fallback
-        const stats = getMockStats();
-        document.getElementById('totalSales').textContent = '₺' + stats.totalSales.toLocaleString('tr-TR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-        document.getElementById('totalCustomers').textContent = stats.totalCustomers;
-        document.getElementById('totalProducts').textContent = stats.totalProducts;
-        document.getElementById('newOrders').textContent = stats.newOrders;
     }
 }
 
-// Load recent orders
+// Load recent orders for dashboard
 async function loadRecentOrders() {
     if (!checkAdminAuth()) return;
     
+    // Get recent orders element
+    const recentOrdersElement = document.getElementById('recentOrdersList');
+    
     // Show loading state
-    const recentOrdersTable = document.getElementById('recentOrdersTable');
-    const tableBody = recentOrdersTable.querySelector('tbody');
-    tableBody.innerHTML = '<tr><td colspan="5">Yükleniyor...</td></tr>';
+    recentOrdersElement.innerHTML = '<li class="loading">Siparişler yükleniyor...</li>';
     
     try {
-        // Try to fetch real data
-        let orders = [];
-        try {
-            const response = await fetchWithCORS('admin/orders/recent', {
-                headers: {
-                    'Authorization': `Bearer ${authToken}`
-                }
-            });
-            
-            // Ensure orders is an array
-            orders = Array.isArray(response) ? response : 
-                    (response && response.orders ? response.orders : []);
-                    
-            // If no orders were returned, use mock data
-            if (orders.length === 0) {
-                console.log('No orders returned from API, using mock data');
-                orders = getMockOrders();
+        // Fetch recent orders from API (limit to 5)
+        const orders = await fetchWithCORS('orders?limit=5', {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
             }
-        } catch (error) {
-            console.log('Using mock orders data due to API error:', error);
-            orders = getMockOrders();
-        }
+        });
         
-        if (orders.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="5">Henüz sipariş bulunmamaktadır.</td></tr>';
+        // Clear loading state
+        recentOrdersElement.innerHTML = '';
+        
+        // Check if we have orders
+        if (!orders || (Array.isArray(orders) && orders.length === 0)) {
+            recentOrdersElement.innerHTML = '<li>Henüz sipariş bulunmamaktadır.</li>';
             return;
         }
         
-        tableBody.innerHTML = '';
+        // Make sure orders is an array
+        const ordersArray = Array.isArray(orders) ? orders : 
+                           (orders.data ? orders.data : 
+                           (orders.orders ? orders.orders : []));
         
-        orders.forEach(order => {
-            const row = document.createElement('tr');
-            
-            // Format date
-            const orderDate = order.createdAt ? new Date(order.createdAt) : new Date();
-            const formattedDate = orderDate.toLocaleDateString('tr-TR');
-            
-            // Format price
-            const formattedTotal = typeof order.total === 'number' ? 
-                order.total.toLocaleString('tr-TR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }) : '0.00';
-            
-            // Get status badge class
-            let statusClass = '';
-            switch(order.status) {
-                case 'completed': statusClass = 'completed'; break;
-                case 'processing': statusClass = 'processing'; break;
-                case 'shipped': statusClass = 'shipped'; break;
-                case 'cancelled': statusClass = 'cancelled'; break;
-                default: statusClass = 'pending';
-            }
-            
-            row.innerHTML = `
-                <td>${order.orderNumber || `#${order._id || order.id || 'N/A'}`}</td>
-                <td>${formattedDate}</td>
-                <td>${order.customer ? order.customer.name : 'Misafir'}</td>
-                <td>₺${formattedTotal}</td>
-                <td><span class="status-badge ${statusClass}">${order.status || 'pending'}</span></td>
-            `;
-            
-            tableBody.appendChild(row);
+        // Sort orders by date (newest first)
+        ordersArray.sort((a, b) => {
+            return new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt);
         });
         
-        // Add click event to rows
-        const rows = tableBody.querySelectorAll('tr');
-        rows.forEach(row => {
-            row.addEventListener('click', function() {
-                const orderNumber = this.cells[0].textContent;
-                const orderId = orderNumber.startsWith('#') ? orderNumber.substring(1) : orderNumber;
+        // Limit to 5 most recent orders
+        const recentOrders = ordersArray.slice(0, 5);
+        
+        // Add orders to list
+        recentOrders.forEach(order => {
+            const date = new Date(order.date || order.createdAt).toLocaleDateString('tr-TR');
+            const total = typeof order.total === 'number' ? 
+                '₺' + order.total.toLocaleString('tr-TR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) : '₺0.00';
+            
+            // Determine status class
+            let statusClass = '';
+            switch (order.status?.toLowerCase()) {
+                case 'completed':
+                case 'tamamlandı':
+                    statusClass = 'completed';
+                    break;
+                case 'pending':
+                case 'beklemede':
+                    statusClass = 'pending';
+                    break;
+                case 'processing':
+                case 'işleniyor':
+                    statusClass = 'processing';
+                    break;
+                case 'cancelled':
+                case 'iptal edildi':
+                    statusClass = 'cancelled';
+                    break;
+                default:
+                    statusClass = 'pending';
+            }
+            
+            const orderItem = document.createElement('li');
+            orderItem.innerHTML = `
+                <div class="order-id">#${order.orderNumber || order._id?.substring(0, 8) || 'N/A'}</div>
+                <div class="order-date">${date}</div>
+                <div class="order-status">
+                    <span class="status-badge ${statusClass}">${order.status || 'Beklemede'}</span>
+                </div>
+                <div class="order-total">${total}</div>
+                <div class="order-actions">
+                    <button class="action-btn view-order-btn" data-id="${order._id || order.id}">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            `;
+            
+            recentOrdersElement.appendChild(orderItem);
+        });
+        
+        // Add event listeners to order action buttons
+        document.querySelectorAll('.view-order-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const orderId = this.getAttribute('data-id');
                 viewOrder(orderId);
             });
         });
+        
     } catch (error) {
         console.error('Error loading recent orders:', error);
+        recentOrdersElement.innerHTML = '<li class="error">Siparişler yüklenirken bir hata oluştu.</li>';
         
-        // Show error message in the table
-        tableBody.innerHTML = '<tr><td colspan="5">Son siparişler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</td></tr>';
-        
-        // Use mock data as fallback
-        setTimeout(() => {
-            try {
-                const orders = getMockOrders();
-                tableBody.innerHTML = '';
-                
-                orders.forEach(order => {
-                    const row = document.createElement('tr');
-                    
-                    // Format date
-                    const orderDate = new Date(order.createdAt);
-                    const formattedDate = orderDate.toLocaleDateString('tr-TR');
-                    
-                    row.innerHTML = `
-                        <td>${order.orderNumber || `#${order._id || order.id}`}</td>
-                        <td>${formattedDate}</td>
-                        <td>${order.customer ? order.customer.name : 'Misafir'}</td>
-                        <td>₺${order.total.toLocaleString('tr-TR')}</td>
-                        <td><span class="status-badge ${order.status}">${order.status}</span></td>
-                    `;
-                    
-                    tableBody.appendChild(row);
-                });
-                
-                // Add click event to rows
-                const rows = tableBody.querySelectorAll('tr');
-                rows.forEach(row => {
-                    row.addEventListener('click', function() {
-                        const orderNumber = this.cells[0].textContent;
-                        const orderId = orderNumber.startsWith('#') ? orderNumber.substring(1) : orderNumber;
-                        viewOrder(orderId);
-                    });
-                });
-            } catch (mockError) {
-                console.error('Error loading mock orders:', mockError);
-            }
-        }, 1000);
+        // Show notification
+        showNotification('Siparişler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 'error');
     }
 }
 
