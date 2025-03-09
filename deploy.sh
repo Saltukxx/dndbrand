@@ -30,6 +30,20 @@ fi
 # Go back to root
 cd ..
 
+# Verify routes and controllers
+echo "Verifying routes and controllers..."
+node verify-routes.js
+if [ $? -ne 0 ]; then
+  echo "Warning: Route verification detected issues that need to be addressed"
+  echo "Check the output above for details on what needs to be fixed"
+  
+  read -p "Continue with deployment preparation anyway? (y/N): " confirm
+  if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+    echo "Deployment preparation aborted"
+    exit 1
+  fi
+fi
+
 echo
 echo "Deployment preparation complete!"
 echo "You can now deploy to Render using the 'render.yaml' configuration"

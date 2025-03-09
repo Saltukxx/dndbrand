@@ -9,7 +9,11 @@
     "server:prod:win": "cd server && npm run prod:win",
     "install:server": "cd server && npm install",
     "install:all": "npm install && npm run install:server",
-    "postinstall": "cd server && npm install node-cache winston --no-save || true"
+    "postinstall": "cd server && npm install node-cache winston --no-save || true",
+    "verify-routes": "node verify-routes.js",
+    "auto-fix": "node apply-fixes.js",
+    "deploy:verify": "npm run verify-routes && cd server && npm run prod",
+    "deploy:safe": "npm run auto-fix && npm run verify-routes && cd server && npm run prod"
   },
   "author": "DnD Brand",
   "license": "MIT",
