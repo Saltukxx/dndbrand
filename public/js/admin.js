@@ -3,6 +3,9 @@
  * Comprehensive admin panel with product management, order tracking, and analytics
  */
 
+// Default placeholder image URL (should be the same as in ImageService)
+const DEFAULT_PLACEHOLDER_URL = 'https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg';
+
 // Get API URL from config if available
 let adminApiUrl;
 if (window.CONFIG && window.CONFIG.API_URL) {
@@ -158,9 +161,16 @@ function showNotification(message, type = 'success') {
 
 // Initialize admin dashboard
 function initializeAdminDashboard() {
-    // Load dashboard data
-    loadDashboardStats();
-    loadRecentOrders();
+    // Load dashboard data if elements exist
+    if (document.getElementById('totalSales') || document.getElementById('totalOrders') || 
+        document.getElementById('totalCustomers') || document.getElementById('totalProducts')) {
+        loadDashboardStats();
+    }
+    
+    // Only load recent orders if the element exists
+    if (document.getElementById('recentOrdersList')) {
+        loadRecentOrders();
+    }
     
     // Set up navigation
     setupNavigation();
@@ -172,13 +182,16 @@ function initializeAdminDashboard() {
     setupSearch();
     
     // Set up logout button
-    document.getElementById('logoutBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        sessionStorage.removeItem('adminToken');
-        sessionStorage.removeItem('adminAuthenticated');
-        sessionStorage.removeItem('adminUser');
-        window.location.href = 'admin-login.html';
-    });
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            sessionStorage.removeItem('adminToken');
+            sessionStorage.removeItem('adminAuthenticated');
+            sessionStorage.removeItem('adminUser');
+            window.location.href = 'admin-login.html';
+        });
+    }
     
     // Set up refresh interval with a more reasonable refresh rate
     // and clear any existing intervals first
@@ -474,7 +487,7 @@ async function loadProducts() {
                 const productId = product._id || product.id || '';
                 
                 // Safely get image URL
-                let imageUrl = '../img/placeholder.jpg';
+                let imageUrl = DEFAULT_PLACEHOLDER_URL;
                 
                 // Use ImageService if available for consistent image handling
                 if (window.ImageService && typeof window.ImageService.getProductImage === 'function') {
@@ -482,8 +495,6 @@ async function loadProducts() {
                         imageUrl = window.ImageService.getProductImage(product.images[0]);
                     } else if (product.image) {
                         imageUrl = window.ImageService.getProductImage(product.image);
-                    } else {
-                        imageUrl = window.ImageService.getProductImage(null); // Will use default placeholder
                     }
                 } else {
                     // Fallback to the old method if ImageService is not available
@@ -516,7 +527,7 @@ async function loadProducts() {
                 row.innerHTML = `
                 <td class="product-cell">
                     <div class="product-info">
-                        <img src="${imageUrl}" alt="${product.name}" onerror="this.onerror=null; this.src=window.ImageService ? window.ImageService.getProductImage(null) : 'https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg';">
+                        <img src="${imageUrl}" alt="${product.name}" onerror="this.onerror=null; this.src=${DEFAULT_PLACEHOLDER_URL};">
                         <span>${product.name}</span>
                     </div>
                 </td>
@@ -670,7 +681,7 @@ function viewProduct(productId) {
                         const imageUrl = window.ImageService && typeof window.ImageService.getProductImage === 'function' 
                             ? window.ImageService.getProductImage(image)
                             : image;
-                        return `<img src="${imageUrl}" alt="${product.name}" onerror="this.onerror=null; this.src=window.ImageService ? window.ImageService.getProductImage(null) : 'https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg';">`;
+                        return `<img src="${imageUrl}" alt="${product.name}" onerror="this.onerror=null; this.src=${DEFAULT_PLACEHOLDER_URL};">`;
                     }).join('')}
                 </div>
             `;
@@ -1241,7 +1252,7 @@ function confirmDeleteProduct(productId) {
     .then(response => {
         // Get product name with fallback
         let productName = 'Bu ürünü';
-        let productImage = '../img/placeholder.jpg';
+        let productImage = DEFAULT_PLACEHOLDER_URL;
         
         // Handle different response formats
         if (response && response.name) {
@@ -1275,7 +1286,7 @@ function confirmDeleteProduct(productId) {
                 </div>
                 <div class="modal-body">
                     <div class="delete-product-info">
-                        <img src="${productImage}" alt="${productName}" onerror="this.src='../img/placeholder.jpg';">
+                        <img src="${productImage}" alt="${productName}" onerror="this.src=${DEFAULT_PLACEHOLDER_URL};">
                         <div class="delete-product-details">
                             <h3>${productName}</h3>
                             <p>Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
