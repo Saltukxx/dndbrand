@@ -14,11 +14,8 @@ try {
     console.log('Config not found, using fallback API URL:', productApiUrl);
 }
 
-// Server-side placeholder URL (production)
-const SERVER_PLACEHOLDER_URL = `https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg`;
-
-// Local server placeholder URL
-const LOCAL_PLACEHOLDER_URL = '/api/images/placeholder-product.jpg';
+// Database placeholder image URL (stored in MongoDB)
+const DATABASE_PLACEHOLDER_URL = 'https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg';
 
 // Default fallback image path (local file)
 const FALLBACK_PRODUCT_IMAGE = '/images/placeholder-product.jpg';
@@ -26,49 +23,25 @@ const FALLBACK_PRODUCT_IMAGE = '/images/placeholder-product.jpg';
 // Make fallback available globally for other scripts
 window.FALLBACK_PRODUCT_IMAGE = FALLBACK_PRODUCT_IMAGE;
 
-// Set fallback product image with ImageService or direct fallback
-const DEFAULT_PRODUCT_IMAGE = window.ImageService ? 
-    window.ImageService.getBestPlaceholder ? window.ImageService.getBestPlaceholder() : 
-    window.ImageService.getProductImage('placeholder-product.jpg') : 
-    LOCAL_PLACEHOLDER_URL;
+// Track if database placeholder is available
+let isDatabasePlaceholderAvailable = false;
 
-// Track if placeholder images are available
-let isServerPlaceholderAvailable = false;
-let isLocalPlaceholderAvailable = false;
-
-// Preload local placeholder image first
-function preloadLocalPlaceholder() {
+// Preload the database placeholder image
+function preloadDatabasePlaceholder() {
     const img = new Image();
     img.onload = function() {
-        isLocalPlaceholderAvailable = true;
-        console.log('Local placeholder image loaded successfully for product page');
+        isDatabasePlaceholderAvailable = true;
+        console.log('Database placeholder image loaded successfully for product page');
     };
     img.onerror = function() {
-        isLocalPlaceholderAvailable = false;
-        console.warn('Local placeholder not available for product page, trying server');
-        
-        // Try server placeholder as fallback
-        preloadServerPlaceholder();
+        isDatabasePlaceholderAvailable = false;
+        console.warn('Database placeholder not available, will use local fallback for product page');
     };
-    img.src = LOCAL_PLACEHOLDER_URL;
+    img.src = DATABASE_PLACEHOLDER_URL;
 }
 
-// Preload server placeholder image as backup
-function preloadServerPlaceholder() {
-    const img = new Image();
-    img.onload = function() {
-        isServerPlaceholderAvailable = true;
-        console.log('Server placeholder image loaded successfully for product page');
-    };
-    img.onerror = function() {
-        isServerPlaceholderAvailable = false;
-        console.warn('Server placeholder not available, using local file fallback for product page');
-    };
-    img.src = SERVER_PLACEHOLDER_URL;
-}
-
-// Try to preload the placeholders
-preloadLocalPlaceholder();
+// Try to preload the placeholder
+preloadDatabasePlaceholder();
 
 document.addEventListener('DOMContentLoaded', function() {
     // Get product ID from URL
@@ -193,13 +166,9 @@ function getProductImage(imagePath, useOriginal = false) {
         return imagePath;
     }
     
-    // Check for placeholder or default image references
-    if (imagePath.includes('placeholder-product.jpg')) {
-        return getBestPlaceholder();
-    }
-    
-    // Check for problematic patterns and return the fallback
-    if (imagePath.includes('no-image.jpg') || 
+    // Check for placeholder or problematic image references
+    if (imagePath.includes('placeholder-product.jpg') || 
+        imagePath.includes('no-image.jpg') || 
         imagePath.includes('undefined') || 
         imagePath.includes('null') ||
         imagePath.includes('default-product.jpg')) {
@@ -225,17 +194,9 @@ function getProductImage(imagePath, useOriginal = false) {
  * @returns {string} The placeholder image URL
  */
 function getBestPlaceholder() {
-    // If local placeholder is available, use it (fastest)
-    if (isLocalPlaceholderAvailable) {
-        return LOCAL_PLACEHOLDER_URL;
+    if (isDatabasePlaceholderAvailable) {
+        return DATABASE_PLACEHOLDER_URL;
     }
-    
-    // If server placeholder is available, use it (reliable)
-    if (isServerPlaceholderAvailable) {
-        return SERVER_PLACEHOLDER_URL;
-    }
-    
-    // Otherwise fall back to local file
     return FALLBACK_PRODUCT_IMAGE;
 }
 
@@ -1511,7 +1472,7 @@ function displayRelatedProducts(products) {
         } else if (product.imageUrl) {
             productImage = getProductImage(product.imageUrl);
         } else {
-            productImage = DEFAULT_PRODUCT_IMAGE;
+            productImage = getBestPlaceholder();
         }
         
         // Create product card HTML
@@ -1520,7 +1481,7 @@ function displayRelatedProducts(products) {
         productCard.innerHTML = `
             <div class="product-card-image">
                 ${product.isNew || product.isFeatured ? `<div class="premium-badge">${product.isNew ? 'Yeni' : 'Premium'}</div>` : ''}
-                <img src="${productImage}" alt="${product.name}" onerror="this.src='${DEFAULT_PRODUCT_IMAGE}'; this.onerror=null;">
+                <img src="${productImage}" alt="${product.name}" onerror="this.src='${getBestPlaceholder()}'; this.onerror=null;">
                 <div class="product-card-overlay">
                     <a href="product.html?id=${product._id || product.id}" class="view-details">Detayları Gör</a>
                     <button class="add-to-cart-quick" data-id="${product._id || product.id}">Sepete Ekle</button>

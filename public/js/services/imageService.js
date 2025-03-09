@@ -16,11 +16,8 @@ const PLACEHOLDER_IMAGES = {
     default: '/images/placeholder-product.jpg'
 };
 
-// Server-side placeholder URL (production)
-const SERVER_PLACEHOLDER_URL = `https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg`;
-
-// Local server placeholder URL
-const LOCAL_PLACEHOLDER_URL = '/api/images/placeholder-product.jpg';
+// Remote placeholder (stored in database) - always available in production
+const DATABASE_PLACEHOLDER_URL = 'https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg';
 
 // Default image path - use placeholder-product.jpg as the default fallback
 const DEFAULT_IMAGE = '/images/placeholder-product.jpg';
@@ -28,43 +25,25 @@ const DEFAULT_IMAGE = '/images/placeholder-product.jpg';
 // Maximum number of retry attempts
 const MAX_RETRY_ATTEMPTS = 2;
 
-// Track whether placeholder images are available
-let isServerPlaceholderAvailable = false;
-let isLocalPlaceholderAvailable = false;
+// Track whether database placeholder is available
+let isDatabasePlaceholderAvailable = false;
 
-// Preload local placeholder image first
-function preloadLocalPlaceholder() {
+// Preload the database placeholder image
+function preloadDatabasePlaceholder() {
     const img = new Image();
     img.onload = function() {
-        isLocalPlaceholderAvailable = true;
-        console.log('Local placeholder image loaded successfully');
+        isDatabasePlaceholderAvailable = true;
+        console.log('Database placeholder image loaded successfully');
     };
     img.onerror = function() {
-        isLocalPlaceholderAvailable = false;
-        console.warn('Local placeholder not available, will try server');
-        
-        // Try server placeholder as fallback
-        preloadServerPlaceholder();
+        isDatabasePlaceholderAvailable = false;
+        console.warn('Database placeholder image not available, will use local file fallback');
     };
-    img.src = LOCAL_PLACEHOLDER_URL;
+    img.src = DATABASE_PLACEHOLDER_URL;
 }
 
-// Preload server placeholder image as backup
-function preloadServerPlaceholder() {
-    const img = new Image();
-    img.onload = function() {
-        isServerPlaceholderAvailable = true;
-        console.log('Server placeholder image loaded successfully');
-    };
-    img.onerror = function() {
-        isServerPlaceholderAvailable = false;
-        console.warn('Server placeholder not available, will use local file fallback');
-    };
-    img.src = SERVER_PLACEHOLDER_URL;
-}
-
-// Try to preload the placeholders
-preloadLocalPlaceholder();
+// Try to preload the database placeholder
+preloadDatabasePlaceholder();
 
 /**
  * Get the best available placeholder image
@@ -72,14 +51,9 @@ preloadLocalPlaceholder();
  * @returns {string} The best available placeholder image URL
  */
 function getBestPlaceholder(category) {
-    // If local placeholder is available, use it (fastest)
-    if (isLocalPlaceholderAvailable) {
-        return LOCAL_PLACEHOLDER_URL;
-    }
-    
-    // If server placeholder is available, use it (reliable)
-    if (isServerPlaceholderAvailable) {
-        return SERVER_PLACEHOLDER_URL;
+    // If database placeholder is available, use it (most reliable)
+    if (isDatabasePlaceholderAvailable) {
+        return DATABASE_PLACEHOLDER_URL;
     }
     
     // Otherwise fall back to category-specific or default local placeholder
@@ -127,32 +101,78 @@ function handleImageError(imgElement, fallbackSrc, maxRetries = MAX_RETRY_ATTEMP
  * Apply the image error handler to all images on the page
  */
 function applyImageErrorHandler() {
-    // Get all images on the page
-    const images = document.querySelectorAll('img');
+    // Wait for DOM to be ready
+    const applyHandlers = () => {
+        // Get all images on the page
+        const images = document.querySelectorAll('img');
+        
+        // Apply error handler to each image
+        images.forEach(img => {
+            // Skip images that already have our error handler
+            if (img.hasAttribute('data-error-handled')) return;
+            
+            // Mark image as handled
+            img.setAttribute('data-error-handled', 'true');
+            
+            // Get appropriate fallback based on image classes or parent elements
+            let fallbackSrc = PLACEHOLDER_IMAGES.default;
+            
+            // Check if image is in a product card with a category
+            const productCard = img.closest('[data-category]');
+            if (productCard) {
+                const category = productCard.getAttribute('data-category');
+                fallbackSrc = getCategoryPlaceholder(category);
+            }
+            
+            // Set error handler
+            img.onerror = function() {
+                handleImageError(this, fallbackSrc);
+            };
+        });
+    };
     
-    // Apply error handler to each image
-    images.forEach(img => {
-        // Skip images that already have our error handler
-        if (img.hasAttribute('data-error-handled')) return;
+    // Apply now if DOM is ready, otherwise wait
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyHandlers);
+    } else {
+        applyHandlers();
+    }
+    
+    // Set up MutationObserver to catch dynamically added images
+    if (document.body) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach((node) => {
+                        // Apply to direct image nodes
+                        if (node.tagName === 'IMG') {
+                            if (!node.hasAttribute('data-error-handled')) {
+                                node.setAttribute('data-error-handled', 'true');
+                                node.onerror = function() {
+                                    handleImageError(this, getBestPlaceholder());
+                                };
+                            }
+                        }
+                        
+                        // Apply to all images inside added nodes
+                        if (node.querySelectorAll) {
+                            const images = node.querySelectorAll('img');
+                            images.forEach(img => {
+                                if (!img.hasAttribute('data-error-handled')) {
+                                    img.setAttribute('data-error-handled', 'true');
+                                    img.onerror = function() {
+                                        handleImageError(this, getBestPlaceholder());
+                                    };
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        });
         
-        // Mark image as handled
-        img.setAttribute('data-error-handled', 'true');
-        
-        // Get appropriate fallback based on image classes or parent elements
-        let fallbackSrc = PLACEHOLDER_IMAGES.default;
-        
-        // Check if image is in a product card with a category
-        const productCard = img.closest('[data-category]');
-        if (productCard) {
-            const category = productCard.getAttribute('data-category');
-            fallbackSrc = getCategoryPlaceholder(category);
-        }
-        
-        // Set error handler
-        img.onerror = function() {
-            handleImageError(this, fallbackSrc);
-        };
-    });
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
 }
 
 // Apply error handler to all images when DOM is loaded
@@ -161,42 +181,6 @@ if (document.readyState === 'loading') {
 } else {
     applyImageErrorHandler();
 }
-
-// Apply error handler to new images added to the DOM
-const observer = new MutationObserver(mutations => {
-    mutations.forEach(mutation => {
-        if (mutation.type === 'childList') {
-            mutation.addedNodes.forEach(node => {
-                // Check if the added node is an element
-                if (node.nodeType === Node.ELEMENT_NODE) {
-                    // If it's an image, apply error handler
-                    if (node.tagName === 'IMG') {
-                        if (!node.hasAttribute('data-error-handled')) {
-                            node.setAttribute('data-error-handled', 'true');
-                            node.onerror = function() {
-                                handleImageError(this, PLACEHOLDER_IMAGES.default);
-                            };
-                        }
-                    }
-                    
-                    // Check for images inside the added node
-                    const images = node.querySelectorAll('img');
-                    images.forEach(img => {
-                        if (!img.hasAttribute('data-error-handled')) {
-                            img.setAttribute('data-error-handled', 'true');
-                            img.onerror = function() {
-                                handleImageError(this, PLACEHOLDER_IMAGES.default);
-                            };
-                        }
-                    });
-                }
-            });
-        }
-    });
-});
-
-// Start observing the document
-observer.observe(document.body, { childList: true, subtree: true });
 
 /**
  * Get product image URL with proper handling of various formats
@@ -284,6 +268,18 @@ function processImagePath(imagePath) {
     // If it's a relative path to our images folder, return it as is
     if (imagePath.startsWith('/images/')) {
         return imagePath;
+    }
+    
+    // Check for problematic patterns and return the best placeholder
+    const problematicPatterns = [
+        'no-image.jpg',
+        'undefined',
+        'default-product.jpg'
+    ];
+    
+    if (problematicPatterns.some(pattern => imagePath.includes(pattern)) ||
+        imagePath.includes('placeholder-product.jpg')) {
+        return getBestPlaceholder();
     }
     
     // Handle uploads directory paths
