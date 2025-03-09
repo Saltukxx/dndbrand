@@ -8,11 +8,19 @@
 // Import the cors package (make sure to install it first: npm install cors)
 const cors = require('cors');
 
-// CORS options - TEMPORARILY ALLOWING ALL ORIGINS
+// CORS options - PRODUCTION CONFIGURATION
 const corsOptions = {
-    origin: '*', // Allow all origins temporarily
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    // Allow only specific origins
+    origin: [
+        'https://dndbrand.com',
+        'https://www.dndbrand.com',
+        'https://dndbrand-server.onrender.com',
+        // Keep local development environment
+        'http://localhost:3000',
+        'http://localhost:8080'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
     credentials: true,
     maxAge: 86400 // 24 hours
 };
@@ -21,9 +29,8 @@ const corsOptions = {
 module.exports = cors(corsOptions);
 
 /**
- * WARNING: This configuration allows requests from ANY origin.
- * This should only be used for development and testing.
- * For production, use a more restrictive configuration.
+ * IMPORTANT: This configuration allows requests only from specified origins.
+ * This is the recommended setup for production use.
  */
 
 /**

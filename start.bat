@@ -21,8 +21,20 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
+echo Creating logs directory...
+if not exist logs mkdir logs
+
 echo Installing dependencies...
-call npm install
+call npm install --legacy-peer-deps
+
+echo.
+echo Setting up database...
+node server/scripts/setup-db.js
+if %ERRORLEVEL% neq 0 (
+    echo Error: Database setup failed.
+    pause
+    exit /b 1
+)
 
 echo.
 echo Starting DnD Brand server...

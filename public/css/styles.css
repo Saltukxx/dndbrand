@@ -1614,4 +1614,165 @@ main, section:not(.hero):not(.page-header) {
     .newsletter-content p {
         font-size: 1rem;
     }
+}
+
+/* Button loading states */
+.btn.loading, 
+.add-to-cart.loading,
+button[type="submit"].loading {
+    opacity: 0.7;
+    pointer-events: none;
+    position: relative;
+}
+
+.btn.loading i, 
+.add-to-cart.loading i,
+button[type="submit"].loading i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Cart icon animation */
+.cart-icon.pulse {
+    animation: pulse 0.5s cubic-bezier(0.66, 0, 0, 1);
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* Improved notifications */
+.shop-notification,
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    background-color: #333;
+    color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s, transform 0.3s;
+    max-width: 320px;
+}
+
+.shop-notification.show,
+.notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.shop-notification i,
+.notification i {
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+.shop-notification.success,
+.notification.success {
+    background-color: #4CAF50;
+}
+
+.shop-notification.error,
+.notification.error {
+    background-color: #F44336;
+}
+
+.shop-notification.warning,
+.notification.warning {
+    background-color: #FF9800;
+}
+
+.shop-notification.info,
+.notification.info {
+    background-color: #2196F3;
+}
+
+.close-notification {
+    margin-left: 10px;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.close-notification:hover {
+    opacity: 1;
+}
+
+/* Newsletter form improvements */
+.newsletter-form input[type="email"].valid {
+    border-color: #4CAF50;
+    background-color: rgba(76, 175, 80, 0.05);
+}
+
+.newsletter-form input[type="email"].invalid {
+    border-color: #F44336;
+    background-color: rgba(244, 67, 54, 0.05);
+}
+
+.newsletter-form.success {
+    animation: formSuccess 1.5s;
+}
+
+@keyframes formSuccess {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+/* Mobile menu animations */
+.mobile-menu ul li {
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.mobile-menu ul li.animate-in {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.mobile-menu-btn.active i.fa-bars {
+    transform: rotate(90deg);
+    transition: transform 0.3s;
+}
+
+.mobile-menu-btn i.fa-bars {
+    transition: transform 0.3s;
+}
+
+/* Add to cart button hover effect */
+.add-to-cart {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.add-to-cart:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+    transition: all 0.5s;
+}
+
+.add-to-cart:hover:before {
+    left: 100%;
 } 

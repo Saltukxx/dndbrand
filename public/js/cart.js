@@ -223,9 +223,47 @@ function addCartItemEventListeners() {
     });
 }
 
-// Update cart item quantity
+// Update cart item quantity with improved validation and feedback
 function updateCartItemQuantity(itemId, quantity, options = {}) {
     try {
+        // Validate quantity input
+        const parsedQuantity = parseInt(quantity);
+        
+        if (isNaN(parsedQuantity)) {
+            showNotification('Lütfen geçerli bir miktar girin.', 'error');
+            // Reset the input to the current quantity
+            const cartItem = document.querySelector(`.cart-item[data-id="${itemId}"]`);
+            if (cartItem) {
+                const quantityInput = cartItem.querySelector('.quantity-input');
+                if (quantityInput) {
+                    // Find the current quantity from cart
+                    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                    const item = cart.find(i => {
+                        if (i.id !== itemId) return false;
+                        if (options.color && i.color !== options.color) return false;
+                        if (options.size && i.size !== options.size) return false;
+                        return true;
+                    });
+                    
+                    if (item) {
+                        quantityInput.value = item.quantity;
+                    }
+                }
+            }
+            return;
+        }
+        
+        if (parsedQuantity < 0) {
+            showNotification('Miktar 0\'dan az olamaz.', 'error');
+            return;
+        }
+        
+        // Show updating feedback
+        const cartItem = document.querySelector(`.cart-item[data-id="${itemId}"]`);
+        if (cartItem) {
+            cartItem.classList.add('updating');
+        }
+        
         // Get cart from localStorage
         let cart = localStorage.getItem('cart');
         cart = cart ? JSON.parse(cart) : [];
@@ -241,14 +279,51 @@ function updateCartItemQuantity(itemId, quantity, options = {}) {
             return true;
         });
         
-        if (itemIndex === -1) return;
+        if (itemIndex === -1) {
+            showNotification('Ürün sepette bulunamadı.', 'error');
+            return;
+        }
+        
+        // Store old quantity for undo functionality
+        const oldQuantity = cart[itemIndex].quantity;
         
         // Update quantity
-        cart[itemIndex].quantity = parseInt(quantity);
+        cart[itemIndex].quantity = parsedQuantity;
         
         // Remove item if quantity is 0
         if (cart[itemIndex].quantity <= 0) {
             cart.splice(itemIndex, 1);
+            
+            // Remove item from DOM if it exists
+            if (cartItem) {
+                cartItem.classList.add('removing');
+                setTimeout(() => {
+                    cartItem.remove();
+                    
+                    // Check if cart is empty
+                    if (cart.length === 0) {
+                        const cartItemsContainer = document.querySelector('.cart-items');
+                        if (cartItemsContainer) {
+                            cartItemsContainer.innerHTML = '<div class="empty-cart">Sepetiniz boş</div>';
+                        }
+                    }
+                }, 300);
+            }
+        } else {
+            // Update the subtotal in the DOM
+            if (cartItem) {
+                const subtotalElement = cartItem.querySelector('.cart-item-subtotal');
+                if (subtotalElement) {
+                    const price = cart[itemIndex].price;
+                    const subtotal = price * parsedQuantity;
+                    subtotalElement.textContent = `₺${subtotal.toFixed(2)}`;
+                }
+                
+                // Remove updating class
+                setTimeout(() => {
+                    cartItem.classList.remove('updating');
+                }, 300);
+            }
         }
         
         // Save cart to localStorage
@@ -260,10 +335,18 @@ function updateCartItemQuantity(itemId, quantity, options = {}) {
         // Update cart summary
         updateCartSummary();
         
-        return true;
+        // Show success notification
+        showNotification('Sepet güncellendi.', 'success');
+        
     } catch (error) {
         console.error('Error updating cart item quantity:', error);
-        return false;
+        showNotification('Sepet güncellenirken bir hata oluştu.', 'error');
+        
+        // Remove updating class if it exists
+        const cartItem = document.querySelector(`.cart-item[data-id="${itemId}"]`);
+        if (cartItem) {
+            cartItem.classList.remove('updating');
+        }
     }
 }
 

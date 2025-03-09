@@ -37,15 +37,41 @@ function initializeMobileMenu() {
         mobileMenuBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
+            
+            // Add animation to the button
+            this.classList.add('active');
+            
+            // Animate the mobile menu opening
             mobileMenu.classList.add('active');
             mobileMenuOverlay.classList.add('active');
             document.body.style.overflow = 'hidden';
+            
+            // Animate menu items
+            const menuItems = mobileMenu.querySelectorAll('ul li');
+            menuItems.forEach((item, index) => {
+                setTimeout(() => {
+                    item.classList.add('animate-in');
+                }, 100 + (index * 50));
+            });
         });
         
         if (closeMenuBtn) {
             closeMenuBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
+                
+                // Reset button state
+                if (mobileMenuBtn) {
+                    mobileMenuBtn.classList.remove('active');
+                }
+                
+                // Reset animation on menu items
+                const menuItems = mobileMenu.querySelectorAll('ul li');
+                menuItems.forEach(item => {
+                    item.classList.remove('animate-in');
+                });
+                
+                // Close the menu with animation
                 mobileMenu.classList.remove('active');
                 mobileMenuOverlay.classList.remove('active');
                 document.body.style.overflow = '';
@@ -55,6 +81,19 @@ function initializeMobileMenu() {
         if (mobileMenuOverlay) {
             mobileMenuOverlay.addEventListener('click', function(e) {
                 e.preventDefault();
+                
+                // Reset button state
+                if (mobileMenuBtn) {
+                    mobileMenuBtn.classList.remove('active');
+                }
+                
+                // Reset animation on menu items
+                const menuItems = mobileMenu.querySelectorAll('ul li');
+                menuItems.forEach(item => {
+                    item.classList.remove('animate-in');
+                });
+                
+                // Close the menu with animation
                 mobileMenu.classList.remove('active');
                 mobileMenuOverlay.classList.remove('active');
                 document.body.style.overflow = '';
@@ -65,6 +104,18 @@ function initializeMobileMenu() {
         const mobileMenuLinks = mobileMenu.querySelectorAll('a');
         mobileMenuLinks.forEach(link => {
             link.addEventListener('click', function() {
+                // Reset button state
+                if (mobileMenuBtn) {
+                    mobileMenuBtn.classList.remove('active');
+                }
+                
+                // Reset animation on menu items
+                const menuItems = mobileMenu.querySelectorAll('ul li');
+                menuItems.forEach(item => {
+                    item.classList.remove('animate-in');
+                });
+                
+                // Close the menu with animation
                 mobileMenu.classList.remove('active');
                 mobileMenuOverlay.classList.remove('active');
                 document.body.style.overflow = '';
@@ -87,6 +138,16 @@ function initializeMobileMenu() {
         function handleSwipe() {
             if (touchStartX - touchEndX > 50) {
                 // Swipe left to close
+                if (mobileMenuBtn) {
+                    mobileMenuBtn.classList.remove('active');
+                }
+                
+                // Reset animation on menu items
+                const menuItems = mobileMenu.querySelectorAll('ul li');
+                menuItems.forEach(item => {
+                    item.classList.remove('animate-in');
+                });
+                
                 mobileMenu.classList.remove('active');
                 mobileMenuOverlay.classList.remove('active');
                 document.body.style.overflow = '';
@@ -113,18 +174,87 @@ function initializeNewsletterForm() {
     const newsletterForm = document.querySelector('.newsletter-form');
     
     if (newsletterForm) {
-        newsletterForm.addEventListener('submit', function(e) {
+        newsletterForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const emailInput = this.querySelector('input[type="email"]');
+            const submitButton = this.querySelector('button[type="submit"]');
             const email = emailInput.value.trim();
             
-            if (email) {
-                // In a real application, this would send the email to a server
+            // Validate email
+            if (!email) {
+                showNotification('Lütfen e-posta adresinizi girin.', 'warning');
+                emailInput.focus();
+                return;
+            }
+            
+            // Email format validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showNotification('Lütfen geçerli bir e-posta adresi girin.', 'warning');
+                emailInput.focus();
+                return;
+            }
+            
+            // Show loading state
+            if (submitButton) {
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                submitButton.disabled = true;
+            }
+            
+            try {
+                // In a real app, this would send the email to a server
+                // Simulate API call with a delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Store subscription in localStorage to persist it
+                const subscriptions = JSON.parse(localStorage.getItem('newsletter_subscriptions') || '[]');
+                if (!subscriptions.includes(email)) {
+                    subscriptions.push(email);
+                    localStorage.setItem('newsletter_subscriptions', JSON.stringify(subscriptions));
+                }
+                
+                // Show success message
                 showNotification('Bültenimize başarıyla abone oldunuz!', 'success');
+                
+                // Clear input
                 emailInput.value = '';
+                
+                // Add successful animation to the form
+                newsletterForm.classList.add('success');
+                setTimeout(() => {
+                    newsletterForm.classList.remove('success');
+                }, 2000);
+            } catch (error) {
+                console.error('Newsletter subscription error:', error);
+                showNotification('Abonelik işlemi sırasında bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 'error');
+            } finally {
+                // Reset button
+                if (submitButton) {
+                    submitButton.innerHTML = 'Abone Ol';
+                    submitButton.disabled = false;
+                }
             }
         });
+        
+        // Add visual feedback when typing
+        const emailInput = newsletterForm.querySelector('input[type="email"]');
+        if (emailInput) {
+            emailInput.addEventListener('input', function() {
+                const email = this.value.trim();
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                
+                if (email && emailRegex.test(email)) {
+                    this.classList.add('valid');
+                    this.classList.remove('invalid');
+                } else if (email) {
+                    this.classList.add('invalid');
+                    this.classList.remove('valid');
+                } else {
+                    this.classList.remove('valid', 'invalid');
+                }
+            });
+        }
     }
 }
 

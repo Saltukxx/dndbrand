@@ -1,32 +1,49 @@
 const multer = require('multer');
 const path = require('path');
+const crypto = require('crypto');
+const { GridFsStorage } = require('multer-gridfs-storage');
+const mongoose = require('mongoose');
 
-// Set storage engine
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../../uploads'));
-  },
-  filename: function (req, file, cb) {
-    cb(
-      null,
-      `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`
-    );
+// Get MongoDB connection string from environment variables
+const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/dndbrand';
+
+// Create storage engine using GridFS
+const storage = new GridFsStorage({
+  url: mongoURI,
+  options: { useNewUrlParser: true, useUnifiedTopology: true },
+  file: (req, file) => {
+    return new Promise((resolve, reject) => {
+      // Generate a unique filename
+      crypto.randomBytes(16, (err, buf) => {
+        if (err) {
+          return reject(err);
+        }
+        const filename = buf.toString('hex') + path.extname(file.originalname);
+        const fileInfo = {
+          filename: filename,
+          bucketName: 'uploads' // This is the collection name for GridFS
+        };
+        resolve(fileInfo);
+      });
+    });
   }
 });
 
 // Check file type
 function checkFileType(file, cb) {
+  // Allowed MIME types
+  const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
   // Allowed extensions
-  const filetypes = /jpeg|jpg|png|webp/;
-  // Check extension
-  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-  // Check mime type
-  const mimetype = filetypes.test(file.mimetype);
-
-  if (mimetype && extname) {
+  const allowedExts = ['.jpg', '.jpeg', '.png', '.webp'];
+  
+  const ext = path.extname(file.originalname).toLowerCase();
+  const isValidExt = allowedExts.includes(ext);
+  const isValidMime = allowedMimes.includes(file.mimetype);
+  
+  if (isValidMime && isValidExt) {
     return cb(null, true);
   } else {
-    cb('Error: Images Only!');
+    cb(new Error('Only JPG, PNG, and WebP images are allowed'));
   }
 }
 

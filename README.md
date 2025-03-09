@@ -61,13 +61,33 @@ dndbrand/
 └── README.md               # Project documentation
 ```
 
-## Installation
+## Production Setup Guide for DnD Brand
 
-### Prerequisites
-- Node.js (v14 or higher)
-- MongoDB
+This guide will help you set up and run the DnD Brand e-commerce website.
 
-### Setup
+### System Requirements
+
+- Node.js (v14.x or newer)
+- MongoDB (v4.4 or newer)
+- npm (v6.x or newer)
+
+### Quick Start
+
+#### Using the Automatic Scripts (Recommended)
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/saltukxx/dndbrand.git
+   cd dndbrand
+   ```
+
+2. Run the start script:
+   - **Windows**: Double-click on `start.bat` or run it from the command line
+   - **Linux/Mac**: Run `./start.sh` (you may need to make it executable with `chmod +x start.sh`)
+
+3. Access the frontend at: http://localhost:3000
+
+#### Manual Setup
 
 1. Clone the repository:
    ```
@@ -77,41 +97,81 @@ dndbrand/
 
 2. Install dependencies:
    ```
-   npm install
+   npm install --legacy-peer-deps
    ```
 
-3. Create a `.env` file in the `server/config` directory:
+3. Create necessary directories:
    ```
-   PORT=3000
-   MONGO_URI=mongodb://localhost:27017/dndbrand
-   JWT_SECRET=your_jwt_secret_key
-   JWT_EXPIRE=30d
-   CORS_ORIGIN=https://dndbrand.com,https://www.dndbrand.com,http://localhost:3000
+   mkdir -p logs
    ```
 
-4. Start the local development server:
+4. Set up environment variables:
+   ```
+   cp server/config/production.env.example server/config/.env
+   ```
+   And edit `.env` with your MongoDB connection string and other settings
+
+5. Run the database setup script:
+   ```
+   node server/scripts/setup-db.js
+   ```
+
+6. Start the server:
    ```
    npm start
    ```
 
-5. Open the website in your browser:
-   ```
-   http://localhost:3000
-   ```
+7. Access the frontend at: http://localhost:3000
 
-## Running in Production
+### Production Deployment
 
-To run the production server:
+For production deployment, use the production server:
 
-### On Windows:
 ```
-npm run server:prod:win
+npm run server:prod         # Linux/Mac
+npm run server:prod:win     # Windows
 ```
 
-### On Unix/Linux/Mac:
-```
-npm run server:prod
-```
+### Features
+
+- **Secure API**: Authentication with JWT, secure endpoints with authorization
+- **Image Storage**: Uses MongoDB GridFS for reliable image storage
+- **CORS Handling**: Configured for proper security in production
+- **Caching**: Optimized with in-memory cache for frequently accessed data
+- **Logging**: Comprehensive logging system with Winston
+- **Database Performance**: Optimized with proper indexes
+- **Rate Limiting**: Protection against brute force attacks
+
+### Codebase Structure
+
+- `/server` - Backend API code
+  - `/controllers` - Business logic for API endpoints
+  - `/middleware` - Authentication, error handling, etc.
+  - `/models` - Database models
+  - `/routes` - API route definitions
+  - `/config` - Configuration files
+  - `/utils` - Utility functions
+  - `/scripts` - Setup and maintenance scripts
+
+- `/public` - Frontend assets
+  - `/html` - HTML templates
+  - `/css` - Stylesheets
+  - `/js` - JavaScript files
+  - `/images` - Static images
+
+### Environment Variables
+
+See `server/config/production.env.example` for all available configuration options.
+
+### Logs
+
+Logs are stored in the `/logs` directory:
+- `combined.log` - All logs
+- `error.log` - Error logs only
+
+### Contributing
+
+Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for contribution guidelines.
 
 ## Admin Access
 

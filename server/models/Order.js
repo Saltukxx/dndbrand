@@ -177,6 +177,14 @@ const OrderSchema = new mongoose.Schema(
   }
 );
 
+// Create indexes for better performance
+OrderSchema.index({ user: 1 });
+OrderSchema.index({ customer: 1 });
+OrderSchema.index({ status: 1 });
+OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ 'items.product': 1 });
+OrderSchema.index({ orderNumber: 1 }, { unique: true });
+
 // Generate order number before saving
 OrderSchema.pre('save', async function (next) {
   if (!this.orderNumber) {

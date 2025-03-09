@@ -11,10 +11,7 @@ const CONFIG = {
         // Local proxy first (most reliable)
         window.location.origin + '/api-proxy/',
         'https://corsproxy.io/?',
-        'https://api.allorigins.win/raw?url=',
-        'https://thingproxy.freeboard.io/fetch/',
-        'https://cors-anywhere.herokuapp.com/',
-        'https://cors.bridged.cc/'
+        'https://api.allorigins.win/raw?url='
     ],
     
     // Version
@@ -27,16 +24,18 @@ const CONFIG = {
     // Feature flags
     FEATURES: {
         ENABLE_CACHE: true,
-        DEBUG_MODE: true, // Enable for more detailed logging
-        FORCE_HTTPS: false, // Disabled to prevent redirect loops
-        USE_CORS_PROXY: true, // Enable CORS proxy by default until server CORS is fixed
+        DEBUG_MODE: false, // Disabled for production
+        FORCE_HTTPS: true, // Enable for production
+        USE_CORS_PROXY: true, // Enable CORS proxy until server CORS is fixed
         USE_MOCK_DATA: false // MOCK DATA IS DISABLED - MUST REMAIN FALSE
     },
     
     // Security settings
     SECURITY: {
-        REQUIRE_HTTPS: false, // Disabled to prevent redirect loops
-        HSTS_ENABLED: false   // Disabled to prevent redirect issues
+        REQUIRE_HTTPS: true, // Enable for production
+        HSTS_ENABLED: true,  // Enable for production
+        MAX_LOGIN_ATTEMPTS: 5,
+        AUTO_LOGOUT_TIME: 30 * 60 * 1000 // 30 minutes of inactivity
     },
     
     // API Request settings
@@ -44,7 +43,7 @@ const CONFIG = {
         // Default fetch options for API requests
         DEFAULT_OPTIONS: {
             mode: 'cors',
-            credentials: 'omit', // Changed from 'include' to 'omit' to avoid CORS preflight issues
+            credentials: 'omit', // Use 'omit' to avoid CORS preflight issues
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -52,11 +51,11 @@ const CONFIG = {
         },
         
         // Retry settings for failed requests
-        RETRY_COUNT: 5, // Increased from 3 to 5
-        RETRY_DELAY: 2000, // Increased from 1000 to 2000 (2 seconds)
+        RETRY_COUNT: 3,
+        RETRY_DELAY: 1000, // 1 second
         
         // Proxy settings
-        PROXY_TIMEOUT: 30000 // Increased from 10000 to 30000 (30 seconds)
+        PROXY_TIMEOUT: 15000 // 15 seconds
     }
 };
 
@@ -236,14 +235,9 @@ CONFIG.fetchAPI = async function(endpoint, options = {}) {
     throw new Error(`Failed to fetch data from ${url} after trying all available methods`);
 };
 
-// Enforce HTTPS in production environments - DISABLED to prevent redirect loops
+// Enforce HTTPS in production environments
 (function() {
-    // This function is now disabled to prevent redirect loops
-    // If you need to enforce HTTPS, enable this in a production environment
-    // with proper SSL certificates
-    
     // Check if we're in a browser environment
-    /*
     if (typeof window !== 'undefined' && window.location && 
         CONFIG.SECURITY.REQUIRE_HTTPS && 
         window.location.protocol === 'http:' && 
@@ -251,7 +245,14 @@ CONFIG.fetchAPI = async function(endpoint, options = {}) {
         // Redirect to HTTPS
         window.location.href = window.location.href.replace('http:', 'https:');
     }
-    */
+    
+    // Add HSTS header if enabled
+    if (CONFIG.SECURITY.HSTS_ENABLED && typeof document !== 'undefined') {
+        const meta = document.createElement('meta');
+        meta.httpEquiv = 'Strict-Transport-Security';
+        meta.content = 'max-age=31536000; includeSubDomains; preload';
+        document.head.appendChild(meta);
+    }
 })();
 
 // Make fetchAPI globally available

@@ -1,6 +1,8 @@
 /**
- * Security middleware for DnD Brand API
+ * Comprehensive Security middleware for DnD Brand API
  */
+const logger = require('../utils/logger');
+const rateLimit = require('express-rate-limit');
 
 // Set secure HTTP headers
 const setSecureHeaders = (req, res, next) => {
@@ -24,13 +26,28 @@ const setSecureHeaders = (req, res, next) => {
   
   // Remove X-Powered-By header
   res.removeHeader('X-Powered-By');
+
+  // Add Strict-Transport-Security header (HSTS)
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
   
   next();
 };
 
 // Log all requests
 const requestLogger = (req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  const startTime = Date.now();
+  
+  // Log request
+  logger.http(`${req.method} ${req.originalUrl} [IP: ${req.ip}]`);
+  
+  // Log response time on finish
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+    logger.http(`${req.method} ${req.originalUrl} [${res.statusCode}] - ${duration}ms`);
+  });
+  
   next();
 };
 
@@ -41,7 +58,7 @@ const detectSuspiciousActivity = (req, res, next) => {
   const requestUrl = req.url;
   
   if (sqlInjectionPattern.test(requestUrl)) {
-    console.warn(`Possible SQL injection attempt: ${requestUrl}`);
+    logger.warn(`Possible SQL injection attempt: ${requestUrl} from IP: ${req.ip}`);
     return res.status(403).json({
       success: false,
       error: 'Forbidden'
@@ -55,13 +72,27 @@ const detectSuspiciousActivity = (req, res, next) => {
     'nessus',
     'nmap',
     'acunetix',
-    'burp'
+    'burp',
+    'masscan',
+    'zgrab',
+    'gobuster',
+    'dirbuster'
   ];
   
   const userAgent = req.headers['user-agent'] || '';
   
   if (suspiciousUserAgents.some(agent => userAgent.toLowerCase().includes(agent))) {
-    console.warn(`Suspicious user agent detected: ${userAgent}`);
+    logger.warn(`Suspicious user agent detected: ${userAgent} from IP: ${req.ip}`);
+    return res.status(403).json({
+      success: false,
+      error: 'Forbidden'
+    });
+  }
+  
+  // Additional checks for path traversal attacks
+  const pathTraversalPattern = /(\.\.)|(\.\/)/i;
+  if (pathTraversalPattern.test(requestUrl)) {
+    logger.warn(`Possible path traversal attempt: ${requestUrl} from IP: ${req.ip}`);
     return res.status(403).json({
       success: false,
       error: 'Forbidden'
@@ -70,6 +101,22 @@ const detectSuspiciousActivity = (req, res, next) => {
   
   next();
 };
+
+// Create login rate limiter
+const loginRateLimiter = rateLimit({
+  windowMs: process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000, // 15 minutes
+  max: process.env.LOGIN_RATE_LIMIT_MAX || 5, // 5 login attempts per window
+  message: 'Too many login attempts, please try again after 15 minutes',
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res, next, options) => {
+    logger.warn(`Rate limit exceeded for login: ${req.ip}`);
+    res.status(options.statusCode).json({
+      success: false,
+      message: options.message
+    });
+  }
+});
 
 // Validate request parameters
 const validateRequestParams = (req, res, next) => {
@@ -90,5 +137,6 @@ module.exports = {
   setSecureHeaders,
   requestLogger,
   detectSuspiciousActivity,
-  validateRequestParams
+  validateRequestParams,
+  loginRateLimiter
 }; 

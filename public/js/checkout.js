@@ -1719,119 +1719,136 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(debugCheckout, 1000);
 });
 
-// Place order
+// Place order with improved validation, error handling, and feedback
 async function placeOrder() {
+    // Disable the place order button to prevent multiple submissions
+    const placeOrderBtn = document.getElementById('place-order-btn');
+    if (!placeOrderBtn) return;
+    
+    // Check if already processing
+    if (placeOrderBtn.disabled) {
+        showError('Sipariş işlemi zaten devam ediyor, lütfen bekleyin.');
+        return;
+    }
+    
+    // Show processing state
+    placeOrderBtn.disabled = true;
+    placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sipariş İşleniyor...';
+    
     try {
-        console.log('Placing order...');
-        
-        // Check if already processing
-        if (processing) {
-            console.log('Already processing order');
-            return;
-        }
-        
-        // Set processing state
-        processing = true;
-        
-        // Update button
-        if (placeOrderBtn) {
-            placeOrderBtn.disabled = true;
-            placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> İşleniyor...';
-        }
-        
-        // Validate order
-        if (!validateOrder()) {
-            processing = false;
-            if (placeOrderBtn) {
-                placeOrderBtn.disabled = false;
-                placeOrderBtn.innerHTML = '<i class="fas fa-lock"></i> Siparişi Tamamla';
-            }
-            return;
-        }
-        
-        // Get current order data
-        if (!currentOrder) {
-            await loadOrderSummary();
-        }
-        
-        if (!currentOrder) {
-            showError('Sipariş bilgileri bulunamadı');
-            processing = false;
-            if (placeOrderBtn) {
-                placeOrderBtn.disabled = false;
-                placeOrderBtn.innerHTML = '<i class="fas fa-lock"></i> Siparişi Tamamla';
-            }
+        // Validate if cart has items
+        const cart = localStorage.getItem('cart');
+        if (!cart || JSON.parse(cart).length === 0) {
+            showError('Sepetiniz boş. Sipariş verebilmek için sepetinize ürün ekleyin.');
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.innerHTML = 'Sipariş Ver';
             return;
         }
         
         // Get selected address
-        const addresses = JSON.parse(localStorage.getItem('savedAddresses') || '[]');
-        const selectedAddress = addresses.find(addr => addr.id === selectedAddressId);
+        const selectedAddressId = document.querySelector('input[name="delivery-address"]:checked')?.value;
+        if (!selectedAddressId) {
+            showError('Lütfen bir teslimat adresi seçin veya yeni bir adres ekleyin.');
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.innerHTML = 'Sipariş Ver';
+            return;
+        }
         
-        if (!selectedAddress) {
-            showError('Lütfen bir teslimat adresi seçin');
-            processing = false;
-            if (placeOrderBtn) {
-                placeOrderBtn.disabled = false;
-                placeOrderBtn.innerHTML = '<i class="fas fa-lock"></i> Siparişi Tamamla';
-            }
+        // Get selected payment method
+        const selectedPaymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value;
+        if (!selectedPaymentMethod) {
+            showError('Lütfen bir ödeme yöntemi seçin.');
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.innerHTML = 'Sipariş Ver';
+            return;
+        }
+        
+        // Validate order data
+        if (!validateOrder()) {
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.innerHTML = 'Sipariş Ver';
             return;
         }
         
         // Create order object
         const order = {
-            items: currentOrder.items,
-            subtotal: currentOrder.subtotal,
-            tax: currentOrder.tax,
-            shipping: currentOrder.shipping,
-            total: currentOrder.total,
+            customer: {
+                name: document.getElementById('name')?.value || 'Misafir',
+                email: document.getElementById('email')?.value || 'guest@example.com',
+                phone: document.getElementById('phone')?.value || ''
+            },
+            addressId: selectedAddressId,
             paymentMethod: selectedPaymentMethod,
-            shippingAddress: selectedAddress,
-            orderDate: new Date().toISOString(),
+            items: JSON.parse(cart),
             status: 'pending',
-            orderNumber: 'ORD-' + Math.floor(100000 + Math.random() * 900000)
+            notes: document.getElementById('order-notes')?.value || '',
+            createdAt: new Date().toISOString()
         };
         
-        console.log('Order data:', order);
+        // Calculate totals
+        const { subtotal, discount, tax, shipping, total } = calculateTotals(order.items);
+        order.totals = { subtotal, discount, tax, shipping, total };
+        
+        // Process based on payment method
+        if (selectedPaymentMethod === 'credit_card') {
+            // Process credit card payment first
+            const paymentResult = await processCreditCardPayment();
+            if (!paymentResult.success) {
+                showError(paymentResult.message || 'Ödeme işlemi başarısız oldu.');
+                placeOrderBtn.disabled = false;
+                placeOrderBtn.innerHTML = 'Sipariş Ver';
+                return;
+            }
+            
+            // Add payment info to order
+            order.payment = {
+                method: 'credit_card',
+                transactionId: paymentResult.transactionId,
+                status: 'completed'
+            };
+        } else if (selectedPaymentMethod === 'bank_transfer') {
+            order.payment = {
+                method: 'bank_transfer',
+                status: 'pending'
+            };
+        } else if (selectedPaymentMethod === 'cash_on_delivery') {
+            order.payment = {
+                method: 'cash_on_delivery',
+                status: 'pending'
+            };
+        }
         
         // Save order to server
-        let savedOrder;
-        try {
-            savedOrder = await saveOrderToServer(order);
-            console.log('Order saved to server:', savedOrder);
-        } catch (error) {
-            console.error('Error saving order to server:', error);
-            // Continue with local order
-            savedOrder = order;
-        }
+        const response = await saveOrderToServer(order);
         
-        // Save order to localStorage
-        let savedOrders = localStorage.getItem('savedOrders');
-        savedOrders = savedOrders ? JSON.parse(savedOrders) : [];
-        savedOrders.push(savedOrder);
-        localStorage.setItem('savedOrders', JSON.stringify(savedOrders));
+        if (!response.success) {
+            showError(response.message || 'Siparişiniz kaydedilirken bir hata oluştu.');
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.innerHTML = 'Sipariş Ver';
+            return;
+        }
         
         // Clear cart
-        localStorage.setItem('dndCart', JSON.stringify([]));
+        localStorage.removeItem('cart');
         
         // Show success message
-        document.getElementById('success-order-number').textContent = savedOrder.orderNumber;
-        paymentSuccessModal.style.display = 'block';
+        showPaymentSuccess({
+            orderId: response.orderId || 'ORD-' + Date.now(),
+            total: total
+        });
         
-        // Reset processing state
-        processing = false;
+        // Redirect to order confirmation page after a delay
+        setTimeout(() => {
+            window.location.href = `order-confirmation.html?id=${response.orderId}`;
+        }, 3000);
         
-        return savedOrder;
     } catch (error) {
         console.error('Error placing order:', error);
-        showError('Sipariş oluşturulurken bir hata oluştu');
+        showError('Sipariş işlemi sırasında beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
         
-        // Reset processing state
-        processing = false;
-        if (placeOrderBtn) {
-            placeOrderBtn.disabled = false;
-            placeOrderBtn.innerHTML = '<i class="fas fa-lock"></i> Siparişi Tamamla';
-        }
+        // Reset button
+        placeOrderBtn.disabled = false;
+        placeOrderBtn.innerHTML = 'Sipariş Ver';
     }
 }
 

@@ -88,4 +88,16 @@ const ProductSchema = new mongoose.Schema(
   }
 );
 
+// Create indexes for better performance
+// Text index for search functionality
+ProductSchema.index({ name: 'text', description: 'text' });
+
+// Regular indexes for frequently queried fields
+ProductSchema.index({ category: 1 });
+ProductSchema.index({ price: 1 });
+ProductSchema.index({ status: 1 });
+ProductSchema.index({ featured: 1 });
+ProductSchema.index({ onSale: 1 });
+ProductSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model('Product', ProductSchema); 

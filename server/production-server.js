@@ -34,6 +34,9 @@ const customerRoutes = require('./routes/customerRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
+// Import the CORS configuration
+const corsMiddleware = require('./cors-config');
+
 // Initialize express app
 const app = express();
 
@@ -83,27 +86,11 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Enable CORS - TEMPORARILY ALLOWING ALL ORIGINS
-const corsOptions = {
-  origin: '*', // Allow all origins temporarily
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  credentials: true,
-  maxAge: 86400 // 24 hours
-};
-app.use(cors(corsOptions));
+// Apply CORS middleware
+app.use(corsMiddleware);
 
 // Add OPTIONS pre-flight handler
-app.options('*', cors(corsOptions));
-
-// Add additional CORS headers middleware for extra compatibility
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  next();
-});
+app.options('*', corsMiddleware);
 
 // Compression for faster response times
 app.use(compression());

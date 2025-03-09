@@ -106,25 +106,6 @@ function checkAdminAuth() {
 
 // Admin login function
 async function loginAdmin(email, password) {
-    // Demo login for testing (always works)
-    if (email === 'admin@dndbrand.com' && password === 'admin123') {
-        console.log('Using demo login');
-        
-        // Create a demo token
-        const demoToken = 'demo-token-' + Date.now();
-        
-        // Store authentication data in session storage
-        sessionStorage.setItem('adminToken', demoToken);
-        sessionStorage.setItem('adminAuthenticated', 'true');
-        sessionStorage.setItem('adminName', 'Demo Admin');
-        sessionStorage.setItem('adminEmail', email);
-        
-        // Redirect to admin dashboard
-        window.location.href = 'admin.html';
-        
-        return { success: true };
-    }
-    
     try {
         // Try to login via server
         const loginData = await fetchWithCORS('admin/login', {
@@ -149,16 +130,15 @@ async function loginAdmin(email, password) {
         } else {
             return { 
                 success: false, 
-                message: 'Invalid credentials. Please try again or use demo login.'
+                message: 'Invalid credentials. Please try again.'
             };
         }
     } catch (error) {
         console.error('Login error:', error);
         
-        // Suggest using demo login if server error
         return { 
             success: false, 
-            message: 'Server error. Please try again or use demo login (admin@dndbrand.com / admin123).'
+            message: 'Server error. Please try again later.'
         };
     }
 }
@@ -384,94 +364,252 @@ function viewOrder(orderId) {
     showNotification(`Sipariş #${orderId} görüntüleniyor`);
 }
 
-// Load products
+// Load products with enhanced error handling and retry logic
 async function loadProducts() {
     if (!checkAdminAuth()) return;
     
-        // Show loading state
+    // Show loading state
     const productsTable = document.getElementById('productsTable');
     const tableBody = productsTable.querySelector('tbody');
-        tableBody.innerHTML = '<tr><td colspan="7">Yükleniyor...</td></tr>';
-        
-    try {
-        const response = await fetchWithCORS('products', {
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        });
-        
-        // Ensure products is an array
-        const products = Array.isArray(response) ? response : 
-                        (response && response.products ? response.products : []);
+    tableBody.innerHTML = '<tr><td colspan="7"><div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Ürünler yükleniyor...</div></td></tr>';
+    
+    // Track retry attempts
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    async function attemptFetch() {
+        try {
+            console.log('Fetching products, attempt:', retryCount + 1);
             
-        if (products.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="7">Henüz ürün bulunmamaktadır.</td></tr>';
-            return;
-        }
-            
-        tableBody.innerHTML = '';
-            
-        products.forEach(product => {
-            const row = document.createElement('tr');
-                
-            // Get status badge class
-            let statusClass = '';
-            let statusText = '';
-            
-            if (product.stock > 0) {
-                statusClass = 'active';
-                statusText = 'Aktif';
-            } else {
-                statusClass = 'out-of-stock';
-                statusText = 'Stokta Yok';
-            }
-                
-            // Format price with fallback for missing price
-            const price = typeof product.price === 'number' ? product.price : 0;
-            const formattedPrice = price.toLocaleString('tr-TR', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+            const response = await fetchWithCORS('products', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                },
+                // Add cache-busting parameter
+                signal: AbortSignal.timeout(15000) // 15 second timeout
             });
+            
+            console.log('Products API response:', response);
+            
+            // Handle different API response formats
+            let products = [];
+            
+            if (Array.isArray(response)) {
+                // Direct array response
+                products = response;
+            } else if (response && response.success && Array.isArray(response.data)) {
+                // Success wrapper with data array
+                products = response.data;
+            } else if (response && response.products && Array.isArray(response.products)) {
+                // Products container object
+                products = response.products;
+            } else if (response && typeof response === 'object') {
+                // Object with multiple products as properties
+                const possibleArrays = Object.values(response).filter(Array.isArray);
+                if (possibleArrays.length > 0) {
+                    // Take the longest array, which is likely the products
+                    products = possibleArrays.reduce((a, b) => a.length > b.length ? a : b, []);
+                }
+            }
+            
+            console.log('Processed products:', products);
+            
+            if (!Array.isArray(products)) {
+                console.error('Products is not an array:', products);
+                throw new Error('Invalid products data format');
+            }
+            
+            // Check if we have any products
+            if (products.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <i class="fas fa-box-open"></i>
+                                <p>Henüz ürün bulunmamaktadır.</p>
+                                <button id="addFirstProductBtn" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> İlk Ürünü Ekle
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
                 
-            row.innerHTML = `
-            <td class="product-cell">
-                <div class="product-info">
-                    <img src="${product.images && product.images.length > 0 ? product.images[0] : '../img/placeholder.jpg'}" alt="${product.name}">
+                // Add event listener to the add first product button
+                const addFirstProductBtn = document.getElementById('addFirstProductBtn');
+                if (addFirstProductBtn) {
+                    addFirstProductBtn.addEventListener('click', function() {
+                        const addProductBtn = document.getElementById('addProductBtn');
+                        if (addProductBtn) {
+                            addProductBtn.click();
+                        }
+                    });
+                }
+                
+                return;
+            }
+            
+            // Clear table body
+            tableBody.innerHTML = '';
+            
+            // Sort products by newest first
+            products.sort((a, b) => {
+                if (a.createdAt && b.createdAt) {
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                }
+                return 0;
+            });
+            
+            // Add products to table
+            products.forEach(product => {
+                const row = document.createElement('tr');
+                
+                // Get status badge class
+                let statusClass = '';
+                let statusText = '';
+                
+                if (product.status === 'inactive') {
+                    statusClass = 'inactive';
+                    statusText = 'Pasif';
+                } else if (product.stock > 0) {
+                    statusClass = 'active';
+                    statusText = 'Aktif';
+                } else {
+                    statusClass = 'out-of-stock';
+                    statusText = 'Stokta Yok';
+                }
+                
+                // Safely get product ID
+                const productId = product._id || product.id || '';
+                
+                // Safely get image URL
+                let imageUrl = '../img/placeholder.jpg';
+                
+                if (product.images && Array.isArray(product.images) && product.images.length > 0 && product.images[0]) {
+                    imageUrl = product.images[0];
+                    
+                    // Check if the image URL is relative and add API URL if needed
+                    if (!imageUrl.startsWith('http') && !imageUrl.startsWith('../')) {
+                        imageUrl = `${adminApiUrl}/${imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl}`;
+                    }
+                } else if (product.image && typeof product.image === 'string') {
+                    imageUrl = product.image;
+                    
+                    // Check if the image URL is relative and add API URL if needed
+                    if (!imageUrl.startsWith('http') && !imageUrl.startsWith('../')) {
+                        imageUrl = `${adminApiUrl}/${imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl}`;
+                    }
+                }
+                
+                // Format price with fallback for missing price
+                const price = typeof product.price === 'number' ? product.price : 
+                             (typeof product.price === 'string' ? parseFloat(product.price) : 0);
+                             
+                const formattedPrice = price.toLocaleString('tr-TR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+                
+                row.innerHTML = `
+                <td class="product-cell">
+                    <div class="product-info">
+                        <img src="${imageUrl}" alt="${product.name}" onerror="this.src='../img/placeholder.jpg';">
                         <span>${product.name}</span>
                     </div>
                 </td>
                 <td>${product.sku || '-'}</td>
                 <td>${product.category || '-'}</td>
-            <td>₺${formattedPrice}</td>
-            <td>${product.stock}</td>
+                <td>₺${formattedPrice}</td>
+                <td>${product.stock}</td>
                 <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td class="actions-cell">
-                <button class="action-btn view-btn" data-id="${product._id || product.id}" title="Görüntüle">
+                    <button class="action-btn view-btn" data-id="${productId}" title="Görüntüle">
                         <i class="fas fa-eye"></i>
                     </button>
-                <button class="action-btn edit-btn" data-id="${product._id || product.id}" title="Düzenle">
+                    <button class="action-btn edit-btn" data-id="${productId}" title="Düzenle">
                         <i class="fas fa-edit"></i>
                     </button>
-                <button class="action-btn delete-btn" data-id="${product._id || product.id}" title="Sil">
+                    <button class="action-btn delete-btn" data-id="${productId}" title="Sil">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
-            `;
+                `;
                 
-            tableBody.appendChild(row);
-        });
+                tableBody.appendChild(row);
+            });
             
-        // Add event listeners to action buttons
-        addProductActionListeners();
-    } catch (error) {
-        console.error('Error loading products:', error);
-        
-        // Show error message in the table
-        tableBody.innerHTML = '<tr><td colspan="7">Ürünler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</td></tr>';
-        
-        // Show notification
-        showNotification('Sunucu bağlantısı kurulamadı. Lütfen daha sonra tekrar deneyin.', 'error');
+            // Add event listeners to action buttons
+            addProductActionListeners();
+            
+            // Add search functionality
+            const searchInput = document.getElementById('productSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    const rows = tableBody.querySelectorAll('tr');
+                    
+                    rows.forEach(row => {
+                        const productName = row.querySelector('.product-info span').textContent.toLowerCase();
+                        const category = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                        const sku = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                        
+                        if (productName.includes(searchTerm) || category.includes(searchTerm) || sku.includes(searchTerm)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            }
+            
+        } catch (error) {
+            console.error('Error loading products:', error);
+            
+            // Retry logic
+            if (retryCount < maxRetries) {
+                retryCount++;
+                
+                // Show retrying message
+                tableBody.innerHTML = `<tr><td colspan="7"><div class="loading-spinner"><i class="fas fa-sync fa-spin"></i> Bağlantı hatası, yeniden deneniyor (${retryCount}/${maxRetries})...</div></td></tr>`;
+                
+                // Wait a bit longer between retries
+                await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
+                
+                // Try again
+                return attemptFetch();
+            }
+            
+            // Show error message in the table after max retries
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7">
+                        <div class="error-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>Ürünler yüklenirken bir hata oluştu. Lütfen internet bağlantınızı kontrol edin.</p>
+                            <p class="error-details">${error.message}</p>
+                            <button id="retryProductsBtn" class="btn btn-primary">
+                                <i class="fas fa-sync"></i> Yeniden Dene
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            // Add event listener to retry button
+            const retryBtn = document.getElementById('retryProductsBtn');
+            if (retryBtn) {
+                retryBtn.addEventListener('click', function() {
+                    loadProducts();
+                });
+            }
+            
+            // Show notification
+            showNotification('Sunucu bağlantısı kurulamadı. Lütfen daha sonra tekrar deneyin.', 'error');
+        }
     }
+    
+    // Start the fetch attempt
+    await attemptFetch();
 }
 
 // Add product action listeners
@@ -874,10 +1012,117 @@ function setupAddProductButton() {
     }
 }
 
-// Create product
+// Create product with improved validation and error handling
 async function createProduct(productData, modal) {
+    // Validation for required fields
+    const requiredFields = ['name', 'price', 'category', 'description'];
+    const missingFields = requiredFields.filter(field => !productData[field] || productData[field].trim && productData[field].trim() === '');
+    
+    if (missingFields.length > 0) {
+        const fieldNames = {
+            name: 'Ürün Adı',
+            price: 'Fiyat',
+            category: 'Kategori',
+            description: 'Açıklama'
+        };
+        
+        // Create error message with missing fields
+        const errorMessage = `Lütfen şu alanları doldurun: ${missingFields.map(field => fieldNames[field] || field).join(', ')}`;
+        
+        // Show error in modal if exists
+        if (modal) {
+            const form = modal.querySelector('form');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'form-error';
+            errorDiv.textContent = errorMessage;
+            
+            // Remove existing error if any
+            const existingError = form.querySelector('.form-error');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Add error message to form
+            form.prepend(errorDiv);
+            
+            // Highlight missing fields
+            missingFields.forEach(field => {
+                const input = form.querySelector(`[name="${field}"]`);
+                if (input) {
+                    input.classList.add('error');
+                    input.addEventListener('input', function() {
+                        this.classList.remove('error');
+                    }, { once: true });
+                }
+            });
+            
+            // Enable button if disabled
+            const addButton = modal.querySelector('.add-new-product-btn');
+            if (addButton) {
+                addButton.disabled = false;
+                addButton.innerHTML = 'Ekle';
+            }
+        }
+        
+        showNotification(errorMessage, 'error');
+        return;
+    }
+    
+    // Validate price is a number
+    if (isNaN(parseFloat(productData.price))) {
+        showNotification('Fiyat geçerli bir sayı olmalıdır.', 'error');
+        
+        // Highlight price field
+        if (modal) {
+            const priceInput = modal.querySelector('[name="price"]');
+            if (priceInput) {
+                priceInput.classList.add('error');
+                priceInput.addEventListener('input', function() {
+                    this.classList.remove('error');
+                }, { once: true });
+            }
+        }
+        
+        return;
+    }
+    
+    // Disable the button and show loading state
+    if (modal) {
+        const addButton = modal.querySelector('.add-new-product-btn');
+        if (addButton) {
+            addButton.disabled = true;
+            addButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ekleniyor...';
+        }
+    }
+    
     try {
-        await fetchWithCORS('products', {
+        // Convert price to number
+        productData.price = parseFloat(productData.price);
+        
+        // Convert stock to number if exists
+        if (productData.stock) {
+            productData.stock = parseInt(productData.stock, 10) || 0;
+        }
+        
+        // Convert featured to boolean if exists
+        if (productData.featured) {
+            productData.featured = productData.featured === 'true' || productData.featured === true;
+        }
+        
+        // Set status active/inactive
+        if (productData.status === 'active') {
+            productData.status = 'active';
+        } else if (productData.status === 'inactive') {
+            productData.status = 'inactive';
+        }
+        
+        // Add timestamps
+        productData.createdAt = new Date().toISOString();
+        productData.updatedAt = new Date().toISOString();
+        
+        console.log('Sending product data:', productData);
+        
+        const response = await fetchWithCORS('products', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -885,49 +1130,413 @@ async function createProduct(productData, modal) {
             },
             body: JSON.stringify(productData)
         });
-            
-            // Close modal
-            if (modal) {
+        
+        console.log('API response for product creation:', response);
+        
+        // Check different response formats
+        let success = false;
+        let message = '';
+        let createdProduct = null;
+        
+        if (response && response.success === true) {
+            success = true;
+            message = response.message || 'Ürün başarıyla eklendi.';
+            createdProduct = response.data || response.product || null;
+        } else if (response && response._id) {
+            // Direct product response
+            success = true;
+            message = 'Ürün başarıyla eklendi.';
+            createdProduct = response;
+        } else if (response && response.id) {
+            // Direct product response with id
+            success = true;
+            message = 'Ürün başarıyla eklendi.';
+            createdProduct = response;
+        } else if (response && response.product) {
+            // Product in response.product
+            success = true;
+            message = 'Ürün başarıyla eklendi.';
+            createdProduct = response.product;
+        } else if (response && response.error) {
+            // Error in response
+            success = false;
+            message = response.error || 'Ürün eklenirken bir hata oluştu.';
+        } else {
+            // Unknown format
+            console.error('Unknown API response format:', response);
+            success = false;
+            message = 'Ürün eklenirken beklenmeyen bir cevap alındı.';
+        }
+        
+        // Close modal
+        if (modal) {
             modal.remove();
-            }
-            
+        }
+        
+        if (success) {
             // Show success notification
-            showNotification('Ürün başarıyla oluşturuldu.', 'success');
+            showNotification(message, 'success');
             
             // Reload products
             loadProducts();
+            
+            return true;
+        } else {
+            // Show error notification
+            showNotification(message, 'error');
+            return false;
+        }
     } catch (error) {
         console.error('Error creating product:', error);
-        showNotification('Ürün oluşturulurken bir hata oluştu.', 'error');
-    }
-}
-
-// Confirm delete product
-function confirmDeleteProduct(productId) {
-    if (confirm('Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
-        deleteProduct(productId);
-    }
-}
-
-// Delete product
-async function deleteProduct(productId) {
-    try {
-        await fetchWithCORS(`products/${productId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${authToken}`
+        
+        // Show error notification
+        showNotification(`Ürün eklenirken bir hata oluştu: ${error.message}`, 'error');
+        
+        // Reset button state
+        if (modal) {
+            const addButton = modal.querySelector('.add-new-product-btn');
+            if (addButton) {
+                addButton.disabled = false;
+                addButton.innerHTML = 'Ekle';
             }
+            
+            // Add error message to modal
+            const form = modal.querySelector('form');
+            if (form) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'form-error';
+                errorDiv.textContent = `Sunucu hatası: ${error.message}`;
+                
+                // Remove existing error if any
+                const existingError = form.querySelector('.form-error');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                // Add error message to form
+                form.prepend(errorDiv);
+            }
+        }
+        
+        return false;
+    }
+}
+
+// Confirm delete product with improved UI
+function confirmDeleteProduct(productId) {
+    // Fetch product details first to show product name
+    fetchWithCORS(`products/${productId}`, {
+        headers: {
+            'Authorization': `Bearer ${authToken}`
+        }
+    })
+    .then(response => {
+        // Get product name with fallback
+        let productName = 'Bu ürünü';
+        let productImage = '../img/placeholder.jpg';
+        
+        // Handle different response formats
+        if (response && response.name) {
+            productName = response.name;
+            
+            if (response.images && response.images.length > 0) {
+                productImage = response.images[0];
+            } else if (response.image) {
+                productImage = response.image;
+            }
+        } else if (response && response.data && response.data.name) {
+            productName = response.data.name;
+            
+            if (response.data.images && response.data.images.length > 0) {
+                productImage = response.data.images[0];
+            } else if (response.data.image) {
+                productImage = response.data.image;
+            }
+        }
+        
+        // Create and show confirmation modal
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = 'deleteProductModal';
+        
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Ürün Silmeyi Onayla</h2>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="delete-product-info">
+                        <img src="${productImage}" alt="${productName}" onerror="this.src='../img/placeholder.jpg';">
+                        <div class="delete-product-details">
+                            <h3>${productName}</h3>
+                            <p>Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal-btn">İptal</button>
+                    <button class="btn btn-danger confirm-btn">Evet, Sil</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Show modal
+        setTimeout(() => {
+            modal.style.display = 'flex';
+        }, 10);
+        
+        // Close modal on close button click
+        modal.querySelector('.close-modal').addEventListener('click', () => {
+            modal.style.display = 'none';
+            setTimeout(() => {
+                modal.remove();
+            }, 300);
         });
         
-            // Show success notification
-            showNotification('Ürün başarıyla silindi.', 'success');
+        // Close modal on cancel button click
+        modal.querySelector('.close-modal-btn').addEventListener('click', () => {
+            modal.style.display = 'none';
+            setTimeout(() => {
+                modal.remove();
+            }, 300);
+        });
+        
+        // Delete product on confirm button click
+        modal.querySelector('.confirm-btn').addEventListener('click', () => {
+            // Disable button and show loading state
+            const confirmBtn = modal.querySelector('.confirm-btn');
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Siliniyor...';
             
-            // Reload products
-            loadProducts();
-    } catch (error) {
-        console.error('Error deleting product:', error);
-        showNotification('Ürün silinirken bir hata oluştu.', 'error');
+            // Delete product
+            deleteProduct(productId, modal);
+        });
+        
+        // Close modal on outside click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            }
+        });
+    })
+    .catch(error => {
+        console.error('Error fetching product details:', error);
+        
+        // Create and show generic confirmation modal
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = 'deleteProductModal';
+        
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Ürün Silmeyi Onayla</h2>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal-btn">İptal</button>
+                    <button class="btn btn-danger confirm-btn">Evet, Sil</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Show modal
+        setTimeout(() => {
+            modal.style.display = 'flex';
+        }, 10);
+        
+        // Close modal on close button click
+        modal.querySelector('.close-modal').addEventListener('click', () => {
+            modal.style.display = 'none';
+            setTimeout(() => {
+                modal.remove();
+            }, 300);
+        });
+        
+        // Close modal on cancel button click
+        modal.querySelector('.close-modal-btn').addEventListener('click', () => {
+            modal.style.display = 'none';
+            setTimeout(() => {
+                modal.remove();
+            }, 300);
+        });
+        
+        // Delete product on confirm button click
+        modal.querySelector('.confirm-btn').addEventListener('click', () => {
+            // Disable button and show loading state
+            const confirmBtn = modal.querySelector('.confirm-btn');
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Siliniyor...';
+            
+            // Delete product
+            deleteProduct(productId, modal);
+        });
+        
+        // Close modal on outside click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            }
+        });
+    });
+}
+
+// Delete product with improved error handling and retry logic
+async function deleteProduct(productId, modal) {
+    // Track retry attempts
+    let retryCount = 0;
+    const maxRetries = 2;
+    
+    async function attemptDelete() {
+        try {
+            console.log(`Deleting product ${productId}, attempt: ${retryCount + 1}`);
+            
+            const response = await fetchWithCORS(`products/${productId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                },
+                signal: AbortSignal.timeout(15000) // 15 second timeout
+            });
+            
+            console.log('Delete product API response:', response);
+            
+            // Check different response formats for success
+            let success = false;
+            
+            if (response && response.success === true) {
+                success = true;
+            } else if (response && response.message && response.message.includes('success')) {
+                success = true;
+            } else if (response && response.status && (response.status === 'success' || response.status === 200)) {
+                success = true;
+            } else if (response === null || response === '') {
+                // Some APIs return empty response on successful delete
+                success = true;
+            }
+            
+            // Close modal if it exists
+            if (modal) {
+                modal.style.display = 'none';
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            }
+            
+            if (success) {
+                // Show success notification
+                showNotification('Ürün başarıyla silindi.', 'success');
+                
+                // Reload products
+                loadProducts();
+                
+                return true;
+            } else {
+                throw new Error('API returned unsuccessful response');
+            }
+        } catch (error) {
+            console.error('Error deleting product:', error);
+            
+            // Retry logic
+            if (retryCount < maxRetries) {
+                retryCount++;
+                
+                // Update modal if it exists
+                if (modal) {
+                    const confirmBtn = modal.querySelector('.confirm-btn');
+                    if (confirmBtn) {
+                        confirmBtn.innerHTML = `<i class="fas fa-sync fa-spin"></i> Tekrar deneniyor (${retryCount}/${maxRetries})...`;
+                    }
+                    
+                    // Add warning message to modal
+                    const modalBody = modal.querySelector('.modal-body');
+                    if (modalBody) {
+                        const warningElement = document.createElement('p');
+                        warningElement.className = 'warning-text';
+                        warningElement.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Bağlantı hatası, tekrar deneniyor...`;
+                        modalBody.appendChild(warningElement);
+                    }
+                }
+                
+                // Wait before retrying
+                await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
+                
+                // Try again
+                return attemptDelete();
+            }
+            
+            // Show error notification after max retries
+            showNotification(`Ürün silinirken bir hata oluştu: ${error.message}`, 'error');
+            
+            // Update modal if it exists after max retries
+            if (modal) {
+                const confirmBtn = modal.querySelector('.confirm-btn');
+                if (confirmBtn) {
+                    confirmBtn.innerHTML = 'Evet, Sil';
+                    confirmBtn.disabled = false;
+                }
+                
+                // Add error message to modal
+                const modalBody = modal.querySelector('.modal-body');
+                if (modalBody) {
+                    const errorElement = document.createElement('div');
+                    errorElement.className = 'form-error';
+                    errorElement.innerHTML = `
+                        <p>Silme işlemi başarısız oldu. Lütfen tekrar deneyin.</p>
+                        <small>${error.message}</small>
+                    `;
+                    modalBody.appendChild(errorElement);
+                    
+                    // Add retry button
+                    const retryBtn = document.createElement('button');
+                    retryBtn.className = 'btn btn-primary';
+                    retryBtn.innerHTML = '<i class="fas fa-sync"></i> Tekrar Dene';
+                    retryBtn.style.marginTop = '10px';
+                    retryBtn.style.marginRight = '10px';
+                    
+                    const modalFooter = modal.querySelector('.modal-footer');
+                    modalFooter.prepend(retryBtn);
+                    
+                    retryBtn.addEventListener('click', () => {
+                        // Reset retry count
+                        retryCount = 0;
+                        
+                        // Remove error element
+                        errorElement.remove();
+                        
+                        // Remove retry button
+                        retryBtn.remove();
+                        
+                        // Disable confirm button and show loading state
+                        confirmBtn.disabled = true;
+                        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Siliniyor...';
+                        
+                        // Try again
+                        attemptDelete();
+                    });
+                }
+            }
+            
+            return false;
+        }
     }
+    
+    // Start the delete attempt
+    return attemptDelete();
 }
 
 // Load orders

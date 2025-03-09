@@ -287,8 +287,28 @@ function initializeProductCards() {
 // Add to cart function
 async function addToCart(productId) {
     try {
+        // Get the button that triggered this to show loading state
+        const addToCartBtn = document.querySelector(`.add-to-cart[data-id="${productId}"]`);
+        if (addToCartBtn) {
+            addToCartBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            addToCartBtn.classList.add('loading');
+            addToCartBtn.disabled = true;
+        }
+        
+        // Validate product ID
+        if (!productId) {
+            showNotification('Geçersiz ürün bilgisi.', 'error');
+            resetButton(addToCartBtn);
+            return;
+        }
+        
         // Fetch product details from API
         const response = await fetch(`${indexApiUrl}/products/${productId}`);
+        
+        if (!response.ok) {
+            throw new Error(`API responded with status: ${response.status}`);
+        }
+        
         const data = await response.json();
         
         let product;
@@ -298,6 +318,7 @@ async function addToCart(productId) {
         } else if (data && !data.success) {
             console.error('Error fetching product details:', data.message || 'Unknown error');
             showNotification('Ürün bilgileri alınamadı.', 'error');
+            resetButton(addToCartBtn);
             return;
         } else if (data) {
             // Handle case where API returns product directly without success wrapper
@@ -305,12 +326,22 @@ async function addToCart(productId) {
         } else {
             console.error('Error fetching product details: Invalid response format');
             showNotification('Ürün bilgileri alınamadı.', 'error');
+            resetButton(addToCartBtn);
+            return;
+        }
+        
+        // Check if product exists and has required properties
+        if (!product || !product.name || !product.price) {
+            showNotification('Ürün bilgileri eksik veya hatalı.', 'error');
+            resetButton(addToCartBtn);
             return;
         }
         
         // If we have a global addToCart function in script.js, use that
         if (window.addToCart && typeof window.addToCart === 'function') {
-            return window.addToCart(product, 1);
+            const result = await window.addToCart(product, 1);
+            resetButton(addToCartBtn);
+            return result;
         }
         
         // Otherwise, implement cart functionality here
@@ -324,6 +355,7 @@ async function addToCart(productId) {
         if (existingItem) {
             // Increase quantity
             existingItem.quantity += 1;
+            showNotification(`${product.name} sepete eklendi! (${existingItem.quantity} adet)`, 'success');
         } else {
             // Add new item
             cart.push({
@@ -333,22 +365,44 @@ async function addToCart(productId) {
                 image: product.images && product.images.length > 0 ? product.images[0] : null,
                 quantity: 1
             });
+            showNotification(`${product.name} sepete eklendi!`, 'success');
         }
         
         // Save cart to localStorage
         localStorage.setItem('cart', JSON.stringify(cart));
         
-        // Show notification
-        showNotification(`${product.name} sepete eklendi!`, 'success');
-        
         // Update cart count
         updateCartCount();
         
+        // Animation effect on cart icon
+        const cartIcon = document.querySelector('.cart-icon');
+        if (cartIcon) {
+            cartIcon.classList.add('pulse');
+            setTimeout(() => {
+                cartIcon.classList.remove('pulse');
+            }, 1000);
+        }
+        
+        resetButton(addToCartBtn);
         return true;
     } catch (error) {
         console.error('Error adding product to cart:', error);
-        showNotification('Ürün sepete eklenirken bir hata oluştu.', 'error');
+        showNotification('Ürün sepete eklenirken bir hata oluştu. Lütfen tekrar deneyin.', 'error');
+        
+        // Reset add to cart button
+        const addToCartBtn = document.querySelector(`.add-to-cart[data-id="${productId}"]`);
+        resetButton(addToCartBtn);
+        
         return false;
+    }
+}
+
+// Helper function to reset button state
+function resetButton(button) {
+    if (button) {
+        button.innerHTML = 'Sepete Ekle';
+        button.classList.remove('loading');
+        button.disabled = false;
     }
 }
 
@@ -375,7 +429,7 @@ function updateCartCount() {
     }
 }
 
-// Show notification
+// Extend the notification function to be more robust
 function showNotification(message, type = 'info') {
     // Remove existing notifications
     const existingNotifications = document.querySelectorAll('.shop-notification');
@@ -391,10 +445,14 @@ function showNotification(message, type = 'info') {
     let icon = 'info-circle';
     if (type === 'success') icon = 'check-circle';
     if (type === 'error') icon = 'exclamation-circle';
+    if (type === 'warning') icon = 'exclamation-triangle';
     
     notification.innerHTML = `
         <i class="fas fa-${icon}"></i>
         <span>${message}</span>
+        <button class="close-notification">
+            <i class="fas fa-times"></i>
+        </button>
     `;
     
     // Add to document
@@ -405,13 +463,28 @@ function showNotification(message, type = 'info') {
         notification.classList.add('show');
     }, 10);
     
+    // Add close button functionality
+    const closeBtn = notification.querySelector('.close-notification');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        });
+    }
+    
     // Remove notification after 3 seconds
     setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            notification.remove();
-        }, 300);
-    }, 3000);
+        if (document.body.contains(notification)) {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    notification.remove();
+                }
+            }, 300);
+        }
+    }, 5000);
 }
 
 // Initialize homepage
