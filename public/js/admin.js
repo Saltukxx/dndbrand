@@ -258,6 +258,12 @@ async function loadRecentOrders() {
     // Get recent orders element
     const recentOrdersElement = document.getElementById('recentOrdersList');
     
+    // Check if the element exists
+    if (!recentOrdersElement) {
+        console.warn('Recent orders list element not found');
+        return;
+    }
+    
     // Show loading state
     recentOrdersElement.innerHTML = '<li class="loading">Siparişler yükleniyor...</li>';
     
@@ -464,40 +470,37 @@ async function loadProducts() {
             products.forEach(product => {
                 const row = document.createElement('tr');
                 
-                // Get status badge class
-                let statusClass = '';
-                let statusText = '';
-                
-                if (product.status === 'inactive') {
-                    statusClass = 'inactive';
-                    statusText = 'Pasif';
-                } else if (product.stock > 0) {
-                    statusClass = 'active';
-                    statusText = 'Aktif';
-                } else {
-                    statusClass = 'out-of-stock';
-                    statusText = 'Stokta Yok';
-                }
-                
                 // Safely get product ID
                 const productId = product._id || product.id || '';
                 
                 // Safely get image URL
                 let imageUrl = '../img/placeholder.jpg';
                 
-                if (product.images && Array.isArray(product.images) && product.images.length > 0 && product.images[0]) {
-                    imageUrl = product.images[0];
-                    
-                    // Check if the image URL is relative and add API URL if needed
-                    if (!imageUrl.startsWith('http') && !imageUrl.startsWith('../')) {
-                        imageUrl = `${adminApiUrl}/${imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl}`;
+                // Use ImageService if available for consistent image handling
+                if (window.ImageService && typeof window.ImageService.getProductImage === 'function') {
+                    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+                        imageUrl = window.ImageService.getProductImage(product.images[0]);
+                    } else if (product.image) {
+                        imageUrl = window.ImageService.getProductImage(product.image);
+                    } else {
+                        imageUrl = window.ImageService.getProductImage(null); // Will use default placeholder
                     }
-                } else if (product.image && typeof product.image === 'string') {
-                    imageUrl = product.image;
-                    
-                    // Check if the image URL is relative and add API URL if needed
-                    if (!imageUrl.startsWith('http') && !imageUrl.startsWith('../')) {
-                        imageUrl = `${adminApiUrl}/${imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl}`;
+                } else {
+                    // Fallback to the old method if ImageService is not available
+                    if (product.images && Array.isArray(product.images) && product.images.length > 0 && product.images[0]) {
+                        imageUrl = product.images[0];
+                        
+                        // Check if the image URL is relative and add API URL if needed
+                        if (!imageUrl.startsWith('http') && !imageUrl.startsWith('../')) {
+                            imageUrl = `${adminApiUrl}/${imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl}`;
+                        }
+                    } else if (product.image && typeof product.image === 'string') {
+                        imageUrl = product.image;
+                        
+                        // Check if the image URL is relative and add API URL if needed
+                        if (!imageUrl.startsWith('http') && !imageUrl.startsWith('../')) {
+                            imageUrl = `${adminApiUrl}/${imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl}`;
+                        }
                     }
                 }
                 
@@ -513,7 +516,7 @@ async function loadProducts() {
                 row.innerHTML = `
                 <td class="product-cell">
                     <div class="product-info">
-                        <img src="${imageUrl}" alt="${product.name}" onerror="this.src='../img/placeholder.jpg';">
+                        <img src="${imageUrl}" alt="${product.name}" onerror="this.onerror=null; this.src=window.ImageService ? window.ImageService.getProductImage(null) : 'https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg';">
                         <span>${product.name}</span>
                     </div>
                 </td>
@@ -521,7 +524,7 @@ async function loadProducts() {
                 <td>${product.category || '-'}</td>
                 <td>₺${formattedPrice}</td>
                 <td>${product.stock}</td>
-                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td><span class="status-badge ${product.status === 'inactive' ? 'inactive' : product.stock > 0 ? 'active' : 'out-of-stock'}">${product.status === 'inactive' ? 'Pasif' : product.stock > 0 ? 'Aktif' : 'Stokta Yok'}</span></td>
                 <td class="actions-cell">
                     <button class="action-btn view-btn" data-id="${productId}" title="Görüntüle">
                         <i class="fas fa-eye"></i>
@@ -663,7 +666,12 @@ function viewProduct(productId) {
         if (product.images && product.images.length > 0) {
             imageGallery = `
                 <div class="product-gallery">
-                    ${product.images.map(image => `<img src="${image}" alt="${product.name}">`).join('')}
+                    ${product.images.map(image => {
+                        const imageUrl = window.ImageService && typeof window.ImageService.getProductImage === 'function' 
+                            ? window.ImageService.getProductImage(image)
+                            : image;
+                        return `<img src="${imageUrl}" alt="${product.name}" onerror="this.onerror=null; this.src=window.ImageService ? window.ImageService.getProductImage(null) : 'https://dndbrand-server.onrender.com/api/uploads/image/placeholder-product.jpg';">`;
+                    }).join('')}
                 </div>
             `;
         }
