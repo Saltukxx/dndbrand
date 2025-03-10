@@ -25,6 +25,18 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Running delayed banner initialization');
         initializeBannerSlider();
     }, 300);
+    
+    // Optimize banners for mobile
+    optimizeBannersForMobile();
+    
+    // Optimize single banner for all devices
+    optimizeSingleBanner();
+    
+    // Re-optimize on resize
+    window.addEventListener('resize', function() {
+        optimizeBannersForMobile();
+        optimizeSingleBanner();
+    });
 });
 
 // Load featured products to the homepage
@@ -901,4 +913,104 @@ function initializeBannerSlider() {
             }
         });
     }
+}
+
+// Add mobile-specific banner optimizations
+function optimizeBannersForMobile() {
+    const isMobile = window.innerWidth <= 576;
+    
+    if (isMobile) {
+        console.log('Optimizing banners for mobile');
+        
+        // Get all banner slides and images
+        const bannerSlides = document.querySelectorAll('.banner-slide');
+        const bannerImages = document.querySelectorAll('.banner-slide img');
+        
+        // Remove any height constraints that might cause issues
+        bannerSlides.forEach(slide => {
+            slide.style.height = 'auto';
+        });
+        
+        // Ensure images are properly sized
+        bannerImages.forEach(img => {
+            img.style.height = 'auto';
+            img.style.maxHeight = '70vh';
+            img.style.objectFit = 'contain';
+            
+            // Force image to reload for proper sizing
+            const currentSrc = img.src;
+            if (currentSrc.includes('?')) {
+                img.src = currentSrc;
+            } else {
+                img.src = currentSrc + '?t=' + new Date().getTime();
+            }
+            
+            // Listen for image load to ensure it displays properly
+            img.onload = function() {
+                this.style.display = 'block';
+                
+                // Check if the parent slide is active
+                const parentSlide = this.closest('.banner-slide');
+                if (parentSlide && parentSlide.classList.contains('active')) {
+                    parentSlide.style.display = 'block';
+                    parentSlide.style.opacity = '1';
+                }
+            };
+        });
+        
+        // Adjust container to full width on mobile
+        const bannerContainer = document.querySelector('.promo-banners .container');
+        if (bannerContainer) {
+            bannerContainer.style.maxWidth = '100%';
+            bannerContainer.style.width = '100%';
+            bannerContainer.style.padding = '0';
+        }
+        
+        // Optimize single banner for mobile
+        optimizeSingleBanner();
+    }
+}
+
+// Optimize the single banner for all devices
+function optimizeSingleBanner() {
+    const singleBanner = document.querySelector('.single-banner-wrapper img');
+    if (!singleBanner) return;
+    
+    console.log('Optimizing single banner');
+    
+    // Force the image to display correctly
+    singleBanner.style.display = 'block';
+    singleBanner.style.width = '100%';
+    
+    if (window.innerWidth <= 576) {
+        // Mobile specific optimizations
+        singleBanner.style.height = 'auto';
+        singleBanner.style.maxHeight = '70vh';
+        singleBanner.style.objectFit = 'contain';
+        
+        // Adjust container to full width on mobile
+        const singleBannerContainer = document.querySelector('.single-banner .container');
+        if (singleBannerContainer) {
+            singleBannerContainer.style.maxWidth = '100%';
+            singleBannerContainer.style.width = '100%';
+            singleBannerContainer.style.padding = '0';
+        }
+    } else {
+        // Desktop specific optimizations
+        singleBanner.style.objectFit = 'cover';
+    }
+    
+    // Force image to reload for proper sizing
+    const currentSrc = singleBanner.src;
+    if (!currentSrc.includes('?')) {
+        singleBanner.src = currentSrc + '?t=' + new Date().getTime();
+    }
+    
+    // Set up fade-in animation
+    setTimeout(() => {
+        const bannerWrapper = document.querySelector('.single-banner');
+        if (bannerWrapper) {
+            bannerWrapper.classList.add('active');
+        }
+    }, 100);
 } 
