@@ -13,53 +13,282 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js" integrity="sha512-Tn2m0TIpgVyTzzvmxLNuqbSJH3JP8jm+Cy3hvHrW7ndTDcJ1w5mBiksqDBb8GpE2ksktFvDB/ykZ0mDpsZj20w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="public/js/config.js"></script>
     <script src="public/js/services/imageService.js"></script>
-    <style>
-        .info-container {
-            max-width: 800px;
-            margin: 100px auto;
-            padding: 30px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        .info-container h1 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-        .info-container p {
-            margin-bottom: 15px;
-            line-height: 1.6;
-            color: #555;
-        }
-        .btn {
-            display: inline-block;
-            background-color: #5a67d8;
-            color: white;
-            padding: 12px 25px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: 500;
-            margin-top: 20px;
-            transition: background-color 0.3s ease;
-        }
-        .btn:hover {
-            background-color: #4c51bf;
-        }
-    </style>
 </head>
 <body>
-    <div class="info-container">
-        <h1>D&D Brand Ana Sayfa</h1>
-        <p>Redirecting functionality has been removed. This is now the main home page file.</p>
-        <p>For a complete implementation, the entire content from public/html/index.html would be copied here, with paths adjusted to work from the root directory.</p>
-        <p>The redirection was previously in place because:</p>
-        <ol style="text-align: left; max-width: 600px; margin: 0 auto;">
-            <li>The website files are organized in a subdirectory structure (public/html/)</li>
-            <li>The redirect provided a way to maintain this file structure while still having a functioning root URL</li>
-            <li>It ensured users always saw the intended home page content no matter how they accessed the site</li>
-        </ol>
-        <a href="/" class="btn">Go to Current Home Page</a>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <a href="/" class="logo-link">
+                    <img src="public/images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="D&D Brand Logo" class="logo-image">
+                </a>
+                <h1>D&D <span>Brand</span></h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/">ANA SAYFA</a></li>
+                    <li><a href="/shop">KOLEKSİYON</a></li>
+                    <li><a href="/about">HAKKIMIZDA</a></li>
+                    <li><a href="/contact">İLETİŞİM</a></li>
+                </ul>
+            </nav>
+            <div class="nav-icons">
+                <a href="/search" class="search-icon"><i class="fas fa-search"></i></a>
+                <a href="/account" class="account-icon"><i class="fas fa-user"></i><span>HESABIM</span></a>
+                <a href="/cart" class="cart-icon">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>SEPET</span>
+                    <span class="cart-count">0</span>
+                    
+                    <div class="cart-preview">
+                        <div class="cart-preview-header">
+                            <h3>Sepetiniz</h3>
+                            <span class="cart-preview-count">0 Ürün</span>
+                        </div>
+                        <div class="cart-preview-items">
+                            <!-- Cart items will be added here by JavaScript -->
+                            <div class="empty-cart-message">Sepetiniz boş</div>
+                        </div>
+                        <div class="cart-preview-footer">
+                            <div class="cart-preview-total">
+                                <span>Toplam:</span>
+                                <span class="cart-preview-total-price">₺0.00</span>
+                            </div>
+                            <div class="cart-preview-actions">
+                                <a href="/cart" class="view-cart">Sepeti Görüntüle</a>
+                                <a href="/checkout" class="checkout">Ödeme</a>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </header>
+
+    <div class="mobile-menu">
+        <div class="mobile-menu-header">
+            <div class="logo">
+                <a href="/" class="mobile-logo">
+                    <div class="logo">D&D Brand</div>
+                </a>
+            </div>
+            <div class="close-menu">
+                <i class="fas fa-times"></i>
+            </div>
+        </div>
+        <ul>
+            <li><a href="/">Ana Sayfa</a></li>
+            <li><a href="/shop">Koleksiyon</a></li>
+            <li><a href="/about">Hakkımızda</a></li>
+            <li><a href="/contact">İletişim</a></li>
+            <li><a href="/account">Hesabım</a></li>
+            <li><a href="/cart">Sepet</a></li>
+        </ul>
     </div>
+    <div class="mobile-menu-overlay"></div>
+
+    <section class="hero">
+        <img src="public/images/dndherosection.jpg" alt="D&D Brand Koleksiyon" class="hero-background">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 class="hero-title">Tarzınızı <span class="highlight">Yeniden</span> Tanımlayın</h1>
+            <p class="hero-subtitle">Premium kalite, modern tasarım ve benzersiz detaylarla öne çıkan lüks giyim koleksiyonu.</p>
+            <div class="hero-buttons">
+                <a href="/shop" class="btn">Koleksiyonu Keşfet</a>
+                <a href="/about" class="btn btn-secondary">Hikayemiz</a>
+            </div>
+            <div class="hero-features">
+                <div class="hero-feature">
+                    <i class="fas fa-shipping-fast"></i>
+                    <span>Ücretsiz Kargo</span>
+                </div>
+                <div class="hero-feature">
+                    <i class="fas fa-undo"></i>
+                    <span>30 Gün İade</span>
+                </div>
+                <div class="hero-feature">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Güvenli Ödeme</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="featured-collections">
+        <div class="container">
+            <h2 class="section-title">Öne Çıkan Koleksiyonlar</h2>
+            <div class="collection-grid">
+                <div class="collection-item fade-in">
+                    <img src="public/images/erkekkoleksiyon.jpg" alt="Erkek Koleksiyonu">
+                    <div class="collection-info">
+                        <h3>Erkek Koleksiyonu</h3>
+                        <p>Modern genç erkek için tasarlanmış premium streetwear parçalar</p>
+                        <a href="/shop?type=men" class="btn">Keşfet</a>
+                    </div>
+                </div>
+                <div class="collection-item fade-in">
+                    <img src="public/images/aksesuar.jpg" alt="Aksesuar Koleksiyonu">
+                    <div class="collection-info">
+                        <h3>Aksesuar Koleksiyonu</h3>
+                        <p>Tarzınızı tamamlayacak modern ve şık aksesuarlar</p>
+                        <a href="/shop?type=accessories" class="btn">Keşfet</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="premium-banner">
+        <div class="container">
+            <div class="premium-banner-content fade-in">
+                <h2>Premium Kalite</h2>
+                <p>En kaliteli kumaşlar ve üstün işçilik ile üretilen D&D Brand ürünleri, uzun ömürlü kullanım için tasarlandı.</p>
+                <a href="/about" class="btn btn-premium">Daha Fazla Bilgi</a>
+            </div>
+            <div class="premium-banner-image fade-in">
+                <img src="public/images/dndbannersection2.jpg" alt="Premium Kalite">
+            </div>
+        </div>
+    </section>
+
+    <section class="trending">
+        <div class="container">
+            <h2 class="section-title">Öne Çıkan Ürünler</h2>
+            <div class="product-grid">
+                <div class="product-card fade-in">
+                    <div class="product-image">
+                        <span class="product-badge new">Yeni</span>
+                        <img src="https://images.unsplash.com/photo-1578932750294-f5075e85f44a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" alt="Ürün 1">
+                        <div class="product-overlay">
+                            <a href="#" class="add-to-cart" data-id="1" title="Sepete Ekle">Sepete Ekle</a>
+                            <a href="/product?id=1" class="view-details" title="Detayları Gör">Detayları Gör</a>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <div class="brand">D&D Brand</div>
+                        <h3>Premium Pamuklu T-Shirt</h3>
+                        <div class="price">₺599</div>
+                    </div>
+                </div>
+                <div class="product-card fade-in">
+                    <div class="product-image">
+                        <span class="product-badge sale">İndirim</span>
+                        <img src="https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" alt="Ürün 2">
+                        <div class="product-overlay">
+                            <a href="#" class="add-to-cart" data-id="2" title="Sepete Ekle">Sepete Ekle</a>
+                            <a href="/product?id=2" class="view-details" title="Detayları Gör">Detayları Gör</a>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <div class="brand">D&D Brand</div>
+                        <h3>Slim Fit Denim Pantolon</h3>
+                        <div class="price"><span class="old-price">₺1299</span> ₺999</div>
+                    </div>
+                </div>
+                <div class="product-card fade-in">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=736&q=80" alt="Ürün 3">
+                        <div class="product-overlay">
+                            <a href="#" class="add-to-cart" data-id="3" title="Sepete Ekle">Sepete Ekle</a>
+                            <a href="/product?id=3" class="view-details" title="Detayları Gör">Detayları Gör</a>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <div class="brand">D&D Brand</div>
+                        <h3>Oversize Sweatshirt</h3>
+                        <div class="price">₺899</div>
+                    </div>
+                </div>
+                <div class="product-card fade-in">
+                    <div class="product-image">
+                        <span class="product-badge new">Yeni</span>
+                        <img src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" alt="Ürün 4">
+                        <div class="product-overlay">
+                            <a href="#" class="add-to-cart" data-id="4" title="Sepete Ekle">Sepete Ekle</a>
+                            <a href="/product?id=4" class="view-details" title="Detayları Gör">Detayları Gör</a>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <div class="brand">D&D Brand</div>
+                        <h3>Slim Fit Blazer Ceket</h3>
+                        <div class="price">₺1799</div>
+                    </div>
+                </div>
+            </div>
+            <div class="view-all">
+                <a href="/shop" class="btn">Tüm Ürünleri Gör</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="newsletter">
+        <div class="container">
+            <div class="newsletter-content">
+                <h2>Yeniliklerden Haberdar Olun</h2>
+                <p>Yeni koleksiyonlar, özel indirimler ve daha fazlası için bültenimize abone olun.</p>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="E-posta adresiniz" required>
+                    <button type="submit">Abone Ol</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>D&D Brand</h3>
+                    <p>Modern birey için premium giyim. Özel koleksiyonlarımızla tarzınızı yeniden tanımlayın.</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-pinterest-p"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Alışveriş</h3>
+                    <ul>
+                        <li><a href="/shop?type=men">Erkek Koleksiyonu</a></li>
+                        <li><a href="/shop?type=accessories">Aksesuarlar</a></li>
+                        <li><a href="/shop?sale=true">İndirim</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Yardım</h3>
+                    <ul>
+                        <li><a href="/contact">Bize Ulaşın</a></li>
+                        <li><a href="/shipping">Kargo Bilgileri</a></li>
+                        <li><a href="/returns">İade ve Değişim</a></li>
+                        <li><a href="/faq">Sıkça Sorulan Sorular</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Hakkımızda</h3>
+                    <ul>
+                        <li><a href="/about">Hikayemiz</a></li>
+                        <li><a href="/sustainability">Sürdürülebilirlik</a></li>
+                        <li><a href="/careers">Kariyer</a></li>
+                        <li><a href="/privacy">Gizlilik Politikası</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 D&D Brand. Tüm hakları saklıdır.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- WhatsApp Float Button -->
+    <a href="https://wa.me/905373058528?text=Merhaba%20D%26D%20Brand,%20" target="_blank" class="whatsapp-float">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <script src="public/js/storage-manager.js"></script>
+    <script src="public/js/script.js"></script>
+    <script src="public/js/index.js"></script>
 </body>
 </html> 
