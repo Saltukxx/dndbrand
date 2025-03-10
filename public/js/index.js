@@ -56,16 +56,21 @@ document.addEventListener('DOMContentLoaded', function() {
 window.addEventListener('load', function() {
     fixBannerDisplay();
     
-    // Force banners to be 100% of viewport width
+    // Force banners to be 100% of viewport width and adjust image display
     setTimeout(function() {
         document.querySelectorAll('.banner-slider-section, .full-width-banner, .banner-slider-container').forEach(el => {
             el.style.width = '100%';
             el.style.maxWidth = '100%';
         });
         
-        document.querySelectorAll('.banner-slide img, .full-width-banner img').forEach(img => {
+        document.querySelectorAll('.banner-slide img').forEach(img => {
             img.style.width = '100%';
-            img.style.objectFit = 'cover';
+            img.style.objectFit = 'cover'; // Use cover for slider images
+        });
+        
+        document.querySelectorAll('.full-width-banner img').forEach(img => {
+            img.style.width = '100%';
+            img.style.objectFit = 'contain'; // Use contain for full banner to show entire image
         });
     }, 100);
 });

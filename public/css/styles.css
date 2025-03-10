@@ -2625,7 +2625,7 @@ footer .container {
     max-width: none !important;
 }
 
-/* Full Width Banner Styles */
+/* Full Width Banner Styles - Increasing height */
 .full-width-banner {
     position: relative;
     width: 100% !important;
@@ -2634,8 +2634,8 @@ footer .container {
     padding: 0 !important;
     overflow: hidden;
     margin-bottom: 3rem !important;
-    height: 500px;
-    max-height: 60vh;
+    height: 700px; /* Increased height */
+    max-height: 80vh; /* Adjusted max height */
     transform: none !important;
     left: 0 !important;
     right: 0 !important;
@@ -2648,13 +2648,46 @@ footer .container {
     overflow: hidden;
 }
 
+/* Remove gradient overlays since text is removed */
+.banner-slide::before,
+.full-width-banner-inner::before {
+    display: none;
+}
+
+/* Ensure images fill the containers properly */
+.banner-slide img,
 .full-width-banner img {
     width: 100% !important;
     height: 100%;
-    object-fit: cover !important;
+    object-fit: contain !important; /* Changed to contain for full banner image */
     object-position: center;
     display: block !important;
     max-width: none !important;
+}
+
+/* Media queries adjustments */
+@media (max-width: 992px) {
+    .full-width-banner {
+        height: 600px;
+    }
+}
+
+@media (max-width: 768px) {
+    .full-width-banner {
+        height: 500px;
+    }
+}
+
+@media (max-width: 576px) {
+    .full-width-banner {
+        height: 400px;
+    }
+}
+
+@media (max-width: 480px) {
+    .full-width-banner {
+        height: 350px;
+    }
 }
 
 .full-width-banner-content {
