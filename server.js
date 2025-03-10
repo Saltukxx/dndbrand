@@ -38,6 +38,12 @@ const port = process.env.PORT || 3000;
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Add debug middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`[DEBUG] Request path: ${req.path}`);
+  next();
+});
+
 // Create a dedicated route for placeholder images
 app.get('/api/images/:imageName', (req, res) => {
   const imageName = req.params.imageName;
@@ -58,6 +64,71 @@ app.get('/api/images/:imageName', (req, res) => {
       logger.error(`Image not found: ${imageName}`);
     }
   }
+});
+
+// Define routes for clean URLs BEFORE the catch-all route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'index.html'));
+});
+
+app.get('/shop', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'shop.html'));
+});
+
+app.get('/about', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'about.html'));
+});
+
+app.get('/contact', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'contact.html'));
+});
+
+app.get('/cart', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'cart.html'));
+});
+
+app.get('/checkout', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'checkout.html'));
+});
+
+app.get('/account', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'account.html'));
+});
+
+app.get('/search', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'search.html'));
+});
+
+app.get('/collections', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'collections.html'));
+});
+
+app.get('/shipping', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'shipping.html'));
+});
+
+app.get('/returns', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'returns.html'));
+});
+
+app.get('/faq', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'faq.html'));
+});
+
+app.get('/sustainability', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'sustainability.html'));
+});
+
+app.get('/careers', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'careers.html'));
+});
+
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'privacy.html'));
+});
+
+app.get('/product', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'product.html'));
 });
 
 // CORS Proxy middleware for API requests
@@ -176,60 +247,35 @@ app.options('/api-proxy/*', (req, res) => {
   res.status(200).end();
 });
 
-// Handle all routes by sending the index.html file
-app.get('*', (req, res) => {
-  // If the request is for a specific file extension, don't redirect
-  if (path.extname(req.path)) {
-    // Try to find the file
-    const filePath = path.join(__dirname, req.path);
-    if (fs.existsSync(filePath)) {
-      return res.sendFile(filePath);
-    }
-    return res.status(404).send('File not found');
-  }
+// Handle HTML page requests directly - note this comes before the catch-all
+app.get('/*.html', (req, res) => {
+  // Extract the HTML file name from the URL
+  const htmlFile = req.path.substring(1); // Remove the leading slash
+  const htmlPath = path.join(__dirname, htmlFile);
   
-  // Handle clean URLs
-  // First check if the path exactly matches one of our predefined routes
-  const cleanUrlMap = {
-    '/': '/html/index.html',
-    '/shop': '/html/shop.html',
-    '/about': '/html/about.html',
-    '/contact': '/html/contact.html',
-    '/cart': '/html/cart.html',
-    '/checkout': '/html/checkout.html',
-    '/account': '/html/account.html',
-    '/search': '/html/search.html',
-    '/collections': '/html/collections.html',
-    '/shipping': '/html/shipping.html',
-    '/returns': '/html/returns.html',
-    '/faq': '/html/faq.html',
-    '/sustainability': '/html/sustainability.html',
-    '/careers': '/html/careers.html',
-    '/privacy': '/html/privacy.html',
-    '/product': '/html/product.html'
-  };
+  console.log(`[DEBUG] HTML request for ${htmlFile}, checking ${htmlPath}`);
   
-  // Check if we have a direct mapping for this path
-  if (cleanUrlMap[req.path]) {
-    return res.sendFile(path.join(__dirname, 'public', cleanUrlMap[req.path]));
-  }
-  
-  // For other paths, try to find a corresponding HTML file
-  const htmlFile = `/html${req.path}.html`;
-  const htmlPath = path.join(__dirname, 'public', htmlFile);
-  
+  // Check if the file exists
   if (fs.existsSync(htmlPath)) {
     return res.sendFile(htmlPath);
   }
   
-  // If no match is found, serve the 404 page
-  const notFoundPath = path.join(__dirname, 'public', 'html', '404.html');
-  if (fs.existsSync(notFoundPath)) {
-    return res.status(404).sendFile(notFoundPath);
+  // If not found, check if it might be in the public/html directory
+  const altPath = path.join(__dirname, 'public', htmlFile);
+  console.log(`[DEBUG] Checking alternative path: ${altPath}`);
+  
+  if (fs.existsSync(altPath)) {
+    return res.sendFile(altPath);
   }
   
-  // Fallback if 404.html doesn't exist
-  res.status(404).send('Page Not Found');
+  // If HTML file doesn't exist, send 404 page
+  return res.status(404).sendFile(path.join(__dirname, 'public', 'html', '404.html'));
+});
+
+// Fallback 404 handler - this should come last
+app.use((req, res) => {
+  console.log(`[DEBUG] 404 fallback for: ${req.path}`);
+  res.status(404).sendFile(path.join(__dirname, 'public', 'html', '404.html'));
 });
 
 app.listen(port, () => {

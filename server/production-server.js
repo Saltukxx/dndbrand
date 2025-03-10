@@ -122,72 +122,90 @@ app.get('/healthz', (req, res) => {
   res.status(200).send('OK');
 });
 
-// Redirect root to GitHub Pages
+// Define routes for the frontend HTML files
+// Root route serves the index.html
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/html/index.html'));
 });
 
-// Define clean URL mappings
-const cleanUrlMap = {
-  '/shop': '/html/shop.html',
-  '/about': '/html/about.html',
-  '/contact': '/html/contact.html',
-  '/cart': '/html/cart.html',
-  '/checkout': '/html/checkout.html',
-  '/account': '/html/account.html',
-  '/search': '/html/search.html',
-  '/collections': '/html/collections.html',
-  '/shipping': '/html/shipping.html',
-  '/returns': '/html/returns.html',
-  '/faq': '/html/faq.html',
-  '/sustainability': '/html/sustainability.html',
-  '/careers': '/html/careers.html',
-  '/privacy': '/html/privacy.html',
-  '/product': '/html/product.html'
-};
-
-// Handle clean URLs
-app.get(Object.keys(cleanUrlMap), (req, res) => {
-  const htmlFile = cleanUrlMap[req.path];
-  res.sendFile(path.join(__dirname, '../public', htmlFile));
+// Define explicit routes for clean URLs
+app.get('/shop', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/html/shop.html'));
 });
 
-// Handle HTML page requests
+app.get('/about', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/html/about.html'));
+});
+
+app.get('/contact', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/html/contact.html'));
+});
+
+app.get('/cart', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/html/cart.html'));
+});
+
+app.get('/checkout', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/html/checkout.html'));
+});
+
+app.get('/account', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/html/account.html'));
+});
+
+app.get('/search', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/html/search.html'));
+});
+
+app.get('/collections', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/html/collections.html'));
+});
+
+app.get('/shipping', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/html/shipping.html'));
+});
+
+app.get('/returns', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/html/returns.html'));
+});
+
+app.get('/faq', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/html/faq.html'));
+});
+
+app.get('/sustainability', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/html/sustainability.html'));
+});
+
+app.get('/careers', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/html/careers.html'));
+});
+
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/html/privacy.html'));
+});
+
+app.get('/product', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/html/product.html'));
+});
+
+// Handle HTML page requests (for any .html file)
 app.get('/*.html', (req, res) => {
   // Extract the HTML file name from the URL
   const htmlFile = req.path.substring(1); // Remove the leading slash
-  const htmlPath = path.join(__dirname, '../public', htmlFile);
+  const htmlPath = path.join(__dirname, '..', htmlFile);
   
   // Check if the file exists
   if (fs.existsSync(htmlPath)) {
     res.sendFile(htmlPath);
   } else {
-    // If HTML file doesn't exist, send 404 page or redirect to home
+    // If HTML file doesn't exist, send 404 page
     res.status(404).sendFile(path.join(__dirname, '../public/html/404.html'));
   }
 });
 
-// Try other clean URLs without explicit mapping
-app.get('/*', (req, res, next) => {
-  // Skip if it's a file request (has extension)
-  if (path.extname(req.path)) {
-    return next();
-  }
-  
-  // Try to find a corresponding HTML file
-  const htmlPath = path.join(__dirname, '../public/html', `${req.path.substring(1)}.html`);
-  
-  // Check if the file exists
-  if (fs.existsSync(htmlPath)) {
-    return res.sendFile(htmlPath);
-  }
-  
-  // If no clean URL match, continue to the next middleware
-  next();
-});
-
-// Serve frontend for any other route (fallback)
-app.get('*', (req, res) => {
+// Fallback 404 handler for any other routes
+app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, '../public/html/404.html'));
 });
 
