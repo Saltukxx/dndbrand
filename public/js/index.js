@@ -583,10 +583,14 @@ function initializeCountdownTimer() {
 
 // Initialize homepage functionality
 function initializeHomepage() {
-    // Activate animations
+    // Immediately activate all elements without animations
     const animatedElements = document.querySelectorAll('.fade-in, .slide-in-left, .slide-in-right');
     animatedElements.forEach(el => {
         el.classList.add('active');
+        // Disable any transitions or transforms
+        el.style.transition = 'none';
+        el.style.transform = 'none';
+        el.style.opacity = '1';
     });
     
     // Add event listeners to cart buttons
@@ -613,11 +617,8 @@ function initializeHomepage() {
     // Initialize collection items hover effects
     initializeCollections();
     
-    // Make sure all sections are edge-to-edge
-    document.querySelectorAll('.hero, .promo-banners, .single-banner, .featured-collections, .limited-time-offer, .premium-banner, .trending').forEach(section => {
-        section.style.margin = '0';
-        section.style.padding = '0';
-    });
+    // Ensure no spacing between sections and fix image display issues
+    fixSectionSpacingAndImages();
     
     // Preserve padding for the limited-time-offer section
     const limitedTimeOfferSection = document.querySelector('.limited-time-offer');
@@ -655,33 +656,59 @@ function initializeHomepage() {
             }
         }, 100);
     }
+    
+    // Disable scroll animations
+    window.addEventListener('scroll', function() {
+        // Do nothing - prevent scroll animations
+    }, { passive: true });
 }
 
-// Initialize collections section
+// Fix spacing between sections and ensure images display properly
+function fixSectionSpacingAndImages() {
+    // Fix all sections to have zero spacing
+    document.querySelectorAll('section').forEach(section => {
+        section.style.margin = '0';
+        section.style.padding = '0';
+    });
+    
+    // Fix premium banner image display
+    const premiumImage = document.querySelector('.premium-banner-image img');
+    if (premiumImage) {
+        premiumImage.style.width = '100%';
+        premiumImage.style.height = '100%';
+        premiumImage.style.objectFit = 'cover';
+        premiumImage.style.display = 'block';
+        premiumImage.style.transition = 'none';
+        premiumImage.style.transform = 'none';
+    }
+    
+    // Fix single banner image display
+    const singleBannerImage = document.querySelector('.single-banner-wrapper img');
+    if (singleBannerImage) {
+        singleBannerImage.style.width = '100%';
+        singleBannerImage.style.objectFit = 'cover';
+        singleBannerImage.style.display = 'block';
+        singleBannerImage.style.transition = 'none';
+        singleBannerImage.style.transform = 'none';
+    }
+    
+    // Ensure all animated elements are fully visible
+    document.querySelectorAll('.fade-in, .slide-in-left, .slide-in-right').forEach(el => {
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+        el.style.transition = 'none';
+    });
+    
+    // Remove any scroll-triggered animations
+    window.onscroll = null;
+}
+
+// Keep the original initializeCollections function but remove any animations
 function initializeCollections() {
     const collectionItems = document.querySelectorAll('.collection-item');
     
     collectionItems.forEach(item => {
-        // Add hover effect for desktop
-        if (window.innerWidth > 768) {
-            item.addEventListener('mouseenter', function() {
-                const overlay = this.querySelector('.collection-overlay');
-                if (overlay) {
-                    overlay.style.paddingBottom = '40px';
-                    overlay.style.background = 'linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0) 100%)';
-                }
-            });
-            
-            item.addEventListener('mouseleave', function() {
-                const overlay = this.querySelector('.collection-overlay');
-                if (overlay) {
-                    overlay.style.paddingBottom = '20px';
-                    overlay.style.background = 'linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 100%)';
-                }
-            });
-        }
-        
-        // Make entire collection item clickable
+        // Make entire collection item clickable without animations
         item.addEventListener('click', function() {
             const link = this.querySelector('.collection-btn');
             if (link) {
