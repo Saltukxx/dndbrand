@@ -691,6 +691,45 @@ function fixSectionSpacingAndImages() {
             img.style.height = '100%';
         }
     }
+    
+    // Fix collection sections (all)
+    document.querySelectorAll('.featured-collections, .parfume-collections, .casual-collections').forEach(section => {
+        // Remove any margin or padding
+        section.style.margin = '0';
+        section.style.padding = '0';
+        
+        // Fix the collection items
+        const items = section.querySelectorAll('.collection-item');
+        items.forEach(item => {
+            // Set proper styles
+            item.style.margin = '0';
+            item.style.padding = '0';
+            
+            // Fix the images
+            const img = item.querySelector('img');
+            if (img) {
+                img.style.display = 'block';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                img.style.transform = 'none';
+                img.style.transition = 'none';
+            }
+            
+            // Fix the overlay
+            const overlay = item.querySelector('.collection-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                overlay.style.flexDirection = 'column';
+                overlay.style.justifyContent = 'center';
+                overlay.style.alignItems = 'center';
+                overlay.style.textAlign = 'center';
+            }
+        });
+    });
+    
+    // Fix text centering for all key sections
+    ensureTextCentering();
 
     // Ensure zero margin/padding for all sections
     document.querySelectorAll('section').forEach(section => {
@@ -709,18 +748,143 @@ function fixSectionSpacingAndImages() {
     }
 }
 
+// New function to ensure text is centered properly across all sections
+function ensureTextCentering() {
+    // Hero section text centering
+    const heroContent = document.querySelector('.hero-content');
+    if (heroContent) {
+        heroContent.style.textAlign = 'center';
+        
+        // Position hero content in the middle for all screen sizes
+        heroContent.style.position = 'absolute';
+        heroContent.style.top = '50%';
+        heroContent.style.left = '50%';
+        heroContent.style.transform = 'translate(-50%, -50%)';
+        
+        // Make sure all inner elements are centered
+        const heroTitle = heroContent.querySelector('.hero-title');
+        const heroSubtitle = heroContent.querySelector('.hero-subtitle');
+        
+        if (heroTitle) heroTitle.style.textAlign = 'center';
+        if (heroSubtitle) heroSubtitle.style.textAlign = 'center';
+        
+        // Center hero buttons
+        const heroButtons = heroContent.querySelector('.hero-buttons');
+        if (heroButtons) {
+            heroButtons.style.display = 'flex';
+            heroButtons.style.justifyContent = 'center';
+        }
+        
+        // Center hero features
+        const heroFeatures = heroContent.querySelector('.hero-features');
+        if (heroFeatures) {
+            heroFeatures.style.display = 'flex';
+            heroFeatures.style.justifyContent = 'center';
+        }
+    }
+    
+    // Premium banner text centering
+    const premiumContent = document.querySelector('.premium-banner-content');
+    if (premiumContent) {
+        premiumContent.style.textAlign = 'center';
+        premiumContent.style.display = 'flex';
+        premiumContent.style.flexDirection = 'column';
+        premiumContent.style.alignItems = 'center';
+        premiumContent.style.justifyContent = 'center';
+        
+        // Ensure title line is centered
+        const premiumTitle = premiumContent.querySelector('h2');
+        if (premiumTitle && premiumTitle.style) {
+            premiumTitle.style.textAlign = 'center';
+        }
+    }
+    
+    // Collection overlay text centering (for all collection types)
+    document.querySelectorAll('.featured-collections .collection-overlay, .parfume-collections .collection-overlay, .casual-collections .collection-overlay').forEach(overlay => {
+        overlay.style.display = 'flex';
+        overlay.style.flexDirection = 'column';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+        overlay.style.textAlign = 'center';
+        
+        const title = overlay.querySelector('.collection-title');
+        if (title) {
+            title.style.textAlign = 'center';
+            title.style.width = '100%';
+        }
+        
+        const btn = overlay.querySelector('.collection-btn');
+        if (btn) {
+            btn.style.textAlign = 'center';
+        }
+    });
+    
+    // Limited offer text centering
+    const offerContent = document.querySelector('.offer-content');
+    if (offerContent) {
+        offerContent.style.textAlign = 'center';
+        
+        const offerTitle = offerContent.querySelector('.offer-title');
+        const offerSubtitle = offerContent.querySelector('.offer-subtitle');
+        
+        if (offerTitle) offerTitle.style.textAlign = 'center';
+        if (offerSubtitle) offerSubtitle.style.textAlign = 'center';
+        
+        // Center countdown timer
+        const countdownTimer = offerContent.querySelector('.countdown-timer');
+        if (countdownTimer) {
+            countdownTimer.style.display = 'flex';
+            countdownTimer.style.justifyContent = 'center';
+        }
+    }
+    
+    // Section titles centering
+    document.querySelectorAll('.section-title').forEach(title => {
+        title.style.textAlign = 'center';
+    });
+}
+
 // Keep the original initializeCollections function but remove any animations
 function initializeCollections() {
-    const collectionItems = document.querySelectorAll('.collection-item');
+    // Get all collection sections
+    const collectionSections = document.querySelectorAll('.featured-collections, .parfume-collections, .casual-collections');
     
-    collectionItems.forEach(item => {
-        // Make entire collection item clickable without animations
-        item.addEventListener('click', function() {
-            const link = this.querySelector('.collection-btn');
-            if (link) {
-                window.location.href = link.getAttribute('href');
+    // For each collection section
+    collectionSections.forEach(section => {
+        const items = section.querySelectorAll('.collection-item');
+        
+        // Make sure collection items have proper hover effects
+        items.forEach(item => {
+            // Remove any animations or transforms
+            const img = item.querySelector('img');
+            if (img) {
+                img.style.transform = 'none';
+                img.style.transition = 'none';
+            }
+            
+            // Ensure overlay is properly positioned
+            const overlay = item.querySelector('.collection-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                overlay.style.flexDirection = 'column';
+                overlay.style.justifyContent = 'center';
+                overlay.style.alignItems = 'center';
+                overlay.style.textAlign = 'center';
+            }
+            
+            // Ensure collection title is centered
+            const title = item.querySelector('.collection-title');
+            if (title) {
+                title.style.textAlign = 'center';
             }
         });
+    });
+    
+    // Ensure proper spacing between collection sections
+    collectionSections.forEach((section, index) => {
+        if (index > 0) {
+            section.style.marginTop = '0';
+        }
     });
 }
 
