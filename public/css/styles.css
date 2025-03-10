@@ -761,14 +761,26 @@ nav ul li a.active::after {
     }
     
     .banner-navigation {
-        bottom: 10px;
+        bottom: 8px;
     }
     
-    /* Featured collections fixes for mobile */
-    .featured-collections {
-        padding: 30px 0 !important;
-        margin: 0 !important;
-        width: 100%;
+    /* Remove any remaining spacing after hero section */
+    .hero {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Make sure single banner content is positioned correctly */
+    .single-banner-content {
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    /* Fix any additional spacing in sections */
+    .promo-banners,
+    .single-banner {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
     }
 }
 
@@ -818,13 +830,13 @@ nav ul li a.active::after {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(2, 1fr);
-    gap: 0;
+    gap: 5px;
     width: 100%;
 }
 
 .featured-collections.edge-to-edge .collection-item {
     position: relative;
-    height: 350px;
+    height: 450px;
     overflow: hidden;
     margin: 0;
     padding: 0;
@@ -834,6 +846,7 @@ nav ul li a.active::after {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center;
     display: block;
     transition: transform 0.6s ease-out;
 }
@@ -903,52 +916,34 @@ nav ul li a.active::after {
     color: var(--primary-color);
 }
 
-/* Mobile Responsiveness for Edge-to-Edge Collection Grid */
+/* Update responsive settings for collection items */
 @media (max-width: 992px) {
     .featured-collections.edge-to-edge .collection-item {
-        height: 300px;
+        height: 400px;
     }
     
-    .featured-collections.edge-to-edge .collection-title {
-        font-size: 1.5rem;
+    .single-banner {
+        height: 80vh;
     }
 }
 
 @media (max-width: 768px) {
-    .featured-collections.edge-to-edge .collection-grid {
-        grid-template-columns: 1fr;
-        grid-template-rows: repeat(4, 1fr);
-    }
-    
     .featured-collections.edge-to-edge .collection-item {
-        height: 250px;
+        height: 350px;
     }
     
-    .featured-collections.edge-to-edge .collection-overlay {
-        opacity: 1;
-        background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.1) 100%);
-    }
-    
-    .featured-collections.edge-to-edge .collection-title,
-    .featured-collections.edge-to-edge .collection-btn {
-        transform: translateY(0);
-        opacity: 1;
+    .single-banner {
+        height: 70vh;
     }
 }
 
 @media (max-width: 576px) {
     .featured-collections.edge-to-edge .collection-item {
-        height: 200px;
+        height: 250px;
     }
     
-    .featured-collections.edge-to-edge .collection-title {
-        font-size: 1.3rem;
-        margin-bottom: 15px;
-    }
-    
-    .featured-collections.edge-to-edge .collection-btn {
-        padding: 8px 20px;
-        font-size: 0.8rem;
+    .single-banner {
+        height: 60vh;
     }
 }
 
@@ -1156,12 +1151,14 @@ nav ul li a.active::after {
     padding: 0;
     position: relative;
     overflow: hidden;
-    transition: none; /* Remove transitions */
+    transition: none;
+    height: 90vh;
+    max-height: 800px;
 }
 
 .single-banner.active {
     opacity: 1;
-    transform: none !important; /* Prevent any transform */
+    transform: none !important;
 }
 
 .single-banner .container {
@@ -1174,9 +1171,9 @@ nav ul li a.active::after {
 .single-banner-wrapper {
     position: relative;
     overflow: hidden;
-    border-radius: 0; /* Remove rounded corners */
-    box-shadow: none; /* Remove shadow */
-    height: auto;
+    border-radius: 0;
+    box-shadow: none;
+    height: 100%;
     width: 100%;
     margin: 0;
     display: block;
@@ -1184,9 +1181,9 @@ nav ul li a.active::after {
 
 .single-banner-wrapper img {
     width: 100%;
-    height: auto;
-    max-height: 600px;
+    height: 100%;
     object-fit: cover;
+    object-position: center;
     display: block;
     transition: transform 0.5s ease;
     background-color: var(--primary-color);
@@ -1240,47 +1237,228 @@ nav ul li a.active::after {
     }
 }
 
-/* Mobile fixes for edge-to-edge */
-@media (max-width: 576px) {
-    /* Additional fixes for hero content positioning */
+/* Promo Banners Section - Full Width */
+.promo-banners {
+    width: 100%;
+    margin: 30px 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.promo-banners .container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0 auto;
+}
+
+.banner-slider {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.banner-slide {
+    width: 100%;
+    display: none;
+}
+
+.banner-slide.active {
+    display: block;
+}
+
+.banner-slide img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.banner-navigation {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 5;
+}
+
+.banner-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.banner-dot.active {
+    background-color: var(--secondary-color);
+    transform: scale(1.2);
+}
+
+/* Mobile responsiveness for hero section */
+@media (max-width: 768px) {
+    .hero {
+        height: 90vh;
+    }
+    
     .hero-content {
-        margin-left: 0;
-        padding: 20px;
-        position: absolute;
-        bottom: 0;
-        left: 0;
+        width: 90%;
+    }
+    
+    .hero-title {
+        font-size: 2.8rem;
+    }
+    
+    .hero-features {
+        flex-wrap: wrap;
+    }
+    
+    /* Adjust banner for tablets */
+    .promo-banners {
+        margin: 20px 0;
+    }
+    
+    .banner-slide img {
+        height: auto;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Hero section styles */
+    .hero {
+        height: 90vh; /* Full-height hero on mobile */
+        min-height: 500px;
+        position: relative;
+        margin-bottom: 0;
+    }
+    
+    .hero-content {
         width: 100%;
+        max-width: 100%;
+        padding: 0 20px;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
         text-align: center;
+    }
+    
+    .hero-title {
+        font-size: 2.3rem;
+        line-height: 1.2;
+        margin-bottom: 15px;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+        line-height: 1.5;
+        max-width: 100%;
+        margin: 0 auto 25px;
+    }
+    
+    .hero-buttons {
+        flex-direction: column;
+        gap: 15px;
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto 30px;
+    }
+    
+    .hero-buttons .btn {
+        width: 100%;
+        padding: 14px 20px;
+        margin: 0;
+    }
+    
+    .hero-features {
+        width: 100%;
+        justify-content: center;
+        gap: 25px;
+        padding: 0 10px;
+    }
+    
+    .hero-feature {
+        margin: 0;
+    }
+    
+    .hero-feature i {
+        font-size: 20px;
+        margin-bottom: 5px;
+    }
+    
+    .hero-feature span {
+        font-size: 12px;
+    }
+    
+    .hero-overlay {
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0.3) 100%);
+    }
+    
+    /* Banner fixes for mobile */
+    .promo-banners, .single-banner {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100%;
+        max-width: 100vw;
+        overflow: hidden;
+    }
+    
+    .promo-banners .container, .single-banner .container {
+        max-width: 100%;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .banner-slider {
+        width: 100%;
+        position: relative;
+        overflow: visible;
+    }
+    
+    .mobile-banner-slider {
+        display: flex;
+        overflow-x: scroll;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none; /* Hide scrollbar for Firefox */
+        -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
+        width: 100%;
+    }
+    
+    .banner-slider::-webkit-scrollbar {
+        display: none; /* Hide scrollbar for Chrome, Safari, and Opera */
     }
     
     /* Ensure no gaps with swipeable banners */
     .mobile-banner-slider .banner-slide {
+        width: 100%;
+        flex: 0 0 100%;
+        scroll-snap-align: start;
         margin: 0;
         padding: 0;
+        display: block !important;
+        opacity: 1 !important;
     }
     
-    /* Remove any space at the bottom of banners */
+    .banner-slide img, .single-banner-wrapper img {
+        margin: 0;
+        padding: 0;
+        border-radius: 0; /* Remove border radius on mobile */
+        box-shadow: none; /* Remove shadow on mobile */
+        width: 100%;
+        height: auto;
+    }
+    
     .banner-navigation {
-        bottom: 8px;
+        bottom: 10px;
     }
     
-    /* Remove any remaining spacing after hero section */
-    .hero {
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-    }
-    
-    /* Make sure single banner content is positioned correctly */
-    .single-banner-content {
-        bottom: 15px;
-        right: 15px;
-    }
-    
-    /* Fix any additional spacing in sections */
-    .promo-banners,
-    .single-banner {
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
+    /* Featured collections fixes for mobile */
+    .featured-collections {
+        padding: 30px 0 !important;
+        margin: 0 !important;
+        width: 100%;
     }
 }
 
@@ -1789,227 +1967,9 @@ nav ul li a.active::after {
     }
 }
 
-/* Promo Banners Section - Full Width */
-.promo-banners {
-    width: 100%;
-    margin: 30px 0;
-    padding: 0;
-    overflow: hidden;
-}
-
-.promo-banners .container {
-    width: 100%;
-    max-width: 100%;
-    padding: 0;
-    margin: 0 auto;
-}
-
-.banner-slider {
-    width: 100%;
-    position: relative;
-    overflow: hidden;
-}
-
-.banner-slide {
-    width: 100%;
-    display: none;
-}
-
-.banner-slide.active {
-    display: block;
-}
-
-.banner-slide img {
-    width: 100%;
-    height: auto;
-    display: block;
-}
-
-.banner-navigation {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 10px;
-    z-index: 5;
-}
-
-.banner-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.5);
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.banner-dot.active {
-    background-color: var(--secondary-color);
-    transform: scale(1.2);
-}
-
-/* Mobile responsiveness for hero section */
 @media (max-width: 768px) {
-    .hero {
-        height: 90vh;
-    }
-    
-    .hero-content {
-        width: 90%;
-    }
-    
-    .hero-title {
-        font-size: 2.8rem;
-    }
-    
-    .hero-features {
-        flex-wrap: wrap;
-    }
-    
-    /* Adjust banner for tablets */
-    .promo-banners {
-        margin: 20px 0;
-    }
-    
-    .banner-slide img {
-        height: auto;
-    }
-}
-
-@media (max-width: 576px) {
-    /* Hero section styles */
-    .hero {
-        height: 90vh; /* Full-height hero on mobile */
-        min-height: 500px;
-        position: relative;
-        margin-bottom: 0;
-    }
-    
-    .hero-content {
-        width: 100%;
-        max-width: 100%;
-        padding: 0 20px;
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        text-align: center;
-    }
-    
-    .hero-title {
-        font-size: 2.3rem;
-        line-height: 1.2;
-        margin-bottom: 15px;
-    }
-    
-    .hero-subtitle {
-        font-size: 1rem;
-        line-height: 1.5;
-        max-width: 100%;
-        margin: 0 auto 25px;
-    }
-    
-    .hero-buttons {
-        flex-direction: column;
-        gap: 15px;
-        width: 100%;
-        max-width: 300px;
-        margin: 0 auto 30px;
-    }
-    
-    .hero-buttons .btn {
-        width: 100%;
-        padding: 14px 20px;
-        margin: 0;
-    }
-    
-    .hero-features {
-        width: 100%;
-        justify-content: center;
-        gap: 25px;
-        padding: 0 10px;
-    }
-    
-    .hero-feature {
-        margin: 0;
-    }
-    
-    .hero-feature i {
-        font-size: 20px;
-        margin-bottom: 5px;
-    }
-    
-    .hero-feature span {
-        font-size: 12px;
-    }
-    
-    .hero-overlay {
-        background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0.3) 100%);
-    }
-    
-    /* Banner fixes for mobile */
-    .promo-banners, .single-banner {
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100%;
-        max-width: 100vw;
-        overflow: hidden;
-    }
-    
-    .promo-banners .container, .single-banner .container {
-        max-width: 100%;
-        width: 100%;
-        padding: 0;
-        margin: 0;
-    }
-    
-    .banner-slider {
-        width: 100%;
-        position: relative;
-        overflow: visible;
-    }
-    
-    .mobile-banner-slider {
-        display: flex;
-        overflow-x: scroll;
-        scroll-snap-type: x mandatory;
-        scrollbar-width: none; /* Hide scrollbar for Firefox */
-        -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
-        width: 100%;
-    }
-    
-    .banner-slider::-webkit-scrollbar {
-        display: none; /* Hide scrollbar for Chrome, Safari, and Opera */
-    }
-    
-    /* Ensure no gaps with swipeable banners */
-    .mobile-banner-slider .banner-slide {
-        width: 100%;
-        flex: 0 0 100%;
-        scroll-snap-align: start;
-        margin: 0;
-        padding: 0;
-        display: block !important;
-        opacity: 1 !important;
-    }
-    
-    .banner-slide img, .single-banner-wrapper img {
-        margin: 0;
-        padding: 0;
-        border-radius: 0; /* Remove border radius on mobile */
-        box-shadow: none; /* Remove shadow on mobile */
-        width: 100%;
-        height: auto;
-    }
-    
-    .banner-navigation {
-        bottom: 10px;
-    }
-    
-    /* Featured collections fixes for mobile */
-    .featured-collections {
-        padding: 30px 0 !important;
-        margin: 0 !important;
-        width: 100%;
+    .featured-collections.edge-to-edge .collection-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(4, 1fr);
     }
 } 
