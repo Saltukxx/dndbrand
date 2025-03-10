@@ -531,13 +531,10 @@ function initializeHomepage() {
     // Optimize banners for mobile
     optimizeBannersForMobile();
     
-    // Optimize single banner
-    optimizeSingleBanner();
-    
-    // Add resize listener to re-optimize banners when window is resized
-    window.addEventListener('resize', function() {
-        optimizeBannersForMobile();
-        optimizeSingleBanner();
+    // Make sure banners are edge-to-edge
+    document.querySelectorAll('.hero, .promo-banners, .single-banner, .featured-collections').forEach(section => {
+        section.style.margin = '0';
+        section.style.padding = '0';
     });
     
     // Add click handler to cart preview
@@ -551,6 +548,19 @@ function initializeHomepage() {
     
     // Initialize cart count
     updateCartCount();
+    
+    // Force reflow to ensure proper rendering of swipeable banners on mobile
+    if (window.innerWidth <= 576) {
+        setTimeout(() => {
+            const bannerSlider = document.querySelector('.banner-slider');
+            if (bannerSlider) {
+                bannerSlider.style.display = 'none';
+                // Force reflow
+                void bannerSlider.offsetHeight;
+                bannerSlider.style.display = 'flex';
+            }
+        }, 100);
+    }
 }
 
 // Initialize the horizontal scroll behavior for product grid on mobile
@@ -716,7 +726,143 @@ function fixBannerImagePaths() {
     });
 }
 
-// Initialize the banner slider
+// Enhanced mobile banner slider setup
+function setupMobileSlider() {
+    const bannerSlider = document.querySelector('.banner-slider');
+    if (!bannerSlider) return;
+    
+    const bannerSlides = bannerSlider.querySelectorAll('.banner-slide');
+    const bannerDots = bannerSlider.querySelectorAll('.banner-dot');
+    
+    // Initialize CSS class for mobile
+    bannerSlider.classList.add('mobile-banner-slider');
+    
+    // Make all slides visible for mobile
+    bannerSlides.forEach((slide, index) => {
+        slide.style.position = 'relative';
+        slide.style.opacity = '1';
+        slide.style.display = 'block';
+        
+        // Set z-index to properly layer slides
+        slide.style.zIndex = bannerSlides.length - index;
+        
+        // Ensure slides have links to shop page
+        if (!slide.querySelector('a[href="/shop"]')) {
+            const img = slide.querySelector('img');
+            if (img && img.parentElement.tagName !== 'A') {
+                const wrap = document.createElement('a');
+                wrap.href = '/shop';
+                img.parentNode.insertBefore(wrap, img);
+                wrap.appendChild(img);
+            }
+        }
+    });
+
+    // Variables for touch handling
+    let isSwiping = false;
+    let startX, startY, startScrollLeft;
+    let currentIndex = 0;
+    
+    // Get slide width after slides are visible
+    const getSlideWidth = () => bannerSlides[0].offsetWidth;
+    
+    // Improved swipe handlers
+    bannerSlider.addEventListener('touchstart', (e) => {
+        isSwiping = true;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        startScrollLeft = bannerSlider.scrollLeft;
+        bannerSlider.style.cursor = 'grabbing';
+    }, { passive: true });
+    
+    bannerSlider.addEventListener('touchmove', (e) => {
+        if (!isSwiping) return;
+        
+        const x = e.touches[0].clientX;
+        const y = e.touches[0].clientY;
+        const walkX = x - startX;
+        const walkY = y - startY;
+        
+        // Vertical scrolling detection
+        if (Math.abs(walkY) > Math.abs(walkX)) {
+            return;
+        }
+        
+        // Prevent default only for horizontal swipes
+        if (e.cancelable) e.preventDefault();
+        
+        bannerSlider.scrollLeft = startScrollLeft - walkX;
+    }, { passive: false });
+    
+    bannerSlider.addEventListener('touchend', () => {
+        if (!isSwiping) return;
+        isSwiping = false;
+        
+        const slideWidth = getSlideWidth();
+        const scrollPosition = bannerSlider.scrollLeft;
+        currentIndex = Math.round(scrollPosition / slideWidth);
+        
+        // Ensure index is within bounds
+        currentIndex = Math.max(0, Math.min(currentIndex, bannerSlides.length - 1));
+        
+        // Smooth scroll to the current slide
+        bannerSlider.scrollTo({
+            left: currentIndex * slideWidth,
+            behavior: 'smooth'
+        });
+        
+        // Update active dot
+        updateActiveDot(currentIndex);
+        
+        bannerSlider.style.cursor = 'grab';
+    });
+    
+    // Update dots on scroll
+    bannerSlider.addEventListener('scroll', () => {
+        const slideWidth = getSlideWidth();
+        const scrollPosition = bannerSlider.scrollLeft;
+        const index = Math.round(scrollPosition / slideWidth);
+        
+        if (index !== currentIndex && index >= 0 && index < bannerSlides.length) {
+            currentIndex = index;
+            updateActiveDot(index);
+        }
+    });
+    
+    // Click event for dots
+    bannerDots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+            currentIndex = index;
+            
+            // Scroll to the selected slide
+            bannerSlider.scrollTo({
+                left: index * getSlideWidth(),
+                behavior: 'smooth'
+            });
+            
+            // Update active dot
+            updateActiveDot(index);
+        });
+    });
+    
+    // Update active dot
+    function updateActiveDot(index) {
+        bannerDots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === index);
+        });
+    }
+    
+    // Initial scroll to first slide
+    setTimeout(() => {
+        bannerSlider.scrollTo({
+            left: 0,
+            behavior: 'auto'
+        });
+        updateActiveDot(0);
+    }, 100);
+}
+
+// Initialize banner slider
 function initializeBannerSlider() {
     console.log('Initializing banner slider');
     
@@ -729,209 +875,112 @@ function initializeBannerSlider() {
         return;
     }
     
-    const bannerSlides = bannerSlider.querySelectorAll('.banner-slide');
-    const bannerDots = bannerSlider.querySelectorAll('.banner-dot');
+    const isMobile = window.innerWidth <= 576;
     
-    console.log(`Found ${bannerSlides.length} banner slides`);
-    console.log(`Found ${bannerDots.length} banner dots`);
-    
-    if (bannerSlides.length <= 0) return;
-    
-    let currentIndex = 0;
-    let autoSlideInterval;
-    
-    // Set initial active slide
-    function setInitialSlide() {
-        console.log('Setting initial slide');
-        bannerSlides.forEach((slide, i) => {
-            if (i === 0) {
-                slide.classList.add('active');
-                slide.style.display = 'block';
-                slide.style.opacity = '1';
-            } else {
-                slide.classList.remove('active');
-                slide.style.display = 'none';
-                slide.style.opacity = '0';
-            }
-        });
-        
-        if (bannerDots.length > 0) {
-            bannerDots[0].classList.add('active');
-        }
-    }
-    
-    // Call immediately to set up the first slide
-    setInitialSlide();
-    
-    // Handle dot navigation clicks
-    bannerDots.forEach(dot => {
-        dot.addEventListener('click', () => {
-            const index = parseInt(dot.getAttribute('data-index'));
-            navigateToSlide(index);
-        });
-    });
-    
-    // Desktop functionality - auto slide
-    if (window.innerWidth > 576) {
-        console.log('Starting desktop banner slideshow');
-        startAutoSlide();
-        
-        // Pause auto-slide on hover
-        bannerSlider.addEventListener('mouseenter', () => {
-            clearInterval(autoSlideInterval);
-        });
-        
-        // Resume auto-slide on mouse leave
-        bannerSlider.addEventListener('mouseleave', () => {
-            startAutoSlide();
-        });
-    } else {
-        // Mobile functionality
-        console.log('Setting up mobile banner slider');
+    if (isMobile) {
+        // Use mobile setup for small screens
         setupMobileSlider();
-    }
-    
-    // Setup mobile slider
-    function setupMobileSlider() {
-        // Make all slides visible for mobile scrolling
-        bannerSlides.forEach(slide => {
-            slide.style.position = 'relative';
-            slide.style.opacity = '1';
-            slide.style.display = 'block';
-        });
+    } else {
+        // Desktop setup with autoplay
+        const bannerSlides = bannerSlider.querySelectorAll('.banner-slide');
+        const bannerDots = bannerSlider.querySelectorAll('.banner-dot');
         
-        // Add mobile-slider class if it's not already added through CSS
-        bannerSlider.classList.add('mobile-slider');
+        console.log(`Found ${bannerSlides.length} banner slides`);
+        console.log(`Found ${bannerDots.length} banner dots`);
         
-        let startX;
-        let startY;
-        let scrollLeft;
-        let isScrolling;
+        if (bannerSlides.length <= 0) return;
         
-        // Handle touch events for swipe
-        bannerSlider.addEventListener('touchstart', (e) => {
-            startX = e.touches[0].pageX;
-            startY = e.touches[0].pageY;
-            scrollLeft = bannerSlider.scrollLeft;
-            isScrolling = undefined;
-        }, { passive: true });
+        let currentIndex = 0;
+        let autoSlideInterval;
         
-        bannerSlider.addEventListener('touchmove', (e) => {
-            if (!startX || !startY) return;
-            
-            const x = e.touches[0].pageX;
-            const y = e.touches[0].pageY;
-            const diffX = startX - x;
-            const diffY = startY - y;
-            
-            // Determine direction on first move
-            if (isScrolling === undefined) {
-                isScrolling = Math.abs(diffY) > Math.abs(diffX);
-            }
-            
-            // If scrolling horizontally, prevent default to avoid page scrolling
-            if (!isScrolling) {
-                if (e.cancelable) e.preventDefault();
-                bannerSlider.scrollLeft = scrollLeft + diffX;
-            }
-        }, { passive: false });
-        
-        bannerSlider.addEventListener('touchend', () => {
-            // Determine which slide to navigate to based on scroll position
-            const slideWidth = bannerSlides[0].offsetWidth;
-            const scrollPosition = bannerSlider.scrollLeft;
-            let newIndex = Math.round(scrollPosition / slideWidth);
-            
-            // Prevent out of bounds
-            if (newIndex < 0) newIndex = 0;
-            if (newIndex >= bannerSlides.length) newIndex = bannerSlides.length - 1;
-            
-            // Update current index and dots
-            currentIndex = newIndex;
-            updateActiveDot(currentIndex);
-            
-            // Smooth scroll to the selected slide
-            bannerSlider.scrollTo({
-                left: newIndex * slideWidth,
-                behavior: 'smooth'
-            });
-            
-            // Reset variables
-            startX = null;
-            startY = null;
-            isScrolling = undefined;
-        });
-        
-        // Update dots on scroll
-        bannerSlider.addEventListener('scroll', () => {
-            const slideWidth = bannerSlides[0].offsetWidth;
-            const scrollPosition = bannerSlider.scrollLeft;
-            const index = Math.round(scrollPosition / slideWidth);
-            
-            if (index !== currentIndex && index >= 0 && index < bannerSlides.length) {
-                currentIndex = index;
-                updateActiveDot(currentIndex);
-            }
-        });
-    }
-    
-    // Start auto-slide functionality
-    function startAutoSlide() {
-        clearInterval(autoSlideInterval);
-        autoSlideInterval = setInterval(() => {
-            const nextIndex = (currentIndex + 1) % bannerSlides.length;
-            navigateToSlide(nextIndex);
-        }, 5000); // Change slide every 5 seconds
-    }
-    
-    // Navigate to a specific slide
-    function navigateToSlide(index) {
-        if (index === currentIndex) return;
-        
-        currentIndex = index;
-        updateActiveDot(currentIndex);
-        
-        if (window.innerWidth <= 576) {
-            // Mobile - scroll to slide
-            const slideWidth = bannerSlides[0].offsetWidth;
-            bannerSlider.scrollTo({
-                left: index * slideWidth,
-                behavior: 'smooth'
-            });
-        } else {
-            // Desktop - update active class
+        // Set initial active slide
+        function setInitialSlide() {
+            console.log('Setting initial slide');
             bannerSlides.forEach((slide, i) => {
-                if (i === currentIndex) {
-                    slide.style.display = 'block';
+                if (i === 0) {
                     slide.classList.add('active');
-                    // Fade in
-                    setTimeout(() => {
-                        slide.style.opacity = '1';
-                    }, 50);
+                    slide.style.display = 'block';
+                    slide.style.opacity = '1';
                 } else {
                     slide.classList.remove('active');
-                    // Fade out
+                    slide.style.display = 'none';
                     slide.style.opacity = '0';
-                    // Hide after transition
-                    setTimeout(() => {
-                        slide.style.display = 'none';
-                    }, 600);
+                }
+            });
+            
+            if (bannerDots.length > 0) {
+                bannerDots[0].classList.add('active');
+            }
+        }
+        
+        // Set first slide as active
+        setInitialSlide();
+        
+        // Start auto-slide for desktop
+        startAutoSlide();
+        
+        // Click event for dots (desktop)
+        bannerDots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                navigateToSlide(index);
+            });
+        });
+        
+        // Start auto-slide functionality
+        function startAutoSlide() {
+            clearInterval(autoSlideInterval);
+            autoSlideInterval = setInterval(() => {
+                const nextIndex = (currentIndex + 1) % bannerSlides.length;
+                navigateToSlide(nextIndex);
+            }, 5000); // Change slide every 5 seconds
+        }
+        
+        // Navigate to a specific slide
+        function navigateToSlide(index) {
+            if (index === currentIndex) return;
+            
+            bannerSlides[currentIndex].style.opacity = '0';
+            bannerSlides[currentIndex].style.display = 'block';
+            
+            setTimeout(() => {
+                bannerSlides[currentIndex].style.display = 'none';
+                bannerSlides[currentIndex].classList.remove('active');
+                
+                currentIndex = index;
+                
+                bannerSlides[currentIndex].style.display = 'block';
+                
+                setTimeout(() => {
+                    bannerSlides[currentIndex].style.opacity = '1';
+                    bannerSlides[currentIndex].classList.add('active');
+                    
+                    updateActiveDot(currentIndex);
+                }, 50);
+            }, 600);
+        }
+        
+        // Update active dot
+        function updateActiveDot(index) {
+            bannerDots.forEach((dot, i) => {
+                if (i === index) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
                 }
             });
         }
     }
-    
-    // Update active dot
-    function updateActiveDot(index) {
-        bannerDots.forEach((dot, i) => {
-            if (i === index) {
-                dot.classList.add('active');
-            } else {
-                dot.classList.remove('active');
-            }
-        });
-    }
 }
+
+// Add a resize handler to switch between mobile and desktop modes
+window.addEventListener('resize', function() {
+    // Use a debounce technique to avoid multiple calls
+    clearTimeout(window.resizeTimeout);
+    window.resizeTimeout = setTimeout(function() {
+        initializeBannerSlider();
+        optimizeBannersForMobile();
+    }, 250);
+});
 
 // Add mobile-specific banner optimizations
 function optimizeBannersForMobile() {
@@ -940,28 +989,27 @@ function optimizeBannersForMobile() {
     if (isMobile) {
         console.log('Optimizing banners for mobile');
         
-        // Get all banner slides and images
+        // Get banner elements
+        const bannerSlider = document.querySelector('.banner-slider');
         const bannerSlides = document.querySelectorAll('.banner-slide');
         const bannerImages = document.querySelectorAll('.banner-slide img');
-        const bannerSlider = document.querySelector('.banner-slider');
         
-        // Add the mobile-banner-slider class if not already present
+        // Ensure slider has mobile-banner-slider class
         if (bannerSlider && !bannerSlider.classList.contains('mobile-banner-slider')) {
             bannerSlider.classList.add('mobile-banner-slider');
         }
         
-        // Ensure all slides are visible and properly positioned for the swiper
+        // Show all slides for mobile swiping
         bannerSlides.forEach(slide => {
-            slide.style.height = 'auto';
             slide.style.position = 'relative';
             slide.style.opacity = '1';
             slide.style.display = 'block';
+            slide.style.height = 'auto';
             
-            // Ensure the slide has a direct link to shop page
+            // Ensure direct links
             if (!slide.querySelector('a[href="/shop"]')) {
-                // If the slide doesn't already have a direct link, wrap the image in one
                 const img = slide.querySelector('img');
-                if (img && !img.parentElement.tagName === 'A') {
+                if (img && img.parentElement.tagName !== 'A') {
                     const wrap = document.createElement('a');
                     wrap.href = '/shop';
                     img.parentNode.insertBefore(wrap, img);
@@ -969,43 +1017,75 @@ function optimizeBannersForMobile() {
                 }
             }
             
-            // Hide any buttons inside the slide
+            // Hide any buttons
             const buttons = slide.querySelectorAll('.btn, .banner-content .btn');
             buttons.forEach(btn => {
                 btn.style.display = 'none';
             });
         });
         
-        // Ensure images are properly sized for mobile
+        // Ensure images are properly sized for consistent dimensions
         bannerImages.forEach(img => {
+            img.style.width = '100%';
             img.style.height = 'auto';
-            img.style.maxHeight = '70vh';
             img.style.objectFit = 'cover';
+            img.style.aspectRatio = '16/9';
             
-            // Force image to reload for proper sizing
+            // Force image reload for proper sizing
             const currentSrc = img.src;
-            if (currentSrc.includes('?')) {
-                img.src = currentSrc;
-            } else {
-                img.src = currentSrc + '?t=' + new Date().getTime();
-            }
-            
-            // Listen for image load to ensure it displays properly
-            img.onload = function() {
-                this.style.display = 'block';
-            };
+            img.src = currentSrc.includes('?') ? currentSrc : currentSrc + '?t=' + new Date().getTime();
         });
         
-        // Adjust container to full width on mobile
+        // Adjust container to full width
         const bannerContainer = document.querySelector('.promo-banners .container');
         if (bannerContainer) {
             bannerContainer.style.maxWidth = '100%';
             bannerContainer.style.width = '100%';
             bannerContainer.style.padding = '0';
+            bannerContainer.style.margin = '0';
         }
         
-        // Optimize single banner for mobile
-        optimizeSingleBanner();
+        // Optimize single banner
+        const singleBanner = document.querySelector('.single-banner');
+        if (singleBanner) {
+            singleBanner.style.margin = '0';
+            singleBanner.style.padding = '0';
+            
+            const singleBannerContainer = singleBanner.querySelector('.container');
+            if (singleBannerContainer) {
+                singleBannerContainer.style.maxWidth = '100%';
+                singleBannerContainer.style.width = '100%';
+                singleBannerContainer.style.padding = '0';
+                singleBannerContainer.style.margin = '0';
+            }
+            
+            const singleBannerWrapper = singleBanner.querySelector('.single-banner-wrapper');
+            if (singleBannerWrapper) {
+                singleBannerWrapper.style.borderRadius = '0';
+                singleBannerWrapper.style.boxShadow = 'none';
+            }
+            
+            const singleBannerImg = singleBanner.querySelector('img');
+            if (singleBannerImg) {
+                singleBannerImg.style.width = '100%';
+                singleBannerImg.style.height = 'auto';
+                singleBannerImg.style.objectFit = 'cover';
+                singleBannerImg.style.aspectRatio = '16/9';
+                singleBannerImg.style.margin = '0';
+                singleBannerImg.style.padding = '0';
+                singleBannerImg.style.borderRadius = '0';
+                
+                // Force image reload for proper sizing
+                const currentSrc = singleBannerImg.src;
+                singleBannerImg.src = currentSrc.includes('?') ? currentSrc : currentSrc + '?t=' + new Date().getTime();
+            }
+        }
+        
+        // Remove spacing between sections
+        document.querySelectorAll('.hero, .promo-banners, .single-banner, .featured-collections').forEach(section => {
+            section.style.margin = '0';
+            section.style.padding = '0';
+        });
     }
 }
 
