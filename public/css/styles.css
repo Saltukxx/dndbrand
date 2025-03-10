@@ -947,6 +947,110 @@ nav ul li a.active::after {
     }
 }
 
+/* Mobile optimization for banner and collection sections */
+@media (max-width: 768px) {
+    /* Banner improvements */
+    .promo-banners, .single-banner {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .banner-slide img {
+        height: auto;
+        width: 100%;
+        object-fit: cover;
+    }
+    
+    /* Collection grid full width on mobile */
+    .featured-collections.edge-to-edge .collection-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        gap: 1px;
+    }
+    
+    /* Show collection overlay by default on mobile */
+    .featured-collections.edge-to-edge .collection-overlay {
+        opacity: 1;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.1) 100%);
+    }
+    
+    .featured-collections.edge-to-edge .collection-title,
+    .featured-collections.edge-to-edge .collection-btn {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    
+    .single-banner {
+        height: 60vh;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Smaller screens adjustments */
+    .single-banner {
+        height: 50vh;
+    }
+    
+    .single-banner-wrapper {
+        height: 100%;
+    }
+    
+    .single-banner-wrapper img {
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    /* Collection items improvements */
+    .featured-collections.edge-to-edge .collection-item {
+        height: 250px;
+    }
+    
+    .featured-collections.edge-to-edge .collection-title {
+        font-size: 1.4rem;
+        margin-bottom: 12px;
+    }
+    
+    .featured-collections.edge-to-edge .collection-btn {
+        padding: 10px 20px;
+        font-size: 0.85rem;
+    }
+    
+    /* Ensure the banner navigation dots are visible */
+    .banner-navigation {
+        bottom: 15px;
+    }
+    
+    .banner-dot {
+        width: 10px;
+        height: 10px;
+    }
+}
+
+/* Extra small device optimization */
+@media (max-width: 375px) {
+    .featured-collections.edge-to-edge .collection-item {
+        height: 200px;
+    }
+    
+    .featured-collections.edge-to-edge .collection-title {
+        font-size: 1.2rem;
+    }
+    
+    .featured-collections.edge-to-edge .collection-btn {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+    }
+    
+    .single-banner {
+        height: 40vh;
+    }
+    
+    .banner-navigation {
+        bottom: 10px;
+    }
+}
+
 /* Premium Elements */
 .premium-card {
     position: relative;
@@ -1971,5 +2075,139 @@ nav ul li a.active::after {
     .featured-collections.edge-to-edge .collection-grid {
         grid-template-columns: 1fr;
         grid-template-rows: repeat(4, 1fr);
+    }
+}
+
+/* Enhance touch experience for mobile */
+@media (max-width: 768px) {
+    /* Make buttons more touch-friendly */
+    .collection-btn, .btn {
+        padding: 12px 25px; /* Slightly larger touch target */
+        min-height: 44px; /* Apple's recommended minimum touch target height */
+    }
+    
+    /* Improve collection item spacing */
+    .featured-collections.edge-to-edge {
+        margin: 0;
+        padding: 0 0 10px 0;
+    }
+    
+    /* Enable hardware acceleration for smoother scrolling */
+    .promo-banners, 
+    .single-banner, 
+    .featured-collections.edge-to-edge .collection-item,
+    .banner-slide img {
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+    }
+}
+
+/* Ensure banner content is properly visible on all screens */
+.single-banner-content {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    z-index: 5;
+}
+
+@media (max-width: 576px) {
+    /* Better spacing for small screens */
+    .featured-collections.edge-to-edge {
+        padding: 0; /* Remove padding on mobile */
+    }
+    
+    /* Optimize banner content positioning */
+    .single-banner-content {
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    /* Make collection items fill width on small screens */
+    .featured-collections.edge-to-edge .collection-grid {
+        margin: 0;
+        width: 100vw; /* Use viewport width to ensure full width */
+    }
+}
+
+/* Smooth transitions between screen sizes */
+.featured-collections.edge-to-edge .collection-item,
+.single-banner, 
+.promo-banners,
+.banner-slide img,
+.single-banner-wrapper img {
+    transition: height 0.3s ease, padding 0.3s ease, margin 0.3s ease;
+}
+
+/* Fix any flickering during resize */
+.featured-collections.edge-to-edge .collection-item img {
+    will-change: transform;
+}
+
+/* Mobile performance improvements */
+@media (max-width: 768px) {
+    /* Optimize image loading */
+    .banner-slide img,
+    .single-banner-wrapper img,
+    .featured-collections.edge-to-edge .collection-item img {
+        content-visibility: auto; /* Modern browsers will lazy load */
+        contain: content; /* Reduce paint time */
+    }
+    
+    /* Smoother scrolling */
+    .page-wrapper {
+        overflow-x: hidden;
+        overflow-y: visible;
+        width: 100%;
+    }
+    
+    /* Fix any overflow issues */
+    body, html {
+        overflow-x: hidden;
+        max-width: 100vw;
+    }
+    
+    /* Fix collection grid on mobile */
+    .featured-collections.edge-to-edge .collection-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        overflow: hidden;
+    }
+    
+    /* Ensure images don't get distorted */
+    .featured-collections.edge-to-edge .collection-item {
+        aspect-ratio: 1/1; /* Square aspect ratio on mobile */
+        height: auto; /* Let the aspect ratio determine height */
+        min-height: 250px; /* Minimum height */
+        max-height: 350px; /* Maximum height */
+    }
+}
+
+@media (max-width: 576px) {
+    /* Fix single banner position */
+    .single-banner {
+        margin-bottom: 2px !important; /* Force small margin */
+    }
+    
+    /* Ensure consistent spacing */
+    .featured-collections.edge-to-edge {
+        margin-top: 2px !important;
+    }
+    
+    /* Larger touch targets for collection buttons */
+    .featured-collections.edge-to-edge .collection-btn {
+        min-width: 120px; /* Ensure minimum width for touch */
+        text-align: center;
+    }
+    
+    /* Prevent text from getting too small */
+    .featured-collections.edge-to-edge .collection-title {
+        width: 100%;
+        max-width: 90%;
+        text-align: center;
+        white-space: normal; /* Allow text to wrap */
+        font-size: 1.3rem !important; /* Ensure readable font size */
     }
 } 
