@@ -37,6 +37,12 @@ document.addEventListener('DOMContentLoaded', function() {
         optimizeBannersForMobile();
         optimizeSingleBanner();
     });
+    
+    // Initialize collections
+    initializeCollections();
+    
+    // Initialize collection animations with a slight delay
+    setTimeout(initializeCollectionAnimations, 500);
 });
 
 // Load featured products to the homepage
@@ -855,48 +861,67 @@ function ensureTextCentering() {
     });
 }
 
-// Keep the original initializeCollections function but remove any animations
+// Keep the original initializeCollections function but modify for edge-to-edge layout
 function initializeCollections() {
     // Get all collection sections
-    const collectionSections = document.querySelectorAll('.featured-collections, .parfume-collections, .casual-collections');
+    const collectionSections = document.querySelectorAll('.featured-collections');
     
     // For each collection section
     collectionSections.forEach(section => {
         const items = section.querySelectorAll('.collection-item');
         
-        // Make sure collection items have proper hover effects
+        // Handle non-edge-to-edge collections with old styling
+        if (!section.classList.contains('edge-to-edge')) {
+            // Make sure collection items have proper hover effects
+            items.forEach(item => {
+                // Remove any animations or transforms for non-edge-to-edge items
+                const img = item.querySelector('img');
+                if (img) {
+                    img.style.transform = 'none';
+                    img.style.transition = 'none';
+                }
+            });
+        }
+        
+        // Ensure proper sizing for all collection items
         items.forEach(item => {
-            // Remove any animations or transforms
+            // Ensure proper display of collection items
+            item.style.display = 'block';
+            
+            // Ensure images fill the container properly
             const img = item.querySelector('img');
             if (img) {
-                img.style.transform = 'none';
-                img.style.transition = 'none';
-            }
-            
-            // Ensure overlay is properly positioned
-            const overlay = item.querySelector('.collection-overlay');
-            if (overlay) {
-                overlay.style.display = 'flex';
-                overlay.style.flexDirection = 'column';
-                overlay.style.justifyContent = 'center';
-                overlay.style.alignItems = 'center';
-                overlay.style.textAlign = 'center';
-            }
-            
-            // Ensure collection title is centered
-            const title = item.querySelector('.collection-title');
-            if (title) {
-                title.style.textAlign = 'center';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
             }
         });
     });
     
-    // Ensure proper spacing between collection sections
-    collectionSections.forEach((section, index) => {
-        if (index > 0) {
-            section.style.marginTop = '0';
-        }
-    });
+    // Update handling for mobile - ensure proper display on smaller screens
+    if (window.innerWidth <= 768) {
+        document.querySelectorAll('.featured-collections').forEach(section => {
+            // Make sure the grid fits properly on mobile
+            const grid = section.querySelector('.collection-grid');
+            if (grid) {
+                if (section.classList.contains('edge-to-edge')) {
+                    // For edge-to-edge, let CSS grid handle the layout
+                    grid.style.display = 'grid';
+                } else {
+                    // For older style collection grids
+                    grid.style.display = 'block';
+                }
+            }
+            
+            // Make sure items stack properly on mobile
+            const items = section.querySelectorAll('.collection-item');
+            items.forEach(item => {
+                if (!section.classList.contains('edge-to-edge')) {
+                    item.style.marginBottom = '15px';
+                }
+            });
+        });
+    }
 }
 
 // Initialize the horizontal scroll behavior for product grid on mobile
@@ -1633,4 +1658,78 @@ function enhanceTouchInteractions() {
         }
     `;
     document.head.appendChild(style);
+}
+
+// Function to initialize animations for the collection grid
+function initializeCollectionAnimations() {
+    const collectionItems = document.querySelectorAll('.featured-collections.edge-to-edge .collection-item');
+    
+    // Initialize Intersection Observer to trigger animations when scrolled into view
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const item = entry.target;
+                const delay = parseInt(item.getAttribute('data-animation-delay') || '0');
+                
+                // Add active class after the specified delay
+                setTimeout(() => {
+                    item.classList.add('active');
+                }, delay);
+                
+                // Unobserve after animation is triggered
+                observer.unobserve(item);
+            }
+        });
+    }, {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    });
+    
+    // Observe each collection item
+    collectionItems.forEach(item => {
+        observer.observe(item);
+    });
+    
+    // Add hover effects for desktop
+    if (window.innerWidth > 768) {
+        collectionItems.forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                const overlay = item.querySelector('.collection-overlay');
+                const title = item.querySelector('.collection-title');
+                const btn = item.querySelector('.collection-btn');
+                
+                overlay.style.opacity = '1';
+                title.style.opacity = '1';
+                title.style.transform = 'translateY(0)';
+                btn.style.opacity = '1';
+                btn.style.transform = 'translateY(0)';
+            });
+            
+            item.addEventListener('mouseleave', () => {
+                const overlay = item.querySelector('.collection-overlay');
+                const title = item.querySelector('.collection-title');
+                const btn = item.querySelector('.collection-btn');
+                
+                overlay.style.opacity = '0';
+                title.style.opacity = '0';
+                title.style.transform = 'translateY(20px)';
+                btn.style.opacity = '0';
+                btn.style.transform = 'translateY(20px)';
+            });
+        });
+    } else {
+        // For mobile, always show the overlay
+        collectionItems.forEach(item => {
+            const overlay = item.querySelector('.collection-overlay');
+            const title = item.querySelector('.collection-title');
+            const btn = item.querySelector('.collection-btn');
+            
+            overlay.style.opacity = '1';
+            title.style.opacity = '1';
+            title.style.transform = 'translateY(0)';
+            btn.style.opacity = '1';
+            btn.style.transform = 'translateY(0)';
+        });
+    }
 } 

@@ -120,10 +120,9 @@
         <div class="container">
             <div class="banner-slider">
                 <!-- First Banner Slide -->
-                <div class="banner-slide fade-in" data-index="0">
+                <div class="banner-slide fade-in active" data-index="0">
                     <a href="/shop">
                         <img src="public/images/banner1.jpg" alt="D&D Brand Kampanya" 
-                             style="width: 100%;" 
                              loading="eager">
                     </a>
                 </div>
@@ -131,13 +130,12 @@
                 <div class="banner-slide fade-in" data-index="1">
                     <a href="/shop">
                         <img src="public/images/banner2.jpg" alt="D&D Brand Yeni Koleksiyon" 
-                             style="width: 100%;" 
                              loading="eager">
                     </a>
                 </div>
                 <!-- Banner Navigation Dots -->
                 <div class="banner-navigation">
-                    <span class="banner-dot" data-index="0"></span>
+                    <span class="banner-dot active" data-index="0"></span>
                     <span class="banner-dot" data-index="1"></span>
                 </div>
             </div>
@@ -160,37 +158,39 @@
         </div>
     </section>
 
-    <section class="featured-collections">
+    <!-- Merged Collections Section -->
+    <section class="featured-collections edge-to-edge">
         <div class="collection-grid">
-            <div class="collection-item">
-                <img src="public/images/erkekkoleksiyon.jpg" alt="Erkek Koleksiyonu" style="display: block; width: 100%; height: 100%; transform: none; transition: none;">
+            <!-- Men's Collection -->
+            <div class="collection-item fade-in" data-animation-delay="100">
+                <img src="public/images/erkekkoleksiyon.jpg" alt="Erkek Koleksiyonu">
                 <div class="collection-overlay">
                     <div class="collection-title">İKONİK GÖRÜNÜM</div>
                     <a href="/shop?type=men" class="collection-btn">ELBİSELER</a>
                 </div>
             </div>
-            <div class="collection-item">
-                <img src="public/images/aksesuar.jpg" alt="Aksesuar Koleksiyonu" style="display: block; width: 100%; height: 100%; transform: none; transition: none;">
+            
+            <!-- Accessories Collection -->
+            <div class="collection-item fade-in" data-animation-delay="200">
+                <img src="public/images/aksesuar.jpg" alt="Aksesuar Koleksiyonu">
                 <div class="collection-overlay">
                     <div class="collection-title">OFİS ŞIKLIĞI</div>
                     <a href="/shop?type=accessories" class="collection-btn">HEMEN KEŞFET</a>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <!-- New Collection Section for Parfumes -->
-    <section class="featured-collections parfume-collections">
-        <div class="collection-grid">
-            <div class="collection-item">
-                <img src="public/images/WhatsApp Image 2025-03-10 at 15.40.48_97ffb570.jpg" alt="D&D Brand Parfüm" style="display: block; width: 100%; height: 100%; object-fit: cover; transform: none; transition: none;">
+            
+            <!-- Parfume Collection - Men -->
+            <div class="collection-item fade-in" data-animation-delay="300">
+                <img src="public/images/WhatsApp Image 2025-03-10 at 15.40.48_97ffb570.jpg" alt="D&D Brand Parfüm">
                 <div class="collection-overlay">
                     <div class="collection-title">PARFÜM KOLEKSİYONU</div>
                     <a href="/shop?type=parfume-men" class="collection-btn">ÖZEL ÜRETİM</a>
                 </div>
             </div>
-            <div class="collection-item">
-                <img src="public/images/parfume2.jpg" alt="D&D Brand Parfüm" style="display: block; width: 100%; height: 100%; object-fit: cover; transform: none; transition: none;">
+            
+            <!-- Parfume Collection - Women -->
+            <div class="collection-item fade-in" data-animation-delay="400">
+                <img src="public/images/parfume2.jpg" alt="D&D Brand Parfüm">
                 <div class="collection-overlay">
                     <div class="collection-title">LÜKS KOKULAR</div>
                     <a href="/shop?type=parfume-women" class="collection-btn">KEŞFET</a>
