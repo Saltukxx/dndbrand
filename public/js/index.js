@@ -1732,4 +1732,113 @@ function initializeCollectionAnimations() {
             btn.style.transform = 'translateY(0)';
         });
     }
-} 
+}
+
+/**
+ * Initialize featured products functionality
+ */
+function initializeFeaturedProducts() {
+    // Add to cart buttons
+    const addToCartButtons = document.querySelectorAll('.trending .add-to-cart');
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const productId = this.getAttribute('data-id');
+            addToCart(productId);
+            
+            // Show a notification
+            showNotification('Ürün sepete eklendi!', 'success');
+        });
+    });
+    
+    // Make product cards clickable to view details
+    const productCards = document.querySelectorAll('.trending .product-card');
+    productCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const viewDetailsLink = this.querySelector('.view-details');
+            if (viewDetailsLink) {
+                window.location.href = viewDetailsLink.getAttribute('href');
+            }
+        });
+    });
+    
+    // Initialize animations
+    animateProductsOnScroll();
+}
+
+/**
+ * Animate products when they come into view
+ */
+function animateProductsOnScroll() {
+    const productCards = document.querySelectorAll('.trending .product-card');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('fade-in-active');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.2
+    });
+    
+    productCards.forEach(card => {
+        card.classList.add('fade-in');
+        observer.observe(card);
+    });
+}
+
+/**
+ * Ensure banners display at full width
+ */
+function fixBannerDisplay() {
+    // Remove any inline styles from banner images that might restrict width
+    const bannerImages = document.querySelectorAll('.banner-slide img, .single-banner-wrapper img');
+    bannerImages.forEach(img => {
+        // If there are any inline styles that might be causing issues, remove them
+        if (img.hasAttribute('style')) {
+            // Preserve only essential styles, remove others
+            const style = img.getAttribute('style');
+            const essentialStyles = [
+                'object-fit: cover',
+                'object-position: center'
+            ];
+            
+            let newStyle = '';
+            essentialStyles.forEach(s => {
+                if (style.includes(s)) {
+                    newStyle += s + '; ';
+                }
+            });
+            
+            if (newStyle) {
+                img.setAttribute('style', newStyle);
+            } else {
+                img.removeAttribute('style');
+            }
+        }
+    });
+    
+    // Ensure banner containers are properly sized
+    const banners = document.querySelectorAll('.hero, .promo-banners, .single-banner');
+    banners.forEach(banner => {
+        // Force width recalculation
+        banner.style.width = '100vw';
+        
+        // Force no margins or padding
+        banner.style.margin = '0';
+        banner.style.padding = '0';
+    });
+}
+
+// Initialize when the DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize featured products
+    initializeFeaturedProducts();
+    
+    // Fix banner display issues
+    fixBannerDisplay();
+}); 

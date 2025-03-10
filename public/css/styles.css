@@ -2318,7 +2318,7 @@ footer .container {
     }
 }
 
-/* Full-width banner fixes */
+/* Truly full-width banner fixes with no margins/padding */
 .hero, 
 .promo-banners, 
 .single-banner {
@@ -2330,65 +2330,239 @@ footer .container {
     overflow: hidden;
     position: relative;
     box-sizing: border-box;
+    /* Remove any potential transformations */
+    transform: none !important;
 }
 
-.hero-background {
+/* Banner containers need full-width */
+.promo-banners .container,
+.single-banner .container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+/* Ensure banner images cover the entire area */
+.hero-background,
+.banner-slide img,
+.single-banner-wrapper img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: center;
+    display: block;
+    /* Remove any inline styles that might be applied */
+    transform: none !important;
+    transition: transform 0.5s ease-in-out !important;
 }
 
-/* Ensure single banner takes full height */
-.single-banner {
-    height: 90vh;
-    max-height: 800px;
-}
-
+/* Make sure the single banner wrapper is full width */
 .single-banner-wrapper {
     width: 100%;
     height: 100%;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
 }
 
-/* Fix banner slide display */
-.banner-slide {
+/* Fix featured products (öne çıkarılan ürünler) section */
+.trending {
     width: 100%;
-    height: 100%;
+    padding: 50px 0;
+    margin: 0;
+    background-color: var(--color-background);
 }
 
-.banner-slide img {
+.trending .container {
+    max-width: 1400px;
+    padding: 0 20px;
+    margin: 0 auto;
+}
+
+.trending .section-title {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.trending .product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.trending .product-card {
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.trending .product-card:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--shadow-md);
+}
+
+.trending .product-image {
+    position: relative;
+    overflow: hidden;
+    height: 0;
+    padding-bottom: 125%; /* 4:5 aspect ratio */
+}
+
+.trending .product-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
+    transition: transform 0.5s ease;
 }
 
-/* Fix for mobile view */
-@media (max-width: 768px) {
-    /* Remove any extra spacing */
-    .hero, 
-    .promo-banners, 
-    .single-banner {
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
+.trending .product-card:hover .product-image img {
+    transform: scale(1.05);
+}
+
+.trending .product-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: var(--secondary-color);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 4px;
+    z-index: 2;
+}
+
+.trending .product-badge.sale {
+    background-color: var(--accent-color);
+}
+
+.trending .product-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+}
+
+.trending .product-card:hover .product-overlay {
+    transform: translateY(0);
+}
+
+.trending .add-to-cart,
+.trending .view-details {
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    transition: color 0.3s ease;
+}
+
+.trending .add-to-cart:hover,
+.trending .view-details:hover {
+    color: var(--secondary-color);
+}
+
+.trending .product-info {
+    padding: 15px;
+}
+
+.trending .brand {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.trending .product-info h3 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.trending .price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--dark-color);
+}
+
+.trending .old-price {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+    font-weight: 400;
+    margin-right: 8px;
+    font-size: 0.9rem;
+}
+
+.trending .view-all {
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* Responsive for trending products */
+@media (max-width: 1200px) {
+    .trending .product-grid {
+        grid-template-columns: repeat(3, 1fr);
     }
-    
-    /* Single banner size */
-    .single-banner {
-        height: 60vh;
-    }
-    
-    /* Ensure mobile banner slides display correctly */
-    .mobile-banner-slider .banner-slide {
-        scroll-snap-align: center;
-        flex: 0 0 100%;
-        width: 100%;
-        display: block !important;
+}
+
+@media (max-width: 992px) {
+    .trending .product-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 576px) {
+    .trending .product-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .trending {
+        padding: 30px 0;
+    }
+}
+
+/* Ensure mobile banner display is correct */
+@media (max-width: 768px) {
+    /* Remove any margins and paddings for banners */
+    .hero, 
+    .promo-banners, 
     .single-banner {
-        height: 50vh;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100vw;
+    }
+    
+    /* Banner sliders should display properly */
+    .banner-slider, 
+    .mobile-banner-slider {
+        width: 100vw;
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* Make banner slides visible */
+    .mobile-banner-slider .banner-slide {
+        display: block !important;
+        opacity: 1 !important;
+        width: 100%;
+        height: auto;
     }
 } 
