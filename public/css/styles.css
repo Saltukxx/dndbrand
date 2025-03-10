@@ -1216,20 +1216,150 @@ footer {
 }
 
 @media (max-width: 576px) {
-    .product-grid {
-        grid-template-columns: 1fr;
+    /* Adjust container for better horizontal centering */
+    .trending .container {
+        padding: 0;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        text-align: center;
+    }
+    
+    /* Ensure the section title is centered and properly sized */
+    .trending .section-title {
+        text-align: center;
+        margin: 0 auto 30px;
         max-width: 320px;
-        margin-left: auto;
-        margin-right: auto;
+        padding: 0;
     }
     
-    .product-image {
-        height: 350px;
+    /* Center product grid perfectly on mobile */
+    .product-grid {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        padding: 15px 0 25px;
+        margin: 0 auto;
+        gap: 16px; /* Even spacing between cards */
+        scrollbar-width: none; /* Firefox */
+        position: relative;
+        
+        /* Perfect centering technique */
+        width: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        
+        /* This ensures the cards are centered with the correct padding */
+        /* The 50% of the container minus half of the two cards + gap width */
+        padding-left: calc(50% - 152px); /* Based on card width calculation */
+        padding-right: calc(50% - 152px);
     }
     
-    .product-overlay a.add-to-cart,
-    .product-overlay a.view-details {
-        min-width: 120px;
+    .product-grid::-webkit-scrollbar {
+        display: none; /* Hide scrollbar for Chrome/Safari */
+    }
+    
+    /* Size cards to be exactly half the container width, accounting for gap */
+    .product-card {
+        flex: 0 0 144px; /* Fixed width for consistency */
+        min-width: 144px;
+        scroll-snap-align: center;
+        margin: 0;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    /* First two cards should be visible and centered initially */
+    .product-grid .product-card:nth-child(1),
+    .product-grid .product-card:nth-child(2) {
+        scroll-snap-align: start;
+    }
+    
+    /* Add subtle swipe hint on both sides */
+    .product-grid::after,
+    .product-grid::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 40px;
+        pointer-events: none;
+        z-index: 1;
+    }
+    
+    .product-grid::after {
+        right: 0;
+        background: linear-gradient(to right, rgba(18, 18, 18, 0), rgba(18, 18, 18, 0.3));
+        opacity: 0.8;
+    }
+    
+    .product-grid::before {
+        left: 0;
+        background: linear-gradient(to left, rgba(18, 18, 18, 0), rgba(18, 18, 18, 0.3));
+        opacity: 0.8;
+    }
+    
+    /* First card should have a subtle highlight to indicate start */
+    .product-grid .product-card:first-child {
+        position: relative;
+    }
+    
+    /* Remove visual indicators when scrolled */
+    .trending.has-scrolled .product-grid::after,
+    .trending.has-scrolled .product-grid::before {
+        opacity: 0;
+        transition: opacity 0.5s ease;
+    }
+    
+    /* Remove the previous arrow indicator */
+    .trending::after {
+        display: none;
+    }
+    
+    .trending.has-scrolled::after {
+        display: none;
+    }
+    
+    /* Add visual feedback when touching/swiping */
+    .product-card:active {
+        transform: scale(0.98);
+    }
+    
+    /* Mobile slider class - added by JS */
+    .product-grid.mobile-slider {
+        cursor: grab;
+    }
+    
+    .product-grid.mobile-slider:active {
+        cursor: grabbing;
+    }
+    
+    /* Make product info more compact for mobile slider */
+    .product-card .product-info {
+        padding: 12px;
+    }
+    
+    .product-card .product-info h3 {
+        font-size: 14px;
+        margin-bottom: 5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .product-card .product-info .brand {
+        font-size: 11px;
+        margin-bottom: 3px;
+    }
+    
+    .product-card .product-info .price {
+        font-size: 14px;
+        font-weight: 600;
     }
     
     .collection-grid {
@@ -1775,4 +1905,252 @@ button[type="submit"].loading i {
 
 .add-to-cart:hover:before {
     left: 100%;
+}
+
+/* Promo Banners Section */
+.promo-banners {
+    padding: 40px 0;
+    background-color: var(--primary-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.banner-slider {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    height: 400px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.banner-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.6s ease-in-out;
+    border-radius: 12px;
+    overflow: hidden;
+    display: none; /* Hide all slides by default */
+}
+
+.banner-slide.active {
+    opacity: 1;
+    z-index: 1;
+    display: block; /* Show only active slide */
+}
+
+.banner-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s ease;
+}
+
+.banner-slide:hover img {
+    transform: scale(1.02);
+}
+
+.banner-content {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    z-index: 2;
+}
+
+.banner-navigation {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 3;
+}
+
+.banner-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.banner-dot.active {
+    background-color: var(--secondary-color);
+    transform: scale(1.2);
+}
+
+@media (max-width: 992px) {
+    .banner-slider {
+        height: 350px;
+    }
+}
+
+@media (max-width: 768px) {
+    .banner-slider {
+        height: 300px;
+    }
+}
+
+@media (max-width: 576px) {
+    .promo-banners {
+        padding: 20px 0;
+    }
+    
+    .banner-slider {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        height: auto;
+        min-height: 200px;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        transform: none;
+        left: auto;
+    }
+    
+    .banner-slider::-webkit-scrollbar {
+        display: none; /* Hide scrollbar for Chrome/Safari */
+    }
+    
+    .banner-slide {
+        flex: 0 0 100%;
+        min-width: 100%;
+        scroll-snap-align: center;
+        position: relative !important;
+        opacity: 1 !important;
+        display: block !important;
+        height: 200px;
+        border-radius: 8px;
+        top: auto !important;
+        left: auto !important;
+    }
+    
+    .banner-slide img {
+        height: 100%;
+        object-fit: cover;
+        display: block !important;
+    }
+    
+    .banner-content {
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .banner-navigation {
+        bottom: 10px;
+    }
+    
+    .banner-dot {
+        width: 8px;
+        height: 8px;
+    }
+}
+
+/* Fix for banners on all screen sizes */
+.banner-slide img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.banner-slider {
+    visibility: visible !important;
+}
+
+.banner-slide {
+    visibility: visible !important;
+}
+
+/* Additional breakpoint for small tablets */
+@media (max-width: 768px) {
+    .banner-slider {
+        height: 300px;
+    }
+    
+    .banner-slide {
+        height: 300px;
+    }
+    
+    .banner-content {
+        bottom: 30px;
+        right: 30px;
+    }
+}
+
+/* Mobile styles */
+@media (max-width: 576px) {
+    .promo-banners {
+        padding: 20px 0;
+        margin-bottom: 20px;
+    }
+    
+    .banner-slider {
+        display: flex !important;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        height: auto;
+        min-height: 200px;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        transform: none;
+        left: auto;
+        position: relative;
+    }
+    
+    .banner-slider::-webkit-scrollbar {
+        display: none; /* Hide scrollbar for Chrome/Safari */
+    }
+    
+    .banner-slide {
+        flex: 0 0 100%;
+        min-width: 100%;
+        scroll-snap-align: center;
+        position: relative !important;
+        opacity: 1 !important;
+        display: block !important;
+        height: 200px;
+        border-radius: 8px;
+        top: auto !important;
+        left: auto !important;
+    }
+    
+    .banner-slide img {
+        height: 100%;
+        object-fit: cover;
+        display: block !important;
+    }
+    
+    .banner-content {
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .banner-navigation {
+        bottom: 10px;
+    }
+    
+    .banner-dot {
+        width: 8px;
+        height: 8px;
+    }
 } 

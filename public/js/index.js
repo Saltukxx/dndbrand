@@ -19,6 +19,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize other homepage functionality
     initializeHomepage();
+    
+    // Ensure banners are initialized properly with a slight delay
+    setTimeout(function() {
+        console.log('Running delayed banner initialization');
+        initializeBannerSlider();
+    }, 300);
 });
 
 // Load featured products to the homepage
@@ -489,30 +495,410 @@ function showNotification(message, type = 'info') {
 
 // Initialize homepage
 function initializeHomepage() {
-    // Update cart count on page load
-    updateCartCount();
+    // Activate animations
+    const animatedElements = document.querySelectorAll('.fade-in, .slide-in-left, .slide-in-right');
+    animatedElements.forEach(el => {
+        el.classList.add('active');
+    });
     
-    // Add event listeners for other homepage elements
-    const heroButtons = document.querySelectorAll('.hero-content .btn');
-    if (heroButtons.length > 0) {
-        heroButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const target = this.getAttribute('data-target');
-                if (target === 'shop') {
-                    window.location.href = './shop.html';
-                }
-            });
+    // Add event listeners to cart buttons
+    document.querySelectorAll('.add-to-cart').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const productId = this.getAttribute('data-id');
+            addToCart(productId);
+        });
+    });
+    
+    // Initialize mobile product slider
+    initializeMobileProductSlider();
+    
+    // Initialize banner slider
+    initializeBannerSlider();
+    
+    // Add click handler to cart preview
+    const cartPreview = document.querySelector('.cart-preview');
+    if (cartPreview) {
+        cartPreview.addEventListener('click', function(e) {
+            // Prevent closing when clicking inside the preview
+            e.stopPropagation();
         });
     }
     
-    // Load featured products
-    loadFeaturedProducts();
+    // Initialize cart count
+    updateCartCount();
+}
+
+// Initialize the horizontal scroll behavior for product grid on mobile
+function initializeMobileProductSlider() {
+    const productGrid = document.querySelector('.product-grid');
+    if (!productGrid) return;
     
-    // Initialize product cards
-    initializeProductCards();
+    // Only initialize slider on mobile devices
+    if (window.innerWidth <= 576) {
+        let startX;
+        let startY;
+        let scrollLeft;
+        let isScrolling;
+        
+        // Calculate initial scroll position to center the first two items
+        function centerInitialView() {
+            // Wait for layout to be complete
+            setTimeout(() => {
+                // Reset scroll position to 0 to ensure we start at the beginning
+                productGrid.scrollLeft = 0;
+            }, 100);
+        }
+        
+        // Run centering on load
+        centerInitialView();
+        
+        // Add a class to indicate this is a slider
+        productGrid.classList.add('mobile-slider');
+        
+        // Handle touch events for mobile swipe
+        productGrid.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].pageX;
+            startY = e.touches[0].pageY;
+            scrollLeft = productGrid.scrollLeft;
+            isScrolling = undefined; // Reset direction detection
+        }, { passive: true });
+        
+        productGrid.addEventListener('touchmove', (e) => {
+            if (!startX || !startY) return;
+            
+            const x = e.touches[0].pageX;
+            const y = e.touches[0].pageY;
+            const diffX = startX - x;
+            const diffY = startY - y;
+            
+            // Determine direction on first move
+            if (isScrolling === undefined) {
+                isScrolling = Math.abs(diffY) > Math.abs(diffX);
+            }
+            
+            // If scrolling horizontally, prevent default to avoid page scrolling
+            if (!isScrolling) {
+                if (e.cancelable) e.preventDefault();
+                productGrid.scrollLeft = scrollLeft + diffX;
+            }
+        }, { passive: false });
+        
+        productGrid.addEventListener('touchend', () => {
+            // After scrolling ends, check if we need to add has-scrolled class
+            if (productGrid.scrollLeft > 20) {
+                const trendingSection = document.querySelector('.trending');
+                if (trendingSection && !trendingSection.classList.contains('has-scrolled')) {
+                    trendingSection.classList.add('has-scrolled');
+                }
+            }
+            
+            // Reset variables
+            startX = null;
+            startY = null;
+            isScrolling = undefined;
+        });
+        
+        // Detect scroll event to update UI feedback
+        productGrid.addEventListener('scroll', () => {
+            const trendingSection = document.querySelector('.trending');
+            if (trendingSection && productGrid.scrollLeft > 20 && !trendingSection.classList.contains('has-scrolled')) {
+                trendingSection.classList.add('has-scrolled');
+            }
+        });
+        
+        // Ensure snap points are respected after scroll momentum ends
+        productGrid.addEventListener('scrollend', () => {
+            // Get the current scroll position
+            const scrollLeft = productGrid.scrollLeft;
+            
+            // Fixed item width (card width + gap)
+            const itemWidth = 144 + 16; // 144px card width + 16px gap
+            
+            // Calculate nearest snap point
+            const snapPoint = Math.round(scrollLeft / itemWidth) * itemWidth;
+            
+            // Scroll to the nearest snap point with smooth behavior
+            if (Math.abs(scrollLeft - snapPoint) > 5) {
+                productGrid.scrollTo({
+                    left: snapPoint,
+                    behavior: 'smooth'
+                });
+            }
+        });
+        
+        // Handle resize to maintain centering
+        window.addEventListener('resize', () => {
+            if (window.innerWidth <= 576) {
+                centerInitialView();
+            }
+        });
+    }
+}
+
+// Fix banner image paths if needed
+function fixBannerImagePaths() {
+    console.log('Checking banner image paths');
     
-    // Apply global image error handler if available
-    if (window.ImageService && typeof window.ImageService.applyImageErrorHandler === 'function') {
-        window.ImageService.applyImageErrorHandler();
+    const bannerImages = document.querySelectorAll('.banner-slide img');
+    bannerImages.forEach((img, index) => {
+        // Add error handler
+        img.onerror = function() {
+            console.log(`Error loading banner image at: ${img.src}`);
+            
+            // Try alternative paths
+            const filename = img.src.split('/').pop();
+            const possiblePaths = [
+                `/public/images/${filename}`,
+                `public/images/${filename}`,
+                `./public/images/${filename}`,
+                `../public/images/${filename}`
+            ];
+            
+            console.log(`Trying alternative paths for ${filename}`);
+            
+            // Try each path until one works
+            let pathIndex = 0;
+            const tryNextPath = () => {
+                if (pathIndex < possiblePaths.length) {
+                    const newPath = possiblePaths[pathIndex];
+                    console.log(`Trying path: ${newPath}`);
+                    
+                    // Create a test image to see if the path works
+                    const testImg = new Image();
+                    testImg.onload = function() {
+                        console.log(`Path works: ${newPath}`);
+                        img.src = newPath; // Set the working path
+                    };
+                    testImg.onerror = function() {
+                        pathIndex++;
+                        tryNextPath(); // Try next path
+                    };
+                    testImg.src = newPath;
+                } else {
+                    // If all paths fail, use a default image
+                    console.log('All paths failed, using default');
+                    img.src = 'public/images/placeholder-product.jpg';
+                }
+            };
+            
+            tryNextPath();
+        };
+        
+        // Force reload of the image
+        const currentSrc = img.src;
+        img.src = '';
+        img.src = currentSrc;
+    });
+}
+
+// Initialize the banner slider
+function initializeBannerSlider() {
+    console.log('Initializing banner slider');
+    
+    // Fix any image path issues
+    fixBannerImagePaths();
+    
+    const bannerSlider = document.querySelector('.banner-slider');
+    if (!bannerSlider) {
+        console.error('Banner slider element not found');
+        return;
+    }
+    
+    const bannerSlides = bannerSlider.querySelectorAll('.banner-slide');
+    const bannerDots = bannerSlider.querySelectorAll('.banner-dot');
+    
+    console.log(`Found ${bannerSlides.length} banner slides`);
+    console.log(`Found ${bannerDots.length} banner dots`);
+    
+    if (bannerSlides.length <= 0) return;
+    
+    let currentIndex = 0;
+    let autoSlideInterval;
+    
+    // Set initial active slide
+    function setInitialSlide() {
+        console.log('Setting initial slide');
+        bannerSlides.forEach((slide, i) => {
+            if (i === 0) {
+                slide.classList.add('active');
+                slide.style.display = 'block';
+                slide.style.opacity = '1';
+            } else {
+                slide.classList.remove('active');
+                slide.style.display = 'none';
+                slide.style.opacity = '0';
+            }
+        });
+        
+        if (bannerDots.length > 0) {
+            bannerDots[0].classList.add('active');
+        }
+    }
+    
+    // Call immediately to set up the first slide
+    setInitialSlide();
+    
+    // Handle dot navigation clicks
+    bannerDots.forEach(dot => {
+        dot.addEventListener('click', () => {
+            const index = parseInt(dot.getAttribute('data-index'));
+            navigateToSlide(index);
+        });
+    });
+    
+    // Desktop functionality - auto slide
+    if (window.innerWidth > 576) {
+        console.log('Starting desktop banner slideshow');
+        startAutoSlide();
+        
+        // Pause auto-slide on hover
+        bannerSlider.addEventListener('mouseenter', () => {
+            clearInterval(autoSlideInterval);
+        });
+        
+        // Resume auto-slide on mouse leave
+        bannerSlider.addEventListener('mouseleave', () => {
+            startAutoSlide();
+        });
+    } else {
+        // Mobile functionality
+        console.log('Setting up mobile banner slider');
+        setupMobileSlider();
+    }
+    
+    // Setup mobile slider
+    function setupMobileSlider() {
+        // Make all slides visible for mobile scrolling
+        bannerSlides.forEach(slide => {
+            slide.style.position = 'relative';
+            slide.style.opacity = '1';
+            slide.style.display = 'block';
+        });
+        
+        // Add mobile-slider class
+        bannerSlider.classList.add('mobile-slider');
+        
+        let startX;
+        let startY;
+        let scrollLeft;
+        let isScrolling;
+        
+        // Handle touch events for swipe
+        bannerSlider.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].pageX;
+            startY = e.touches[0].pageY;
+            scrollLeft = bannerSlider.scrollLeft;
+            isScrolling = undefined;
+        }, { passive: true });
+        
+        bannerSlider.addEventListener('touchmove', (e) => {
+            if (!startX || !startY) return;
+            
+            const x = e.touches[0].pageX;
+            const y = e.touches[0].pageY;
+            const diffX = startX - x;
+            const diffY = startY - y;
+            
+            // Determine direction on first move
+            if (isScrolling === undefined) {
+                isScrolling = Math.abs(diffY) > Math.abs(diffX);
+            }
+            
+            // If scrolling horizontally, prevent default to avoid page scrolling
+            if (!isScrolling) {
+                if (e.cancelable) e.preventDefault();
+                bannerSlider.scrollLeft = scrollLeft + diffX;
+            }
+        }, { passive: false });
+        
+        bannerSlider.addEventListener('touchend', () => {
+            // Determine which slide to navigate to based on scroll position
+            const slideWidth = bannerSlides[0].offsetWidth;
+            const scrollPosition = bannerSlider.scrollLeft;
+            let newIndex = Math.round(scrollPosition / slideWidth);
+            
+            // Prevent out of bounds
+            if (newIndex < 0) newIndex = 0;
+            if (newIndex >= bannerSlides.length) newIndex = bannerSlides.length - 1;
+            
+            // Update current index and dots
+            currentIndex = newIndex;
+            updateActiveDot(currentIndex);
+            
+            // Reset variables
+            startX = null;
+            startY = null;
+            isScrolling = undefined;
+        });
+        
+        // Update dots on scroll
+        bannerSlider.addEventListener('scroll', () => {
+            const slideWidth = bannerSlides[0].offsetWidth;
+            const scrollPosition = bannerSlider.scrollLeft;
+            const index = Math.round(scrollPosition / slideWidth);
+            
+            if (index !== currentIndex && index >= 0 && index < bannerSlides.length) {
+                currentIndex = index;
+                updateActiveDot(currentIndex);
+            }
+        });
+    }
+    
+    // Start auto-slide functionality
+    function startAutoSlide() {
+        clearInterval(autoSlideInterval);
+        autoSlideInterval = setInterval(() => {
+            const nextIndex = (currentIndex + 1) % bannerSlides.length;
+            navigateToSlide(nextIndex);
+        }, 5000); // Change slide every 5 seconds
+    }
+    
+    // Navigate to a specific slide
+    function navigateToSlide(index) {
+        if (index === currentIndex) return;
+        
+        currentIndex = index;
+        updateActiveDot(currentIndex);
+        
+        if (window.innerWidth <= 576) {
+            // Mobile - scroll to slide
+            const slideWidth = bannerSlides[0].offsetWidth;
+            bannerSlider.scrollTo({
+                left: index * slideWidth,
+                behavior: 'smooth'
+            });
+        } else {
+            // Desktop - update active class
+            bannerSlides.forEach((slide, i) => {
+                if (i === currentIndex) {
+                    slide.style.display = 'block';
+                    slide.classList.add('active');
+                    // Fade in
+                    setTimeout(() => {
+                        slide.style.opacity = '1';
+                    }, 50);
+                } else {
+                    slide.classList.remove('active');
+                    // Fade out
+                    slide.style.opacity = '0';
+                    // Hide after transition
+                    setTimeout(() => {
+                        slide.style.display = 'none';
+                    }, 600);
+                }
+            });
+        }
+    }
+    
+    // Update active dot
+    function updateActiveDot(index) {
+        bannerDots.forEach((dot, i) => {
+            if (i === index) {
+                dot.classList.add('active');
+            } else {
+                dot.classList.remove('active');
+            }
+        });
     }
 } 
