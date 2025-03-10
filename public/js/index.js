@@ -505,7 +505,7 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Initialize homepage
+// Initialize homepage functionality
 function initializeHomepage() {
     // Activate animations
     const animatedElements = document.querySelectorAll('.fade-in, .slide-in-left, .slide-in-right');
@@ -527,6 +527,18 @@ function initializeHomepage() {
     
     // Initialize banner slider
     initializeBannerSlider();
+    
+    // Optimize banners for mobile
+    optimizeBannersForMobile();
+    
+    // Optimize single banner
+    optimizeSingleBanner();
+    
+    // Add resize listener to re-optimize banners when window is resized
+    window.addEventListener('resize', function() {
+        optimizeBannersForMobile();
+        optimizeSingleBanner();
+    });
     
     // Add click handler to cart preview
     const cartPreview = document.querySelector('.cart-preview');
@@ -788,7 +800,7 @@ function initializeBannerSlider() {
             slide.style.display = 'block';
         });
         
-        // Add mobile-slider class
+        // Add mobile-slider class if it's not already added through CSS
         bannerSlider.classList.add('mobile-slider');
         
         let startX;
@@ -837,6 +849,12 @@ function initializeBannerSlider() {
             // Update current index and dots
             currentIndex = newIndex;
             updateActiveDot(currentIndex);
+            
+            // Smooth scroll to the selected slide
+            bannerSlider.scrollTo({
+                left: newIndex * slideWidth,
+                behavior: 'smooth'
+            });
             
             // Reset variables
             startX = null;
@@ -925,17 +943,44 @@ function optimizeBannersForMobile() {
         // Get all banner slides and images
         const bannerSlides = document.querySelectorAll('.banner-slide');
         const bannerImages = document.querySelectorAll('.banner-slide img');
+        const bannerSlider = document.querySelector('.banner-slider');
         
-        // Remove any height constraints that might cause issues
+        // Add the mobile-banner-slider class if not already present
+        if (bannerSlider && !bannerSlider.classList.contains('mobile-banner-slider')) {
+            bannerSlider.classList.add('mobile-banner-slider');
+        }
+        
+        // Ensure all slides are visible and properly positioned for the swiper
         bannerSlides.forEach(slide => {
             slide.style.height = 'auto';
+            slide.style.position = 'relative';
+            slide.style.opacity = '1';
+            slide.style.display = 'block';
+            
+            // Ensure the slide has a direct link to shop page
+            if (!slide.querySelector('a[href="/shop"]')) {
+                // If the slide doesn't already have a direct link, wrap the image in one
+                const img = slide.querySelector('img');
+                if (img && !img.parentElement.tagName === 'A') {
+                    const wrap = document.createElement('a');
+                    wrap.href = '/shop';
+                    img.parentNode.insertBefore(wrap, img);
+                    wrap.appendChild(img);
+                }
+            }
+            
+            // Hide any buttons inside the slide
+            const buttons = slide.querySelectorAll('.btn, .banner-content .btn');
+            buttons.forEach(btn => {
+                btn.style.display = 'none';
+            });
         });
         
-        // Ensure images are properly sized
+        // Ensure images are properly sized for mobile
         bannerImages.forEach(img => {
             img.style.height = 'auto';
             img.style.maxHeight = '70vh';
-            img.style.objectFit = 'contain';
+            img.style.objectFit = 'cover';
             
             // Force image to reload for proper sizing
             const currentSrc = img.src;
@@ -948,13 +993,6 @@ function optimizeBannersForMobile() {
             // Listen for image load to ensure it displays properly
             img.onload = function() {
                 this.style.display = 'block';
-                
-                // Check if the parent slide is active
-                const parentSlide = this.closest('.banner-slide');
-                if (parentSlide && parentSlide.classList.contains('active')) {
-                    parentSlide.style.display = 'block';
-                    parentSlide.style.opacity = '1';
-                }
             };
         });
         

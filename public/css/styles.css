@@ -2035,7 +2035,7 @@ button[type="submit"].loading i {
         padding: 0;
     }
     
-    .banner-slider {
+    .mobile-banner-slider {
         display: flex;
         flex-wrap: nowrap;
         overflow-x: auto;
@@ -2054,11 +2054,11 @@ button[type="submit"].loading i {
         position: relative;
     }
     
-    .banner-slider::-webkit-scrollbar {
+    .mobile-banner-slider::-webkit-scrollbar {
         display: none; /* Hide scrollbar for Chrome/Safari */
     }
     
-    .banner-slide {
+    .mobile-banner-slider .banner-slide {
         flex: 0 0 100%;
         min-width: 100%;
         scroll-snap-align: center;
@@ -2072,18 +2072,17 @@ button[type="submit"].loading i {
         left: auto !important;
     }
     
-    .banner-slide img {
+    .mobile-banner-slider .banner-slide img {
         width: 100%;
         height: auto; /* Auto height instead of fixed */
         max-height: 70vh; /* Limit height to 70% of viewport height */
-        object-fit: contain !important; /* Use contain to show entire image */
+        object-fit: cover !important; /* Use cover to maintain proper aspect ratio */
         display: block !important;
         margin: 0 auto;
     }
     
     .banner-content {
-        bottom: 15px;
-        right: 15px;
+        display: none; /* Hide buttons on mobile */
     }
     
     .banner-navigation {
