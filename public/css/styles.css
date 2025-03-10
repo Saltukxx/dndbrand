@@ -835,8 +835,14 @@ nav ul li a.active::after {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: top; /* Changed from center (or default) to top to show the top portion of collection images */
+    object-position: center; /* Reset to center for most images */
     transition: transform 0.5s ease;
+    display: block;
+}
+
+/* Target specifically the first collection item (erkekkoleksiyon.jpg) */
+.featured-collections.edge-to-edge .collection-item:first-child img {
+    object-position: top; /* Only this image will display from the top */
 }
 
 .featured-collections.edge-to-edge .collection-item:hover img {
