@@ -665,42 +665,48 @@ function initializeHomepage() {
 
 // Fix spacing between sections and ensure images display properly
 function fixSectionSpacingAndImages() {
-    // Fix all sections to have zero spacing
+    // Remove any unwanted animations or effects
+    document.querySelectorAll('img').forEach(img => {
+        img.style.transform = 'none';
+        img.style.transition = 'none';
+    });
+
+    // Fix premium banner image on mobile
+    const premiumBannerImage = document.querySelector('.premium-banner-image');
+    if (premiumBannerImage && window.innerWidth <= 576) {
+        // Ensure minimum height for mobile views
+        premiumBannerImage.style.minHeight = '450px';
+        
+        // For very small screens
+        if (window.innerWidth <= 375) {
+            premiumBannerImage.style.minHeight = '500px';
+        }
+        
+        // Ensure proper image display
+        const img = premiumBannerImage.querySelector('img');
+        if (img) {
+            img.style.objectFit = 'cover';
+            img.style.objectPosition = 'center';
+            img.style.width = '100%';
+            img.style.height = '100%';
+        }
+    }
+
+    // Ensure zero margin/padding for all sections
     document.querySelectorAll('section').forEach(section => {
         section.style.margin = '0';
         section.style.padding = '0';
     });
-    
-    // Fix premium banner image display
-    const premiumImage = document.querySelector('.premium-banner-image img');
-    if (premiumImage) {
-        premiumImage.style.width = '100%';
-        premiumImage.style.height = '100%';
-        premiumImage.style.objectFit = 'cover';
-        premiumImage.style.display = 'block';
-        premiumImage.style.transition = 'none';
-        premiumImage.style.transform = 'none';
+
+    // Ensure containers are full width on mobile
+    if (window.innerWidth <= 576) {
+        document.querySelectorAll('.container').forEach(container => {
+            container.style.maxWidth = '100%';
+            container.style.width = '100%';
+            container.style.padding = '0';
+            container.style.margin = '0';
+        });
     }
-    
-    // Fix single banner image display
-    const singleBannerImage = document.querySelector('.single-banner-wrapper img');
-    if (singleBannerImage) {
-        singleBannerImage.style.width = '100%';
-        singleBannerImage.style.objectFit = 'cover';
-        singleBannerImage.style.display = 'block';
-        singleBannerImage.style.transition = 'none';
-        singleBannerImage.style.transform = 'none';
-    }
-    
-    // Ensure all animated elements are fully visible
-    document.querySelectorAll('.fade-in, .slide-in-left, .slide-in-right').forEach(el => {
-        el.style.opacity = '1';
-        el.style.transform = 'none';
-        el.style.transition = 'none';
-    });
-    
-    // Remove any scroll-triggered animations
-    window.onscroll = null;
 }
 
 // Keep the original initializeCollections function but remove any animations
