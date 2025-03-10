@@ -1,5 +1,5 @@
 /**
- * DnD Brand E-commerce - Cart Page Functionality
+ * D&D Brand E-commerce - Cart Page Functionality
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -16,12 +16,27 @@ document.addEventListener('DOMContentLoaded', function() {
 // Initialize cart
 function initializeCart() {
     // Get cart from localStorage
-    let cart = localStorage.getItem('cart') || localStorage.getItem('dndCart');
+    let cart = localStorage.getItem('cart');
     cart = cart ? JSON.parse(cart) : [];
     
-    // If we found data in 'dndCart', migrate it to 'cart'
-    if (localStorage.getItem('dndCart') && !localStorage.getItem('cart')) {
-        localStorage.setItem('cart', localStorage.getItem('dndCart'));
+    // If we have old dndCart data and no cart data, migrate it
+    if (!cart.length) {
+        let oldCart = localStorage.getItem('dndCart');
+        if (oldCart) {
+            try {
+                oldCart = JSON.parse(oldCart);
+                if (oldCart.length) {
+                    cart = oldCart;
+                    // Save to the new key
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    // Remove old data
+                    localStorage.removeItem('dndCart');
+                    console.log('Successfully migrated cart data from dndCart to cart');
+                }
+            } catch (e) {
+                console.error('Error migrating dndCart data:', e);
+            }
+        }
     }
     
     // Get cart container
@@ -338,8 +353,13 @@ function updateCartItemQuantity(itemId, quantity, options = {}) {
             }
         }
         
-        // Save cart to localStorage
+        // Update quantity in localStorage
         localStorage.setItem('cart', JSON.stringify(cart));
+        
+        // Legacy support - in case there are still pages using dndCart
+        if (localStorage.getItem('dndCart')) {
+            localStorage.removeItem('dndCart');
+        }
         
         // Update cart count
         updateCartCount();
@@ -390,7 +410,7 @@ function removeCartItem(itemId, options = {}) {
                 // Save updated cart
                 localStorage.setItem('cart', JSON.stringify(cart));
                 if (localStorage.getItem('dndCart')) {
-                    localStorage.setItem('dndCart', JSON.stringify(cart));
+                    localStorage.removeItem('dndCart');
                 }
                 
                 // Update UI
@@ -430,7 +450,7 @@ function removeCartItem(itemId, options = {}) {
                         // Save updated cart
                         localStorage.setItem('cart', JSON.stringify(cart));
                         if (localStorage.getItem('dndCart')) {
-                            localStorage.setItem('dndCart', JSON.stringify(cart));
+                            localStorage.removeItem('dndCart');
                         }
                         
                         // Update UI
@@ -520,7 +540,7 @@ function removeCartItem(itemId, options = {}) {
         
         // If old storage key is being used, update it too
         if (localStorage.getItem('dndCart')) {
-            localStorage.setItem('dndCart', JSON.stringify(cart));
+            localStorage.removeItem('dndCart');
         }
         
         // Update UI

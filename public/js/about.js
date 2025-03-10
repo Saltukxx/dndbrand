@@ -1,5 +1,5 @@
 /**
- * DnD Brand E-commerce - About Page Functionality
+ * D&D Brand E-commerce - About Page Functionality
  */
 
 document.addEventListener('DOMContentLoaded', function() {

@@ -690,9 +690,26 @@ async function loadOrderSummary() {
         const loadingElement = document.querySelector('.order-loading');
         if (loadingElement) loadingElement.style.display = 'block';
         
-        // Get cart from localStorage - Check both possible storage keys
-        let cart = localStorage.getItem('cart') || localStorage.getItem('dndCart');
+        // Get cart from localStorage
+        let cart = localStorage.getItem('cart');
         cart = cart ? JSON.parse(cart) : [];
+        
+        // Migrate legacy cart data if needed
+        if (!cart.length) {
+            const existingCart = localStorage.getItem('dndCart');
+            if (existingCart) {
+                try {
+                    const oldCart = JSON.parse(existingCart);
+                    if (oldCart && oldCart.length) {
+                        cart = oldCart;
+                        localStorage.setItem('cart', JSON.stringify(cart));
+                        localStorage.removeItem('dndCart');
+                    }
+                } catch (e) {
+                    console.error('Error migrating old cart data:', e);
+                }
+            }
+        }
         
         console.log('Cart items loaded for order summary:', cart);
         
@@ -922,13 +939,13 @@ function renderOrderItems(items) {
 // Create sample cart data for testing
 function createSampleCartData() {
     // Check if cart data already exists
-    const existingCart = localStorage.getItem('dndCart');
+    const existingCart = localStorage.getItem('cart');
     if (existingCart) {
         try {
             const parsedCart = JSON.parse(existingCart);
             if (parsedCart && parsedCart.length > 0) {
                 console.log('Using existing cart data:', parsedCart);
-                return;
+                return parsedCart;
             }
         } catch (error) {
             console.error('Error parsing existing cart data:', error);
@@ -956,9 +973,9 @@ function createSampleCartData() {
         }
     ];
     
-    // Save to local storage
-    localStorage.setItem('dndCart', JSON.stringify(sampleCartItems));
-    console.log('Sample cart data created:', sampleCartItems);
+    // Update cart in localStorage
+    localStorage.setItem('cart', JSON.stringify(sampleCartItems));
+    console.log('Sample cart loaded successfully');
     
     return sampleCartItems;
 }
@@ -1436,7 +1453,7 @@ function showPaymentSuccess(data) {
     paymentSuccessModal.style.display = 'block';
     
     // Clear cart data from local storage
-    localStorage.removeItem('dndCart');
+    localStorage.removeItem('cart');
     
     // Get the order ID
     const orderId = currentOrder ? currentOrder._id : null;
@@ -1751,7 +1768,7 @@ function debugCheckout() {
     console.log('=== CHECKOUT DEBUG INFO ===');
     
     // Check cart data
-    const cartData = localStorage.getItem('dndCart');
+    const cartData = localStorage.getItem('cart');
     console.log('Cart data exists:', !!cartData);
     if (cartData) {
         try {
@@ -1969,7 +1986,7 @@ function validateOrder() {
     console.log('Validating order');
     
     // Check if cart is empty
-    const cart = JSON.parse(localStorage.getItem('dndCart') || '[]');
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     if (!cart || cart.length === 0) {
         showError('Sepetinizde ürün bulunmamaktadır');
         return false;

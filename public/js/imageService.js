@@ -1,5 +1,5 @@
 /**
- * DnD Brand Image Service
+ * D&D Brand Image Service
  * Centralized image handling with caching and fallbacks
  */
 

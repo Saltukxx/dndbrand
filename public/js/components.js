@@ -1,5 +1,5 @@
 /**
- * DnD Brand E-commerce - Components Script
+ * D&D Brand E-commerce - Components Script
  * Handles loading of common components like header and footer
  */
 
@@ -43,8 +43,8 @@ async function loadHeader() {
                 <div class="container">
                     <div class="logo">
                         <a href="index.html">
-                            <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="DnD Brand Logo" class="logo-image">
-                            <h1>DnD <span>Brand</span></h1>
+                            <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="D&D Brand Logo" class="logo-image">
+                            <h1>D&D <span>Brand</span></h1>
                         </a>
                     </div>
                     <div class="checkout-steps">
@@ -76,8 +76,8 @@ async function loadHeader() {
                 <div class="container">
                     <div class="logo">
                         <a href="./index.html">
-                            <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="DnD Brand Logo" class="logo-image">
-                            <h1>DnD <span>Brand</span></h1>
+                            <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="D&D Brand Logo" class="logo-image">
+                            <h1>D&D <span>Brand</span></h1>
                         </a>
                     </div>
                     <nav>
@@ -252,8 +252,8 @@ async function loadFooter() {
             <div class="container">
                 <div class="footer-content">
                     <div class="footer-column">
-                        <h3>DnD Brand</h3>
-                        <p>Kaliteli ve şık giyim ürünleriyle tarzınızı yansıtın. DnD Brand, modern ve zamansız parçalarla gardırobunuzu yenilemeniz için burada.</p>
+                        <h3>D&D Brand</h3>
+                        <p>Kaliteli ve şık giyim ürünleriyle tarzınızı yansıtın. D&D Brand, modern ve zamansız parçalarla gardırobunuzu yenilemeniz için burada.</p>
                         <div class="social-icons">
                             <a href="#"><i class="fab fa-facebook-f"></i></a>
                             <a href="#"><i class="fab fa-twitter"></i></a>
@@ -296,7 +296,7 @@ async function loadFooter() {
                 </div>
                 
                 <div class="footer-bottom">
-                    <p>&copy; 2023 DnD Brand. Tüm hakları saklıdır. | Tasarım: <a href="#">DnD Creative</a></p>
+                    <p>&copy; 2023 D&D Brand. Tüm hakları saklıdır. | Tasarım: <a href="#">D&D Creative</a></p>
                 </div>
             </div>
         </footer>

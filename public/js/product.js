@@ -1,5 +1,5 @@
 /**
- * DnD Brand E-commerce - Product Detail Page Functionality
+ * D&D Brand E-commerce - Product Detail Page Functionality
  * Displays product details from backend API
  */
 
@@ -410,7 +410,7 @@ async function loadProductDetails(productId) {
         }
         
         // Update page title
-        document.title = `${product.name} | DnD Brand`;
+        document.title = `${product.name} | D&D Brand`;
         
         // Create product detail HTML
         const productHTML = `

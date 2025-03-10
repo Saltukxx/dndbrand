@@ -1,5 +1,5 @@
 /**
- * DnD Brand E-commerce - Admin Dashboard Functionality
+ * D&D Brand E-commerce - Admin Dashboard Functionality
  * Comprehensive admin panel with product management, order tracking, and analytics
  */
 
@@ -2972,8 +2972,8 @@ function setupSettingsForms() {
         const savedGeneralSettings = localStorage.getItem('generalSettings');
         if (savedGeneralSettings) {
             const settings = JSON.parse(savedGeneralSettings);
-            document.getElementById('siteName').value = settings.siteName || 'DnD Brand';
-            document.getElementById('siteDescription').value = settings.siteDescription || 'DnD Brand - Moda ve Stil';
+            document.getElementById('siteName').value = settings.siteName || 'D&D Brand';
+            document.getElementById('siteDescription').value = settings.siteDescription || 'D&D Brand - Moda ve Stil';
             document.getElementById('contactEmail').value = settings.contactEmail || 'info@dndbrand.com';
             document.getElementById('contactPhone').value = settings.contactPhone || '+90 555 123 4567';
         }

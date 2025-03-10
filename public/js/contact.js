@@ -1,5 +1,5 @@
 /**
- * DnD Brand E-commerce - Contact Page Script
+ * D&D Brand E-commerce - Contact Page Script
  * Handles contact page specific functionality
  */
 
@@ -55,7 +55,7 @@ function initializeMap() {
         const marker = L.marker([lat, lng], {icon: customIcon}).addTo(map);
         
         // Add popup
-        marker.bindPopup("<strong>DnD Brand</strong><br>Bağdat Caddesi No: 123<br>Kadıköy, İstanbul").openPopup();
+        marker.bindPopup("<strong>D&D Brand</strong><br>Bağdat Caddesi No: 123<br>Kadıköy, İstanbul").openPopup();
     }
 }
 

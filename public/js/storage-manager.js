@@ -1,5 +1,5 @@
 /**
- * DnD Brand E-commerce - Storage Manager
+ * D&D Brand E-commerce - Storage Manager
  * Handles product data storage with export/import functionality
  */
 

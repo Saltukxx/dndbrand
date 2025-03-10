@@ -1,5 +1,5 @@
 /**
- * DnD Brand E-commerce - Account API Functions
+ * D&D Brand E-commerce - Account API Functions
  * Handles API calls for account-related functionality
  */
 

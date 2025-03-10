@@ -1,5 +1,5 @@
 /**
- * DnD Brand E-commerce - Homepage Functionality
+ * D&D Brand E-commerce - Homepage Functionality
  * Displays featured products from admin panel on the homepage
  */
 
@@ -180,7 +180,7 @@ function createProductCard(product) {
             </div>
         </div>
         <div class="product-info">
-            <div class="brand">DnD Brand</div>
+            <div class="brand">D&D Brand</div>
             <h3>${product.name}</h3>
             <div class="price">${oldPriceHtml} ${formattedPrice} ₺</div>
         </div>

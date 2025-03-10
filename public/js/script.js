@@ -1,5 +1,5 @@
 /**
- * DnD Brand E-commerce - Main Script
+ * D&D Brand E-commerce - Main Script
  * Handles common functionality across all pages
  */
 
@@ -319,13 +319,28 @@ function updateCartCount() {
     
     if (cartCountElements.length === 0) return;
     
-    // Get cart from localStorage - use consistent key 'cart' instead of 'dndCart'
-    let cart = localStorage.getItem('cart') || localStorage.getItem('dndCart');
+    // Get cart from localStorage - consistently use 'cart' key
+    let cart = localStorage.getItem('cart');
     cart = cart ? JSON.parse(cart) : [];
     
-    // If we found data in 'dndCart', migrate it to 'cart'
-    if (localStorage.getItem('dndCart') && !localStorage.getItem('cart')) {
-        localStorage.setItem('cart', localStorage.getItem('dndCart'));
+    // If we have no cart data but old dndCart data exists, migrate it
+    if (!cart.length) {
+        let oldCart = localStorage.getItem('dndCart');
+        if (oldCart) {
+            try {
+                oldCart = JSON.parse(oldCart);
+                if (oldCart.length) {
+                    cart = oldCart;
+                    // Save to the new key
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    // Remove old data
+                    localStorage.removeItem('dndCart');
+                    console.log('Successfully migrated cart data from dndCart to cart');
+                }
+            } catch (e) {
+                console.error('Error migrating dndCart data:', e);
+            }
+        }
     }
     
     // Calculate total quantity

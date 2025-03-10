@@ -1,7 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('Checking DnD Brand E-commerce setup...');
+console.log('=======================');
+console.log('Checking D&D Brand E-commerce setup...');
+console.log('=======================');
 
 // Required directories
 const requiredDirs = [

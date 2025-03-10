@@ -1,5 +1,5 @@
 /**
- * DnD Brand E-commerce - Image Service
+ * D&D Brand E-commerce - Image Service
  * Centralized service for handling product images
  */
 

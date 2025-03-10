@@ -1,5 +1,5 @@
 /**
- * DnD Brand E-commerce - Shop Page Functionality
+ * D&D Brand E-commerce - Shop Page Functionality
  * Displays products from backend API on the shop page
  */
 
@@ -1207,7 +1207,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Get cart from localStorage
-        let cart = localStorage.getItem('dndCart');
+        let cart = localStorage.getItem('cart');
         cart = cart ? JSON.parse(cart) : [];
         
         // Use a consistent ID format - prefer _id if available
@@ -1234,7 +1234,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Save cart to localStorage
-        localStorage.setItem('dndCart', JSON.stringify(cart));
+        localStorage.setItem('cart', JSON.stringify(cart));
         
         // Update cart count
         updateCartCount();
@@ -1297,7 +1297,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (cartCountElements.length === 0) return;
         
         // Get cart from localStorage
-        let cart = localStorage.getItem('dndCart');
+        let cart = localStorage.getItem('cart');
         cart = cart ? JSON.parse(cart) : [];
         
         // Calculate total quantity

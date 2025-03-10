@@ -1,4 +1,4 @@
-// Configuration settings for DnD Brand
+// Configuration settings for D&D Brand
 const CONFIG = {
     // API URL - Production (HTTPS)
     API_URL: 'https://dndbrand-server.onrender.com/api',
