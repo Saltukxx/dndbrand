@@ -480,12 +480,12 @@ nav ul li a.active::after {
 .hero {
     position: relative;
     height: 100vh;
-    min-height: 700px;
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-    margin-top: 0;
+    max-height: 100vh;
     background-color: var(--primary-color);
+    color: var(--text-color);
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
 }
 
 .hero-background {
@@ -495,9 +495,7 @@ nav ul li a.active::after {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0.7;
-    filter: brightness(0.7) contrast(1.2);
-    transition: transform 0.5s ease;
+    z-index: 0;
 }
 
 .hero-overlay {
@@ -506,23 +504,19 @@ nav ul li a.active::after {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(
-        to right,
-        rgba(18, 18, 18, 0.9) 0%,
-        rgba(18, 18, 18, 0.7) 50%,
-        rgba(18, 18, 18, 0.5) 100%
-    );
+    background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.8) 100%);
+    z-index: 1;
+    margin: 0;
+    padding: 0;
 }
 
 .hero-content {
     position: relative;
-    z-index: 10;
-    max-width: 650px;
-    padding: 0 20px;
-    margin-left: 5%;
-    opacity: 0;
-    transform: translateY(30px);
-    animation: fadeInUp 1s forwards 0.5s;
+    z-index: 2;
+    max-width: 800px;
+    margin-left: 50px;
+    padding: 0;
+    color: var(--text-color);
 }
 
 @keyframes fadeInUp {
@@ -607,9 +601,15 @@ nav ul li a.active::after {
 
 /* Featured Collections */
 .featured-collections {
-    padding: 80px 0;
-    background-color: var(--bg-color);
+    padding-top: 40px;
+    background-color: var(--primary-color);
     position: relative;
+    z-index: 1;
+}
+
+.featured-collections .container {
+    position: relative;
+    z-index: 2;
 }
 
 .collection-grid {
@@ -1216,7 +1216,113 @@ footer {
 }
 
 @media (max-width: 576px) {
-    /* Adjust container for better horizontal centering */
+    /* Hero section fixes */
+    .hero {
+        height: 80vh;
+        max-height: 80vh;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-radius: 0;
+    }
+    
+    .hero-content {
+        margin-left: 0;
+        padding: 20px;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .hero-title {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+        margin-bottom: 15px;
+    }
+    
+    .hero-buttons {
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 15px;
+        width: 100%;
+    }
+    
+    .hero-buttons .btn {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+    
+    .hero-features {
+        flex-direction: column;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        align-items: center;
+    }
+    
+    .hero-overlay {
+        margin: 0;
+        padding: 0;
+        border-radius: 0;
+    }
+    
+    /* Banner section fixes */
+    .promo-banners, .single-banner {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .container {
+        max-width: 100%;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+    
+    /* Banner slider fixes */
+    .mobile-banner-slider .banner-slide {
+        margin: 0;
+        padding: 0;
+    }
+    
+    .banner-slide img, .single-banner-wrapper img {
+        margin: 0;
+        padding: 0;
+        border-radius: 0;
+    }
+    
+    .banner-navigation {
+        bottom: 8px;
+    }
+    
+    /* Single banner fixes */
+    .single-banner-wrapper {
+        border-radius: 0;
+        box-shadow: none;
+    }
+    
+    .single-banner-content {
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    /* Featured collections fixes */
+    .featured-collections {
+        padding-top: 30px !important;
+        margin-top: 0;
+    }
+    
+    .collection-grid {
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    /* Product grid mobile styles */
     .trending .container {
         padding: 0;
         width: 100%;
@@ -1225,7 +1331,6 @@ footer {
         text-align: center;
     }
     
-    /* Ensure the section title is centered and properly sized */
     .trending .section-title {
         text-align: center;
         margin: 0 auto 30px;
@@ -1233,7 +1338,6 @@ footer {
         padding: 0;
     }
     
-    /* Center product grid perfectly on mobile */
     .product-grid {
         display: flex;
         flex-wrap: nowrap;
@@ -1253,8 +1357,7 @@ footer {
         transform: translateX(-50%);
         
         /* This ensures the cards are centered with the correct padding */
-        /* The 50% of the container minus half of the two cards + gap width */
-        padding-left: calc(50% - 152px); /* Based on card width calculation */
+        padding-left: calc(50% - 152px);
         padding-right: calc(50% - 152px);
     }
     
@@ -1262,7 +1365,6 @@ footer {
         display: none; /* Hide scrollbar for Chrome/Safari */
     }
     
-    /* Size cards to be exactly half the container width, accounting for gap */
     .product-card {
         flex: 0 0 144px; /* Fixed width for consistency */
         min-width: 144px;
@@ -1274,13 +1376,11 @@ footer {
         overflow: hidden;
     }
     
-    /* First two cards should be visible and centered initially */
     .product-grid .product-card:nth-child(1),
     .product-grid .product-card:nth-child(2) {
         scroll-snap-align: start;
     }
     
-    /* Add subtle swipe hint on both sides */
     .product-grid::after,
     .product-grid::before {
         content: '';
@@ -1304,19 +1404,16 @@ footer {
         opacity: 0.8;
     }
     
-    /* First card should have a subtle highlight to indicate start */
     .product-grid .product-card:first-child {
         position: relative;
     }
     
-    /* Remove visual indicators when scrolled */
     .trending.has-scrolled .product-grid::after,
     .trending.has-scrolled .product-grid::before {
         opacity: 0;
         transition: opacity 0.5s ease;
     }
     
-    /* Remove the previous arrow indicator */
     .trending::after {
         display: none;
     }
@@ -1325,12 +1422,10 @@ footer {
         display: none;
     }
     
-    /* Add visual feedback when touching/swiping */
     .product-card:active {
         transform: scale(0.98);
     }
     
-    /* Mobile slider class - added by JS */
     .product-grid.mobile-slider {
         cursor: grab;
     }
@@ -1339,7 +1434,6 @@ footer {
         cursor: grabbing;
     }
     
-    /* Make product info more compact for mobile slider */
     .product-card .product-info {
         padding: 12px;
     }
@@ -1360,52 +1454,6 @@ footer {
     .product-card .product-info .price {
         font-size: 14px;
         font-weight: 600;
-    }
-    
-    .collection-grid {
-        gap: 25px;
-        margin-top: 20px;
-    }
-    
-    .collection-item {
-        height: 480px;
-    }
-    
-    .collection-info {
-        padding: 35px 25px;
-    }
-    
-    .collection-info h3 {
-        font-size: 1.8rem;
-        margin-bottom: 1rem;
-    }
-    
-    .collection-info p {
-        font-size: 1.1rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .collection-info .btn {
-        font-size: 1.1rem;
-        padding: 12px 25px;
-    }
-    
-    .section-title {
-        font-size: 2rem;
-        margin-bottom: 2rem;
-    }
-    
-    .section-title::after {
-        width: 60px;
-        height: 3px;
-        bottom: -10px;
-    }
-    
-    .featured-collections,
-    .trending,
-    .premium-banner,
-    .newsletter {
-        padding: 50px 0;
     }
 }
 
@@ -1647,38 +1695,37 @@ main, section:not(.hero):not(.page-header) {
 /* Hero Section Responsive Improvements */
 @media (max-width: 768px) {
     .hero {
-        min-height: 600px;
+        height: 85vh;
+        max-height: 85vh;
+        margin: 0;
+        padding: 0;
+        border-radius: 0;
     }
     
     .hero-content {
-        margin-left: 0;
-        padding: 0 20px;
-        text-align: center;
-        max-width: 100%;
+        padding: 30px 20px;
+        width: 100%;
+        margin: 0;
     }
     
-    .hero-title {
-        font-size: 2.5rem;
+    .hero-overlay {
+        border-radius: 0;
     }
     
-    .hero-subtitle {
-        font-size: 1rem;
-    }
-    
-    .hero-buttons {
-        justify-content: center;
-    }
-    
-    .hero-features {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: center;
+    /* Ensure no gaps between sections */
+    section {
+        margin: 0;
+        padding: 0;
     }
 }
 
 @media (max-width: 576px) {
     .hero {
-        min-height: 500px;
+        height: 80vh;
+        max-height: 80vh;
+        margin: 0;
+        padding: 0;
+        border-radius: 0;
     }
     
     .hero-title {
@@ -1686,12 +1733,70 @@ main, section:not(.hero):not(.page-header) {
     }
     
     .hero-buttons {
-        flex-direction: column;
-        width: 100%;
+        gap: 10px;
+        margin-bottom: 15px;
     }
     
     .hero-buttons .btn {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+    
+    .hero-features {
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* Ensure no spacing between sections */
+    .hero, .promo-banners, .single-banner, .featured-collections {
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* Handle hero-content position for mobile */
+    .hero-content {
+        margin-left: 0;
+        padding: 20px;
+        position: absolute;
+        bottom: 0;
+        left: 0;
         width: 100%;
+        text-align: center;
+    }
+    
+    /* Adjust hero overlay */
+    .hero-overlay {
+        margin: 0;
+        padding: 0;
+        border-radius: 0;
+    }
+    
+    /* Ensure edge-to-edge for all containers */
+    .container {
+        max-width: 100%;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+    
+    /* Remove any margin/padding from banner images */
+    .banner-slide img, .single-banner-wrapper img {
+        margin: 0;
+        padding: 0;
+        border-radius: 0;
+    }
+    
+    /* Ensure featured collections respect edge-to-edge design */
+    .featured-collections {
+        padding-top: 30px;
+        margin-top: 0;
+    }
+    
+    /* Adjust collection grid spacing */
+    .collection-grid {
+        gap: 15px;
+        margin-top: 20px;
     }
 }
 
@@ -1909,27 +2014,30 @@ button[type="submit"].loading i {
 
 /* Promo Banners Section */
 .promo-banners {
-    padding: 50px 0;
+    padding: 0;
     background-color: var(--primary-color);
     position: relative;
     overflow: hidden;
+    margin: 0;
 }
 
 /* Special container for banners */
 .promo-banners .container {
-    max-width: 95%;
-    width: 95%;
+    max-width: 100%;
+    width: 100%;
+    padding: 0;
+    margin: 0;
 }
 
 .banner-slider {
     position: relative;
     overflow: hidden;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border-radius: 0; /* Remove rounded corners */
+    box-shadow: none; /* Remove shadow */
     height: auto;
     aspect-ratio: 21 / 9; /* Even wider aspect ratio for banners */
     max-width: 100%;
-    margin: 0 auto;
+    margin: 0;
     visibility: visible !important;
 }
 
@@ -1980,7 +2088,7 @@ button[type="submit"].loading i {
     transform: translateX(-50%);
     display: flex;
     gap: 10px;
-    z-index: 3;
+    z-index: 10;
 }
 
 .banner-dot {
@@ -1990,6 +2098,7 @@ button[type="submit"].loading i {
     background-color: rgba(255, 255, 255, 0.5);
     cursor: pointer;
     transition: all 0.3s ease;
+    z-index: 10;
 }
 
 .banner-dot.active {
@@ -2025,14 +2134,15 @@ button[type="submit"].loading i {
 /* Mobile styles for promo banners */
 @media (max-width: 576px) {
     .promo-banners {
-        padding: 15px 0;
-        margin-bottom: 20px;
+        padding: 0;
+        margin: 0;
     }
     
     .promo-banners .container {
         max-width: 100%;
         width: 100%;
         padding: 0;
+        margin: 0;
     }
     
     .mobile-banner-slider {
@@ -2047,8 +2157,8 @@ button[type="submit"].loading i {
         width: 100%;
         padding: 0;
         margin: 0;
-        border-radius: 0; /* Remove border radius for full-width effect */
-        box-shadow: none; /* Remove shadow on mobile */
+        border-radius: 0;
+        box-shadow: none;
         transform: none;
         left: auto;
         position: relative;
@@ -2070,15 +2180,18 @@ button[type="submit"].loading i {
         border-radius: 0;
         top: auto !important;
         left: auto !important;
+        margin: 0;
+        padding: 0;
     }
     
     .mobile-banner-slider .banner-slide img {
         width: 100%;
         height: auto; /* Auto height instead of fixed */
         max-height: 70vh; /* Limit height to 70% of viewport height */
-        object-fit: cover !important; /* Use cover to maintain proper aspect ratio */
+        object-fit: cover !important;
         display: block !important;
-        margin: 0 auto;
+        margin: 0;
+        border-radius: 0;
     }
     
     .banner-content {
@@ -2087,6 +2200,7 @@ button[type="submit"].loading i {
     
     .banner-navigation {
         bottom: 8px;
+        z-index: 10;
     }
     
     .banner-dot {
@@ -2097,13 +2211,14 @@ button[type="submit"].loading i {
 
 /* Single Banner Section */
 .single-banner {
-    padding: 40px 0;
+    padding: 0;
     background-color: var(--primary-color);
     position: relative;
     overflow: hidden;
     opacity: 0;
     transform: translateY(20px);
     transition: opacity 0.8s ease, transform 0.8s ease;
+    margin: 0;
 }
 
 .single-banner.active {
@@ -2111,25 +2226,39 @@ button[type="submit"].loading i {
     transform: translateY(0);
 }
 
+.single-banner .container {
+    max-width: 100%;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
 .single-banner-wrapper {
     position: relative;
     overflow: hidden;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border-radius: 0; /* Remove rounded corners */
+    box-shadow: none; /* Remove shadow */
     height: auto;
     width: 100%;
-    margin: 0 auto;
+    margin: 0;
     display: block;
 }
 
 .single-banner-wrapper img {
     width: 100%;
     height: auto;
-    max-height: 500px;
-    object-fit: cover; /* Changed to cover to fill the space */
+    max-height: 600px;
+    object-fit: cover;
     display: block;
     transition: transform 0.5s ease;
     background-color: var(--primary-color);
+}
+
+/* For larger desktop screens, make the banner even bigger */
+@media (min-width: 1200px) {
+    .single-banner-wrapper img {
+        max-height: 650px;
+    }
 }
 
 .single-banner-wrapper:hover img {
@@ -2146,13 +2275,15 @@ button[type="submit"].loading i {
 /* Mobile styles for single banner */
 @media (max-width: 576px) {
     .single-banner {
-        padding: 15px 0;
+        padding: 0;
+        margin: 0;
     }
     
     .single-banner .container {
         max-width: 100%;
         width: 100%;
         padding: 0;
+        margin: 0;
     }
     
     .single-banner-wrapper {
@@ -2162,11 +2293,55 @@ button[type="submit"].loading i {
     
     .single-banner-wrapper img {
         max-height: 70vh;
-        object-fit: contain; /* Use contain on mobile to show the entire image */
+        object-fit: contain;
     }
     
     .single-banner-content {
-        bottom: 20px;
-        right: 20px;
+        bottom: 15px;
+        right: 15px;
+    }
+}
+
+/* Mobile fixes for edge-to-edge */
+@media (max-width: 576px) {
+    /* Additional fixes for hero content positioning */
+    .hero-content {
+        margin-left: 0;
+        padding: 20px;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        text-align: center;
+    }
+    
+    /* Ensure no gaps with swipeable banners */
+    .mobile-banner-slider .banner-slide {
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* Remove any space at the bottom of banners */
+    .banner-navigation {
+        bottom: 8px;
+    }
+    
+    /* Remove any remaining spacing after hero section */
+    .hero {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Make sure single banner content is positioned correctly */
+    .single-banner-content {
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    /* Fix any additional spacing in sections */
+    .promo-banners,
+    .single-banner {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
     }
 } 
