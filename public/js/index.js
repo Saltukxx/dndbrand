@@ -52,6 +52,24 @@ document.addEventListener('DOMContentLoaded', function() {
     fixBannerDisplay();
 });
 
+// Add window load event for additional banner fixes
+window.addEventListener('load', function() {
+    fixBannerDisplay();
+    
+    // Force banners to be 100% of viewport width
+    setTimeout(function() {
+        document.querySelectorAll('.banner-slider-section, .full-width-banner, .banner-slider-container').forEach(el => {
+            el.style.width = '100%';
+            el.style.maxWidth = '100%';
+        });
+        
+        document.querySelectorAll('.banner-slide img, .full-width-banner img').forEach(img => {
+            img.style.width = '100%';
+            img.style.objectFit = 'cover';
+        });
+    }, 100);
+});
+
 // Load featured products to the homepage
 async function loadFeaturedProducts() {
     const featuredContainer = document.querySelector('.trending .product-grid');
@@ -1819,42 +1837,48 @@ function animateProductsOnScroll() {
 
 // Make sure banners display correctly
 function fixBannerDisplay() {
-    // Force recalculation of banner dimensions
-    const bannerSliderContainer = document.querySelector('.banner-slider-container');
-    const fullWidthBanner = document.querySelector('.full-width-banner');
+    console.log('Fixing banner display...');
     
-    if (bannerSliderContainer) {
-        // Make sure the banner has the full viewport width
-        const setFullWidth = () => {
-            const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
-            if (bannerSliderContainer.offsetWidth !== vw) {
-                bannerSliderContainer.style.width = `${vw}px`;
-                
-                // Ensure the banner slides also have full width
-                const slides = document.querySelectorAll('.banner-slide');
-                slides.forEach(slide => {
-                    slide.style.width = `${vw}px`;
-                });
-            }
-        };
-        
-        // Apply initially and on resize
-        setFullWidth();
-        window.addEventListener('resize', setFullWidth);
-    }
+    // Apply direct styles to force full width
+    document.querySelectorAll('.banner-slider-section, .full-width-banner').forEach(banner => {
+        banner.style.width = '100%';
+        banner.style.maxWidth = '100%';
+        banner.style.margin = '0';
+        banner.style.padding = '0';
+        banner.style.left = '0';
+        banner.style.right = '0';
+        banner.style.transform = 'none';
+    });
     
-    if (fullWidthBanner) {
-        // Also ensure the single banner has full width
-        const setFullWidthSingle = () => {
-            const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
-            if (fullWidthBanner.offsetWidth !== vw) {
-                fullWidthBanner.style.width = `${vw}px`;
-            }
-        };
-        
-        setFullWidthSingle();
-        window.addEventListener('resize', setFullWidthSingle);
-    }
+    // Force full width on images
+    document.querySelectorAll('.banner-slide img, .full-width-banner img').forEach(img => {
+        img.style.width = '100%';
+        img.style.maxWidth = 'none';
+        img.style.objectFit = 'cover';
+        img.style.display = 'block';
+    });
+    
+    // Ensure slides are properly positioned
+    document.querySelectorAll('.banner-slide').forEach((slide, index) => {
+        if (index === 0) {
+            slide.classList.add('active');
+            slide.style.opacity = '1';
+            slide.style.display = 'block';
+        } else {
+            slide.classList.remove('active');
+            slide.style.opacity = '0';
+            slide.style.display = 'none';
+        }
+    });
+    
+    // Reset any dots
+    document.querySelectorAll('.banner-dot').forEach((dot, index) => {
+        if (index === 0) {
+            dot.classList.add('active');
+        } else {
+            dot.classList.remove('active');
+        }
+    });
 }
 
 // Initialize swipe detection for touch devices
