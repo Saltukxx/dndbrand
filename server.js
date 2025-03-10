@@ -41,6 +41,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Add debug middleware to log all requests
 app.use((req, res, next) => {
   console.log(`[DEBUG] Request path: ${req.path}`);
+  console.log(`[DEBUG] Request method: ${req.method}`);
+  console.log(`[DEBUG] Request headers: ${JSON.stringify(req.headers)}`);
+  console.log(`[DEBUG] Original URL: ${req.originalUrl}`);
   next();
 });
 
@@ -68,23 +71,40 @@ app.get('/api/images/:imageName', (req, res) => {
 
 // Define routes for clean URLs BEFORE the catch-all route
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'html', 'index.html'));
+  console.log('[DEBUG] Root route handler called');
+  const absolutePath = path.resolve(__dirname, 'public', 'html', 'index.html');
+  console.log(`[DEBUG] Absolute path for index.html: ${absolutePath}`);
+  console.log(`[DEBUG] File exists: ${fs.existsSync(absolutePath)}`);
+  res.sendFile(absolutePath);
 });
 
 app.get('/shop', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'html', 'shop.html'));
+  console.log('[DEBUG] Shop route handler called');
+  const absolutePath = path.resolve(__dirname, 'public', 'html', 'shop.html');
+  console.log(`[DEBUG] Absolute path for shop.html: ${absolutePath}`);
+  console.log(`[DEBUG] File exists: ${fs.existsSync(absolutePath)}`);
+  res.sendFile(absolutePath);
 });
 
 app.get('/about', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'html', 'about.html'));
+  const absolutePath = path.resolve(__dirname, 'public', 'html', 'about.html');
+  console.log(`[DEBUG] Absolute path for about.html: ${absolutePath}`);
+  console.log(`[DEBUG] File exists: ${fs.existsSync(absolutePath)}`);
+  res.sendFile(absolutePath);
 });
 
 app.get('/contact', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'html', 'contact.html'));
+  const absolutePath = path.resolve(__dirname, 'public', 'html', 'contact.html');
+  console.log(`[DEBUG] Absolute path for contact.html: ${absolutePath}`);
+  console.log(`[DEBUG] File exists: ${fs.existsSync(absolutePath)}`);
+  res.sendFile(absolutePath);
 });
 
 app.get('/cart', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'html', 'cart.html'));
+  const absolutePath = path.resolve(__dirname, 'public', 'html', 'cart.html');
+  console.log(`[DEBUG] Absolute path for cart.html: ${absolutePath}`);
+  console.log(`[DEBUG] File exists: ${fs.existsSync(absolutePath)}`);
+  res.sendFile(absolutePath);
 });
 
 app.get('/checkout', (req, res) => {
@@ -249,32 +269,35 @@ app.options('/api-proxy/*', (req, res) => {
 
 // Handle HTML page requests directly - note this comes before the catch-all
 app.get('/*.html', (req, res) => {
+  console.log('[DEBUG] HTML handler called for:', req.path);
   // Extract the HTML file name from the URL
   const htmlFile = req.path.substring(1); // Remove the leading slash
   const htmlPath = path.join(__dirname, htmlFile);
   
-  console.log(`[DEBUG] HTML request for ${htmlFile}, checking ${htmlPath}`);
+  console.log(`[DEBUG] Looking for HTML file at: ${htmlPath}`);
+  console.log(`[DEBUG] File exists: ${fs.existsSync(htmlPath)}`);
   
   // Check if the file exists
   if (fs.existsSync(htmlPath)) {
-    return res.sendFile(htmlPath);
+    res.sendFile(htmlPath);
+  } else {
+    // If HTML file doesn't exist, try in the public/html directory
+    const publicHtmlPath = path.join(__dirname, 'public', 'html', path.basename(htmlFile));
+    console.log(`[DEBUG] Looking for HTML file in public/html: ${publicHtmlPath}`);
+    console.log(`[DEBUG] File exists: ${fs.existsSync(publicHtmlPath)}`);
+    
+    if (fs.existsSync(publicHtmlPath)) {
+      res.sendFile(publicHtmlPath);
+    } else {
+      console.log('[DEBUG] Sending 404 page');
+      res.status(404).sendFile(path.join(__dirname, 'public', 'html', '404.html'));
+    }
   }
-  
-  // If not found, check if it might be in the public/html directory
-  const altPath = path.join(__dirname, 'public', htmlFile);
-  console.log(`[DEBUG] Checking alternative path: ${altPath}`);
-  
-  if (fs.existsSync(altPath)) {
-    return res.sendFile(altPath);
-  }
-  
-  // If HTML file doesn't exist, send 404 page
-  return res.status(404).sendFile(path.join(__dirname, 'public', 'html', '404.html'));
 });
 
-// Fallback 404 handler - this should come last
+// Fallback 404 handler for any other routes
 app.use((req, res) => {
-  console.log(`[DEBUG] 404 fallback for: ${req.path}`);
+  console.log('[DEBUG] Fallback 404 handler called for:', req.path);
   res.status(404).sendFile(path.join(__dirname, 'public', 'html', '404.html'));
 });
 

@@ -125,24 +125,39 @@ app.get('/healthz', (req, res) => {
 // Define routes for the frontend HTML files
 // Root route serves the index.html
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/index.html'));
+  const absolutePath = path.resolve(__dirname, '../public/html/index.html');
+  console.log(`[DEBUG] Absolute path for index.html: ${absolutePath}`);
+  console.log(`[DEBUG] File exists: ${fs.existsSync(absolutePath)}`);
+  res.sendFile(absolutePath);
 });
 
 // Define explicit routes for clean URLs
 app.get('/shop', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/shop.html'));
+  const absolutePath = path.resolve(__dirname, '../public/html/shop.html');
+  console.log(`[DEBUG] Absolute path for shop.html: ${absolutePath}`);
+  console.log(`[DEBUG] File exists: ${fs.existsSync(absolutePath)}`);
+  res.sendFile(absolutePath);
 });
 
 app.get('/about', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/about.html'));
+  const absolutePath = path.resolve(__dirname, '../public/html/about.html');
+  console.log(`[DEBUG] Absolute path for about.html: ${absolutePath}`);
+  console.log(`[DEBUG] File exists: ${fs.existsSync(absolutePath)}`);
+  res.sendFile(absolutePath);
 });
 
 app.get('/contact', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/contact.html'));
+  const absolutePath = path.resolve(__dirname, '../public/html/contact.html');
+  console.log(`[DEBUG] Absolute path for contact.html: ${absolutePath}`);
+  console.log(`[DEBUG] File exists: ${fs.existsSync(absolutePath)}`);
+  res.sendFile(absolutePath);
 });
 
 app.get('/cart', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/cart.html'));
+  const absolutePath = path.resolve(__dirname, '../public/html/cart.html');
+  console.log(`[DEBUG] Absolute path for cart.html: ${absolutePath}`);
+  console.log(`[DEBUG] File exists: ${fs.existsSync(absolutePath)}`);
+  res.sendFile(absolutePath);
 });
 
 app.get('/checkout', (req, res) => {

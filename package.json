@@ -4,6 +4,8 @@
   "description": "DnD Brand E-commerce Website",
   "scripts": {
     "start": "node server.js",
+    "prod": "node server/production-server.js",
+    "dev": "node server.js",
     "server": "cd server && npm start",
     "server:prod": "cd server && npm run prod",
     "server:prod:win": "cd server && npm run prod:win",
