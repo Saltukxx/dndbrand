@@ -1834,11 +1834,140 @@ function fixBannerDisplay() {
     });
 }
 
-// Initialize when the DOM is loaded
+// Initialize all components when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize featured products
+    initializeCollectionAnimations();
     initializeFeaturedProducts();
+    animateProductsOnScroll();
+    initializeBannerSlider();
+    initializeSwipeDetection();
+});
+
+// Handle collection animations
+function initializeCollectionAnimations() {
+    // ... existing code ...
+}
+
+// Initialize the banner slider functionality
+function initializeBannerSlider() {
+    const slides = document.querySelectorAll('.banner-slide');
+    const dots = document.querySelectorAll('.banner-dot');
+    const prevBtn = document.querySelector('.banner-prev');
+    const nextBtn = document.querySelector('.banner-next');
+    let currentSlide = 0;
+    let slideInterval;
+
+    // Function to show a specific slide
+    function showSlide(index) {
+        // Remove active class from all slides and dots
+        slides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+        
+        // Add active class to current slide and dot
+        slides[index].classList.add('active');
+        dots[index].classList.add('active');
+        
+        currentSlide = index;
+    }
+
+    // Auto-advance slides
+    function startSlideInterval() {
+        slideInterval = setInterval(() => {
+            nextSlide();
+        }, 5000); // Change slide every 5 seconds
+    }
+
+    // Go to next slide
+    function nextSlide() {
+        let next = currentSlide + 1;
+        if (next >= slides.length) next = 0;
+        showSlide(next);
+    }
+
+    // Go to previous slide
+    function prevSlide() {
+        let prev = currentSlide - 1;
+        if (prev < 0) prev = slides.length - 1;
+        showSlide(prev);
+    }
+
+    // Reset interval when manually changing slides
+    function resetInterval() {
+        clearInterval(slideInterval);
+        startSlideInterval();
+    }
+
+    // Initialize dots click events
+    dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+            showSlide(index);
+            resetInterval();
+        });
+    });
+
+    // Initialize prev/next buttons
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            prevSlide();
+            resetInterval();
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            nextSlide();
+            resetInterval();
+        });
+    }
+
+    // Start the auto-advancing slides
+    startSlideInterval();
+}
+
+// Initialize swipe detection for touch devices
+function initializeSwipeDetection() {
+    const bannerSlider = document.querySelector('.banner-slider-container');
+    const fullWidthBanner = document.querySelector('.full-width-banner');
     
-    // Fix banner display issues
-    fixBannerDisplay();
-}); 
+    if (bannerSlider) {
+        let startX, endX;
+        const minSwipeDistance = 50;
+        
+        bannerSlider.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+        });
+        
+        bannerSlider.addEventListener('touchend', (e) => {
+            endX = e.changedTouches[0].clientX;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            const swipeDistance = endX - startX;
+            
+            if (Math.abs(swipeDistance) >= minSwipeDistance) {
+                if (swipeDistance > 0) {
+                    // Swiped right, go to previous slide
+                    document.querySelector('.banner-prev').click();
+                } else {
+                    // Swiped left, go to next slide
+                    document.querySelector('.banner-next').click();
+                }
+            }
+        }
+    }
+}
+
+function initializeFeaturedProducts() {
+    // ... existing code ...
+}
+
+function animateProductsOnScroll() {
+    // ... existing code ...
+}
+
+// May want to handle any legacy functions
+function fixBannerDisplay() {
+    // This function is no longer needed as we've rebuilt banners from scratch
+    // Keeping it for backward compatibility but it's empty now
+} 

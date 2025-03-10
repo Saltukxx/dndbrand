@@ -2565,4 +2565,285 @@ footer .container {
         width: 100%;
         height: auto;
     }
+}
+
+/* New Edge-to-Edge Banner Styles */
+.banner-slider-section {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    overflow: hidden;
+    margin-bottom: 5rem;
+}
+
+.banner-slider-container {
+    position: relative;
+    width: 100%;
+    height: 500px;
+}
+
+.banner-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: 1;
+}
+
+.banner-slide.active {
+    opacity: 1;
+    z-index: 2;
+}
+
+.banner-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.banner-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #fff;
+    z-index: 3;
+    width: 80%;
+    max-width: 600px;
+}
+
+.banner-content h3 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.banner-btn {
+    display: inline-block;
+    padding: 12px 30px;
+    background-color: #fff;
+    color: #222;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 0;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.banner-btn:hover {
+    background-color: #222;
+    color: #fff;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.banner-controls {
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.banner-prev, .banner-next {
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 0 15px;
+}
+
+.banner-prev:hover, .banner-next:hover {
+    background: #fff;
+    transform: scale(1.1);
+}
+
+.banner-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.banner-dot {
+    width: 12px;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    margin: 0 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.banner-dot.active {
+    background: #fff;
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+/* Full Width Banner Styles */
+.full-width-banner {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    overflow: hidden;
+    margin-bottom: 5rem;
+    height: 400px;
+}
+
+.full-width-banner-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.full-width-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.full-width-banner-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #fff;
+    z-index: 2;
+    width: 80%;
+    max-width: 600px;
+}
+
+.full-width-banner-content h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.full-width-banner-content p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Media Queries */
+@media (max-width: 992px) {
+    .banner-slider-container {
+        height: 400px;
+    }
+    
+    .banner-content h3 {
+        font-size: 2.5rem;
+    }
+    
+    .full-width-banner {
+        height: 350px;
+    }
+    
+    .full-width-banner-content h3 {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .banner-slider-container {
+        height: 350px;
+    }
+    
+    .banner-content h3 {
+        font-size: 2rem;
+    }
+    
+    .banner-btn {
+        padding: 10px 25px;
+    }
+    
+    .full-width-banner {
+        height: 300px;
+    }
+    
+    .full-width-banner-content h3 {
+        font-size: 1.8rem;
+    }
+    
+    .full-width-banner-content p {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .banner-slider-container {
+        height: 250px;
+    }
+    
+    .banner-content h3 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .banner-btn {
+        padding: 8px 20px;
+        font-size: 12px;
+    }
+    
+    .banner-controls {
+        bottom: 15px;
+    }
+    
+    .banner-prev, .banner-next {
+        width: 30px;
+        height: 30px;
+        margin: 0 10px;
+    }
+    
+    .banner-dot {
+        width: 8px;
+        height: 8px;
+        margin: 0 4px;
+    }
+    
+    .full-width-banner {
+        height: 200px;
+    }
+    
+    .full-width-banner-content h3 {
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .full-width-banner-content p {
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Remove old banner styles that are no longer needed */
+.promo-banners,
+.single-banner {
+    display: none;
 } 
