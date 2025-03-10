@@ -1842,25 +1842,31 @@ function animateProductsOnScroll() {
 
 // Make sure banners display correctly
 function fixBannerDisplay() {
-    console.log('Fixing banner display...');
+    console.log('Applying aggressive full-width fix to banners');
     
-    // Apply direct styles to force full width
-    document.querySelectorAll('.banner-slider-section, .full-width-banner').forEach(banner => {
-        banner.style.width = '100%';
-        banner.style.maxWidth = '100%';
-        banner.style.margin = '0';
-        banner.style.padding = '0';
-        banner.style.left = '0';
-        banner.style.right = '0';
-        banner.style.transform = 'none';
+    // Force banners to be full viewport width
+    const bannerSections = document.querySelectorAll('.banner-slider-section, .full-width-banner');
+    const viewportWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+    
+    bannerSections.forEach(section => {
+        section.style.width = viewportWidth + 'px';
+        section.style.maxWidth = viewportWidth + 'px';
+        section.style.marginLeft = ((viewportWidth - document.body.clientWidth) / -2) + 'px';
+        section.style.left = '0';
+        section.style.right = '0';
+        section.style.position = 'relative';
+        section.style.boxSizing = 'border-box';
+        section.style.padding = '0';
+        section.style.overflow = 'hidden';
     });
     
-    // Force full width on images
+    // Make all banner images cover their containers properly
     document.querySelectorAll('.banner-slide img, .full-width-banner img').forEach(img => {
         img.style.width = '100%';
-        img.style.maxWidth = 'none';
+        img.style.height = '100%';
         img.style.objectFit = 'cover';
         img.style.display = 'block';
+        img.style.maxWidth = 'none';
     });
     
     // Ensure slides are properly positioned
@@ -1876,15 +1882,25 @@ function fixBannerDisplay() {
         }
     });
     
-    // Reset any dots
-    document.querySelectorAll('.banner-dot').forEach((dot, index) => {
-        if (index === 0) {
-            dot.classList.add('active');
-        } else {
-            dot.classList.remove('active');
-        }
-    });
+    // Ensure banner slider container is full width
+    const bannerSliderContainer = document.querySelector('.banner-slider-container');
+    if (bannerSliderContainer) {
+        bannerSliderContainer.style.width = '100%';
+    }
 }
+
+// Add window resize event to ensure banners stay full-width
+window.addEventListener('resize', function() {
+    fixBannerDisplay();
+});
+
+// Call the function when the window loads
+window.addEventListener('load', function() {
+    fixBannerDisplay();
+    
+    // Run again after slight delay to ensure all elements have rendered
+    setTimeout(fixBannerDisplay, 100);
+});
 
 // Initialize swipe detection for touch devices
 function initializeSwipeDetection() {
