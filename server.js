@@ -180,12 +180,56 @@ app.options('/api-proxy/*', (req, res) => {
 app.get('*', (req, res) => {
   // If the request is for a specific file extension, don't redirect
   if (path.extname(req.path)) {
+    // Try to find the file
+    const filePath = path.join(__dirname, req.path);
+    if (fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
+    }
     return res.status(404).send('File not found');
   }
   
-  // For clean URLs, redirect to the corresponding HTML file
-  const htmlFile = req.path === '/' ? '/html/index.html' : `/html${req.path}.html`;
-  res.sendFile(path.join(__dirname, 'public', htmlFile));
+  // Handle clean URLs
+  // First check if the path exactly matches one of our predefined routes
+  const cleanUrlMap = {
+    '/': '/html/index.html',
+    '/shop': '/html/shop.html',
+    '/about': '/html/about.html',
+    '/contact': '/html/contact.html',
+    '/cart': '/html/cart.html',
+    '/checkout': '/html/checkout.html',
+    '/account': '/html/account.html',
+    '/search': '/html/search.html',
+    '/collections': '/html/collections.html',
+    '/shipping': '/html/shipping.html',
+    '/returns': '/html/returns.html',
+    '/faq': '/html/faq.html',
+    '/sustainability': '/html/sustainability.html',
+    '/careers': '/html/careers.html',
+    '/privacy': '/html/privacy.html',
+    '/product': '/html/product.html'
+  };
+  
+  // Check if we have a direct mapping for this path
+  if (cleanUrlMap[req.path]) {
+    return res.sendFile(path.join(__dirname, 'public', cleanUrlMap[req.path]));
+  }
+  
+  // For other paths, try to find a corresponding HTML file
+  const htmlFile = `/html${req.path}.html`;
+  const htmlPath = path.join(__dirname, 'public', htmlFile);
+  
+  if (fs.existsSync(htmlPath)) {
+    return res.sendFile(htmlPath);
+  }
+  
+  // If no match is found, serve the 404 page
+  const notFoundPath = path.join(__dirname, 'public', 'html', '404.html');
+  if (fs.existsSync(notFoundPath)) {
+    return res.status(404).sendFile(notFoundPath);
+  }
+  
+  // Fallback if 404.html doesn't exist
+  res.status(404).send('Page Not Found');
 });
 
 app.listen(port, () => {

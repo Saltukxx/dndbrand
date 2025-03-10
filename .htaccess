@@ -1,17 +1,38 @@
 # Enable URL rewriting
 RewriteEngine On
 
+# Set the base directory for rewrites
+# Adjust this if your site is in a subdirectory
+RewriteBase /
+
 # Redirect /index.html to /
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /.*index\.html\ HTTP/
 RewriteRule ^(.*)index\.html$ /$1 [R=301,L]
 
+# Handle URL paths with trailing slashes
+RewriteRule ^(.+)/$ /$1 [R=301,L]
+
 # Map directory requests to index.html
 DirectoryIndex index.html
 
-# Handle URLs without file extensions (clean URLs)
+# Special mapping rules for specific clean URLs
+RewriteRule ^shop$ public/html/shop.html [L]
+RewriteRule ^about$ public/html/about.html [L]
+RewriteRule ^contact$ public/html/contact.html [L]
+RewriteRule ^cart$ public/html/cart.html [L]
+RewriteRule ^checkout$ public/html/checkout.html [L]
+RewriteRule ^account$ public/html/account.html [L]
+RewriteRule ^search$ public/html/search.html [L]
+RewriteRule ^collections$ public/html/collections.html [L]
+RewriteRule ^shipping$ public/html/shipping.html [L]
+RewriteRule ^returns$ public/html/returns.html [L]
+RewriteRule ^faq$ public/html/faq.html [L]
+RewriteRule ^sustainability$ public/html/sustainability.html [L]
+RewriteRule ^careers$ public/html/careers.html [L]
+RewriteRule ^privacy$ public/html/privacy.html [L]
+RewriteRule ^product$ public/html/product.html [L]
+
+# Generic rule for other pages
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^([^\.]+)$ $1.html [NC,L]
-
-# Handle URL paths with trailing slashes
-RewriteRule ^(.+)/$ /$1 [R=301,L] 
+RewriteRule ^([^\.]+)$ $1.html [NC,L] 

@@ -124,7 +124,32 @@ app.get('/healthz', (req, res) => {
 
 // Redirect root to GitHub Pages
 app.get('/', (req, res) => {
-  res.redirect('https://saltukxx.github.io/dndbrand/');
+  res.sendFile(path.join(__dirname, '../public/html/index.html'));
+});
+
+// Define clean URL mappings
+const cleanUrlMap = {
+  '/shop': '/html/shop.html',
+  '/about': '/html/about.html',
+  '/contact': '/html/contact.html',
+  '/cart': '/html/cart.html',
+  '/checkout': '/html/checkout.html',
+  '/account': '/html/account.html',
+  '/search': '/html/search.html',
+  '/collections': '/html/collections.html',
+  '/shipping': '/html/shipping.html',
+  '/returns': '/html/returns.html',
+  '/faq': '/html/faq.html',
+  '/sustainability': '/html/sustainability.html',
+  '/careers': '/html/careers.html',
+  '/privacy': '/html/privacy.html',
+  '/product': '/html/product.html'
+};
+
+// Handle clean URLs
+app.get(Object.keys(cleanUrlMap), (req, res) => {
+  const htmlFile = cleanUrlMap[req.path];
+  res.sendFile(path.join(__dirname, '../public', htmlFile));
 });
 
 // Handle HTML page requests
@@ -140,6 +165,25 @@ app.get('/*.html', (req, res) => {
     // If HTML file doesn't exist, send 404 page or redirect to home
     res.status(404).sendFile(path.join(__dirname, '../public/html/404.html'));
   }
+});
+
+// Try other clean URLs without explicit mapping
+app.get('/*', (req, res, next) => {
+  // Skip if it's a file request (has extension)
+  if (path.extname(req.path)) {
+    return next();
+  }
+  
+  // Try to find a corresponding HTML file
+  const htmlPath = path.join(__dirname, '../public/html', `${req.path.substring(1)}.html`);
+  
+  // Check if the file exists
+  if (fs.existsSync(htmlPath)) {
+    return res.sendFile(htmlPath);
+  }
+  
+  // If no clean URL match, continue to the next middleware
+  next();
 });
 
 // Serve frontend for any other route (fallback)
