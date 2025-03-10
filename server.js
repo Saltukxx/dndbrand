@@ -190,6 +190,6 @@ app.get('*', (req, res) => {
 
 app.listen(port, () => {
   logger.info(`Server running at http://localhost:${port}`);
-  logger.info(`Open http://localhost:${port}/html/index.html in your browser`);
+  logger.info(`Open http://localhost:${port}/ in your browser`);
   logger.info(`API proxy available at http://localhost:${port}/api-proxy/`);
 }); 

@@ -283,8 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.ImageService.applyImageErrorHandler();
                 }
                 
-                // Show success notification
-                showNotification('Ürünler başarıyla yüklendi.', 'success');
+                // Success notification has been removed
             } catch (error) {
                 console.error('Error fetching products:', error);
                 
@@ -330,8 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     window.ImageService.applyImageErrorHandler();
                                 }
                                 
-                                // Show success notification
-                                showNotification('Ürünler başarıyla yüklendi.', 'success');
+                                // Success notification has been removed
                             } catch (retryError) {
                                 console.error('Error retrying fetch:', retryError);
                                 

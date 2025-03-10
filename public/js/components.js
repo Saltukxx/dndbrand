@@ -42,7 +42,7 @@ async function loadHeader() {
             <header>
                 <div class="container">
                     <div class="logo">
-                        <a href="index.html">
+                        <a href="/">
                             <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="D&D Brand Logo" class="logo-image">
                             <h1>D&D <span>Brand</span></h1>
                         </a>
@@ -75,15 +75,15 @@ async function loadHeader() {
             <header>
                 <div class="container">
                     <div class="logo">
-                        <a href="./index.html">
+                        <a href="/">
                             <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="D&D Brand Logo" class="logo-image">
                             <h1>D&D <span>Brand</span></h1>
                         </a>
                     </div>
                     <nav>
                         <ul>
-                            <li><a href="./index.html" class="nav-link">ANA SAYFA</a></li>
-                            <li><a href="./shop.html" class="nav-link">KOLEKSİYON</a></li>
+                            <li><a href="/" class="nav-link">ANA SAYFA</a></li>
+                            <li><a href="/shop" class="nav-link">KOLEKSİYON</a></li>
                             <li><a href="./about.html" class="nav-link">HAKKIMIZDA</a></li>
                             <li><a href="./contact.html" class="nav-link">İLETİŞİM</a></li>
                         </ul>
@@ -91,7 +91,7 @@ async function loadHeader() {
                     <div class="nav-icons">
                         <a href="./search.html" class="search-icon"><i class="fas fa-search"></i></a>
                         <a href="./account.html" class="account-icon"><i class="fas fa-user"></i><span>HESABIM</span></a>
-                        <a href="./cart.html" class="cart-icon">
+                        <a href="/cart" class="cart-icon">
                             <i class="fas fa-shopping-bag"></i>
                             <span>SEPET</span>
                             <span class="cart-count">0</span>
@@ -111,7 +111,7 @@ async function loadHeader() {
                                         <span class="cart-preview-total-price">₺0.00</span>
                                     </div>
                                     <div class="cart-preview-actions">
-                                        <a href="./cart.html" class="view-cart">Sepeti Görüntüle</a>
+                                        <a href="/cart" class="view-cart">Sepeti Görüntüle</a>
                                         <a href="./checkout.html" class="checkout">Ödeme</a>
                                     </div>
                                 </div>
@@ -265,8 +265,8 @@ async function loadFooter() {
                     <div class="footer-column">
                         <h3>Hızlı Linkler</h3>
                         <ul>
-                            <li><a href="./index.html">Ana Sayfa</a></li>
-                            <li><a href="./shop.html">Koleksiyon</a></li>
+                            <li><a href="/">Ana Sayfa</a></li>
+                            <li><a href="/shop">Koleksiyon</a></li>
                             <li><a href="./about.html">Hakkımızda</a></li>
                             <li><a href="./contact.html">İletişim</a></li>
                             <li><a href="./blog.html">Blog</a></li>

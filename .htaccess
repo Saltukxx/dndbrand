@@ -1,0 +1,17 @@
+# Enable URL rewriting
+RewriteEngine On
+
+# Redirect /index.html to /
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /.*index\.html\ HTTP/
+RewriteRule ^(.*)index\.html$ /$1 [R=301,L]
+
+# Map directory requests to index.html
+DirectoryIndex index.html
+
+# Handle URLs without file extensions (clean URLs)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([^\.]+)$ $1.html [NC,L]
+
+# Handle URL paths with trailing slashes
+RewriteRule ^(.+)/$ /$1 [R=301,L] 
