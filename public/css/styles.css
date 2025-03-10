@@ -1909,10 +1909,16 @@ button[type="submit"].loading i {
 
 /* Promo Banners Section */
 .promo-banners {
-    padding: 40px 0;
+    padding: 50px 0;
     background-color: var(--primary-color);
     position: relative;
     overflow: hidden;
+}
+
+/* Special container for banners */
+.promo-banners .container {
+    max-width: 95%;
+    width: 95%;
 }
 
 .banner-slider {
@@ -1920,7 +1926,8 @@ button[type="submit"].loading i {
     overflow: hidden;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    height: 500px;
+    height: auto;
+    aspect-ratio: 21 / 9; /* Even wider aspect ratio for banners */
     max-width: 100%;
     margin: 0 auto;
     visibility: visible !important;
@@ -1949,7 +1956,7 @@ button[type="submit"].loading i {
 .banner-slide img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover; /* Fills the container */
     display: block;
     transition: transform 0.5s ease;
     background-color: var(--primary-color);
@@ -1993,25 +2000,20 @@ button[type="submit"].loading i {
 /* Fix for banners on all screen sizes */
 .banner-slide img {
     max-width: 100%;
-    max-height: 100%;
     display: block;
     margin: 0 auto;
 }
 
 @media (max-width: 992px) {
     .banner-slider {
-        height: 450px;
+        aspect-ratio: 16 / 8; /* Slightly taller on medium screens */
     }
 }
 
 /* Additional breakpoint for small tablets */
 @media (max-width: 768px) {
     .banner-slider {
-        height: 400px;
-    }
-    
-    .banner-slide {
-        height: 400px;
+        aspect-ratio: 16 / 9; /* Standard widescreen ratio for tablets */
     }
     
     .banner-content {
@@ -2035,7 +2037,7 @@ button[type="submit"].loading i {
         scroll-behavior: smooth;
         -webkit-overflow-scrolling: touch;
         height: auto;
-        min-height: 300px;
+        aspect-ratio: 3 / 2; /* Better aspect ratio for mobile */
         width: 100%;
         padding: 0;
         margin: 0;
@@ -2047,7 +2049,7 @@ button[type="submit"].loading i {
     }
     
     .banner-slider::-webkit-scrollbar {
-        display: none;
+        display: none; /* Hide scrollbar for Chrome/Safari */
     }
     
     .banner-slide {
@@ -2057,7 +2059,7 @@ button[type="submit"].loading i {
         position: relative !important;
         opacity: 1 !important;
         display: block !important;
-        height: 300px;
+        height: 100%;
         border-radius: 8px;
         top: auto !important;
         left: auto !important;
@@ -2065,7 +2067,7 @@ button[type="submit"].loading i {
     
     .banner-slide img {
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
         display: block !important;
     }
     
