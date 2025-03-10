@@ -43,6 +43,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize collection animations with a slight delay
     setTimeout(initializeCollectionAnimations, 500);
+    
+    // Initialize all components when DOM is fully loaded
+    initializeFeaturedProducts();
+    animateProductsOnScroll();
+    initializeBannerSlider();
+    initializeSwipeDetection();
+    fixBannerDisplay();
 });
 
 // Load featured products to the homepage
@@ -1276,83 +1283,102 @@ function initializeBannerSlider() {
         
         let currentIndex = 0;
         let autoSlideInterval;
-        
-        // Set initial active slide
-        function setInitialSlide() {
-            console.log('Setting initial slide');
-            bannerSlides.forEach((slide, i) => {
-                if (i === 0) {
-                    slide.classList.add('active');
-                    slide.style.display = 'block';
-                    slide.style.opacity = '1';
-                } else {
-                    slide.classList.remove('active');
-                    slide.style.display = 'none';
-                    slide.style.opacity = '0';
-                }
+        let isTransitioning = false;
+
+        // Function to show a specific slide
+        function showSlide(index) {
+            if (isTransitioning) return;
+            isTransitioning = true;
+            
+            // Validate index
+            if (index < 0) index = bannerSlides.length - 1;
+            if (index >= bannerSlides.length) index = 0;
+            
+            // Remove active class from all slides and dots
+            bannerSlides.forEach(slide => {
+                slide.classList.remove('active');
+                slide.style.opacity = '0';
             });
             
-            if (bannerDots.length > 0) {
-                bannerDots[0].classList.add('active');
-            }
-        }
-        
-        // Set first slide as active
-        setInitialSlide();
-        
-        // Start auto-slide for desktop
-        startAutoSlide();
-        
-        // Click event for dots (desktop)
-        bannerDots.forEach((dot, index) => {
-            dot.addEventListener('click', () => {
-                navigateToSlide(index);
-            });
-        });
-        
-        // Start auto-slide functionality
-        function startAutoSlide() {
-            clearInterval(autoSlideInterval);
-            autoSlideInterval = setInterval(() => {
-                const nextIndex = (currentIndex + 1) % bannerSlides.length;
-                navigateToSlide(nextIndex);
-            }, 5000); // Change slide every 5 seconds
-        }
-        
-        // Navigate to a specific slide
-        function navigateToSlide(index) {
-            if (index === currentIndex) return;
+            bannerDots.forEach(dot => dot.classList.remove('active'));
             
-            bannerSlides[currentIndex].style.opacity = '0';
-            bannerSlides[currentIndex].style.display = 'block';
+            // Add active class to current slide and dot
+            bannerSlides[index].style.display = 'block';
             
             setTimeout(() => {
-                bannerSlides[currentIndex].style.display = 'none';
-                bannerSlides[currentIndex].classList.remove('active');
+                bannerSlides[index].classList.add('active');
+                bannerSlides[index].style.opacity = '1';
+                bannerDots[index].classList.add('active');
                 
                 currentIndex = index;
-                
-                bannerSlides[currentIndex].style.display = 'block';
-                
-                setTimeout(() => {
-                    bannerSlides[currentIndex].style.opacity = '1';
-                    bannerSlides[currentIndex].classList.add('active');
-                    
-                    updateActiveDot(currentIndex);
-                }, 50);
-            }, 600);
+                isTransitioning = false;
+            }, 50);
         }
-        
-        // Update active dot
-        function updateActiveDot(index) {
-            bannerDots.forEach((dot, i) => {
-                if (i === index) {
-                    dot.classList.add('active');
-                } else {
-                    dot.classList.remove('active');
+
+        // Auto-advance slides
+        function startSlideInterval() {
+            autoSlideInterval = setInterval(() => {
+                nextSlide();
+            }, 6000); // Change slide every 6 seconds
+        }
+
+        // Go to next slide
+        function nextSlide() {
+            showSlide(currentIndex + 1);
+        }
+
+        // Go to previous slide
+        function prevSlide() {
+            showSlide(currentIndex - 1);
+        }
+
+        // Reset interval when manually changing slides
+        function resetInterval() {
+            clearInterval(autoSlideInterval);
+            startSlideInterval();
+        }
+
+        // Initialize dots click events
+        bannerDots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                if (currentIndex !== index) {
+                    showSlide(index);
+                    resetInterval();
                 }
             });
+        });
+
+        // Initialize prev/next buttons
+        const prevBtn = document.querySelector('.banner-prev');
+        const nextBtn = document.querySelector('.banner-next');
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                prevSlide();
+                resetInterval();
+            });
         }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                nextSlide();
+                resetInterval();
+            });
+        }
+
+        // Set initial slide display
+        bannerSlides.forEach((slide, i) => {
+            if (i === 0) {
+                slide.classList.add('active');
+                slide.style.opacity = '1';
+                slide.style.display = 'block';
+            } else {
+                slide.style.display = 'none';
+            }
+        });
+
+        // Start the auto-advancing slides
+        startSlideInterval();
     }
 }
 
@@ -1791,143 +1817,49 @@ function animateProductsOnScroll() {
     });
 }
 
-/**
- * Ensure banners display at full width
- */
+// Make sure banners display correctly
 function fixBannerDisplay() {
-    // Remove any inline styles from banner images that might restrict width
-    const bannerImages = document.querySelectorAll('.banner-slide img, .single-banner-wrapper img');
-    bannerImages.forEach(img => {
-        // If there are any inline styles that might be causing issues, remove them
-        if (img.hasAttribute('style')) {
-            // Preserve only essential styles, remove others
-            const style = img.getAttribute('style');
-            const essentialStyles = [
-                'object-fit: cover',
-                'object-position: center'
-            ];
-            
-            let newStyle = '';
-            essentialStyles.forEach(s => {
-                if (style.includes(s)) {
-                    newStyle += s + '; ';
-                }
-            });
-            
-            if (newStyle) {
-                img.setAttribute('style', newStyle);
-            } else {
-                img.removeAttribute('style');
-            }
-        }
-    });
+    // Force recalculation of banner dimensions
+    const bannerSliderContainer = document.querySelector('.banner-slider-container');
+    const fullWidthBanner = document.querySelector('.full-width-banner');
     
-    // Ensure banner containers are properly sized
-    const banners = document.querySelectorAll('.hero, .promo-banners, .single-banner');
-    banners.forEach(banner => {
-        // Force width recalculation
-        banner.style.width = '100vw';
+    if (bannerSliderContainer) {
+        // Make sure the banner has the full viewport width
+        const setFullWidth = () => {
+            const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+            if (bannerSliderContainer.offsetWidth !== vw) {
+                bannerSliderContainer.style.width = `${vw}px`;
+                
+                // Ensure the banner slides also have full width
+                const slides = document.querySelectorAll('.banner-slide');
+                slides.forEach(slide => {
+                    slide.style.width = `${vw}px`;
+                });
+            }
+        };
         
-        // Force no margins or padding
-        banner.style.margin = '0';
-        banner.style.padding = '0';
-    });
-}
-
-// Initialize all components when DOM is fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-    initializeCollectionAnimations();
-    initializeFeaturedProducts();
-    animateProductsOnScroll();
-    initializeBannerSlider();
-    initializeSwipeDetection();
-});
-
-// Handle collection animations
-function initializeCollectionAnimations() {
-    // ... existing code ...
-}
-
-// Initialize the banner slider functionality
-function initializeBannerSlider() {
-    const slides = document.querySelectorAll('.banner-slide');
-    const dots = document.querySelectorAll('.banner-dot');
-    const prevBtn = document.querySelector('.banner-prev');
-    const nextBtn = document.querySelector('.banner-next');
-    let currentSlide = 0;
-    let slideInterval;
-
-    // Function to show a specific slide
-    function showSlide(index) {
-        // Remove active class from all slides and dots
-        slides.forEach(slide => slide.classList.remove('active'));
-        dots.forEach(dot => dot.classList.remove('active'));
+        // Apply initially and on resize
+        setFullWidth();
+        window.addEventListener('resize', setFullWidth);
+    }
+    
+    if (fullWidthBanner) {
+        // Also ensure the single banner has full width
+        const setFullWidthSingle = () => {
+            const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+            if (fullWidthBanner.offsetWidth !== vw) {
+                fullWidthBanner.style.width = `${vw}px`;
+            }
+        };
         
-        // Add active class to current slide and dot
-        slides[index].classList.add('active');
-        dots[index].classList.add('active');
-        
-        currentSlide = index;
+        setFullWidthSingle();
+        window.addEventListener('resize', setFullWidthSingle);
     }
-
-    // Auto-advance slides
-    function startSlideInterval() {
-        slideInterval = setInterval(() => {
-            nextSlide();
-        }, 5000); // Change slide every 5 seconds
-    }
-
-    // Go to next slide
-    function nextSlide() {
-        let next = currentSlide + 1;
-        if (next >= slides.length) next = 0;
-        showSlide(next);
-    }
-
-    // Go to previous slide
-    function prevSlide() {
-        let prev = currentSlide - 1;
-        if (prev < 0) prev = slides.length - 1;
-        showSlide(prev);
-    }
-
-    // Reset interval when manually changing slides
-    function resetInterval() {
-        clearInterval(slideInterval);
-        startSlideInterval();
-    }
-
-    // Initialize dots click events
-    dots.forEach((dot, index) => {
-        dot.addEventListener('click', () => {
-            showSlide(index);
-            resetInterval();
-        });
-    });
-
-    // Initialize prev/next buttons
-    if (prevBtn) {
-        prevBtn.addEventListener('click', () => {
-            prevSlide();
-            resetInterval();
-        });
-    }
-
-    if (nextBtn) {
-        nextBtn.addEventListener('click', () => {
-            nextSlide();
-            resetInterval();
-        });
-    }
-
-    // Start the auto-advancing slides
-    startSlideInterval();
 }
 
 // Initialize swipe detection for touch devices
 function initializeSwipeDetection() {
     const bannerSlider = document.querySelector('.banner-slider-container');
-    const fullWidthBanner = document.querySelector('.full-width-banner');
     
     if (bannerSlider) {
         let startX, endX;
@@ -1935,12 +1867,12 @@ function initializeSwipeDetection() {
         
         bannerSlider.addEventListener('touchstart', (e) => {
             startX = e.touches[0].clientX;
-        });
+        }, {passive: true});
         
         bannerSlider.addEventListener('touchend', (e) => {
             endX = e.changedTouches[0].clientX;
             handleSwipe();
-        });
+        }, {passive: true});
         
         function handleSwipe() {
             const swipeDistance = endX - startX;
@@ -1956,18 +1888,4 @@ function initializeSwipeDetection() {
             }
         }
     }
-}
-
-function initializeFeaturedProducts() {
-    // ... existing code ...
-}
-
-function animateProductsOnScroll() {
-    // ... existing code ...
-}
-
-// May want to handle any legacy functions
-function fixBannerDisplay() {
-    // This function is no longer needed as we've rebuilt banners from scratch
-    // Keeping it for backward compatibility but it's empty now
 } 

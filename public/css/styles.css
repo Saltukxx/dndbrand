@@ -2577,12 +2577,16 @@ footer .container {
     margin-right: -50vw;
     overflow: hidden;
     margin-bottom: 5rem;
+    margin-top: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 .banner-slider-container {
     position: relative;
     width: 100%;
-    height: 500px;
+    height: 600px;
+    max-height: 80vh;
 }
 
 .banner-slide {
@@ -2592,8 +2596,9 @@ footer .container {
     width: 100%;
     height: 100%;
     opacity: 0;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.8s ease;
     z-index: 1;
+    overflow: hidden;
 }
 
 .banner-slide.active {
@@ -2601,11 +2606,23 @@ footer .container {
     z-index: 2;
 }
 
+.banner-slide::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.6) 100%);
+    z-index: 1;
+}
+
 .banner-slide img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: center;
+    display: block;
 }
 
 .banner-content {
@@ -2617,21 +2634,24 @@ footer .container {
     color: #fff;
     z-index: 3;
     width: 80%;
-    max-width: 600px;
+    max-width: 800px;
+    padding: 2rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 .banner-content h3 {
-    font-size: 3rem;
+    font-size: 3.5rem;
     font-weight: 700;
     margin-bottom: 1.5rem;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 .banner-btn {
     display: inline-block;
     padding: 12px 30px;
     background-color: #fff;
-    color: #222;
+    color: #000;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -2639,13 +2659,14 @@ footer .container {
     transition: all 0.3s ease;
     font-size: 14px;
     text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .banner-btn:hover {
-    background-color: #222;
+    background-color: #000;
     color: #fff;
     transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
 }
 
 .banner-controls {
@@ -2660,22 +2681,25 @@ footer .container {
 }
 
 .banner-prev, .banner-next {
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.9);
     border: none;
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin: 0 15px;
+    margin: 0 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 20;
 }
 
 .banner-prev:hover, .banner-next:hover {
     background: #fff;
     transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .banner-dots {
@@ -2685,19 +2709,20 @@ footer .container {
 }
 
 .banner-dot {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     background: rgba(255, 255, 255, 0.5);
     border-radius: 50%;
-    margin: 0 6px;
+    margin: 0 8px;
     cursor: pointer;
     transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .banner-dot.active {
     background: #fff;
     transform: scale(1.2);
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.9);
 }
 
 /* Full Width Banner Styles */
@@ -2710,7 +2735,8 @@ footer .container {
     margin-right: -50vw;
     overflow: hidden;
     margin-bottom: 5rem;
-    height: 400px;
+    height: 500px;
+    max-height: 60vh;
 }
 
 .full-width-banner-inner {
@@ -2719,11 +2745,23 @@ footer .container {
     position: relative;
 }
 
+.full-width-banner-inner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.6) 100%);
+    z-index: 1;
+}
+
 .full-width-banner img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: center;
+    display: block;
 }
 
 .full-width-banner-content {
@@ -2735,48 +2773,51 @@ footer .container {
     color: #fff;
     z-index: 2;
     width: 80%;
-    max-width: 600px;
+    max-width: 800px;
+    padding: 2rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 .full-width-banner-content h3 {
-    font-size: 2.5rem;
+    font-size: 3rem;
     font-weight: 700;
     margin-bottom: 1rem;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
 }
 
 .full-width-banner-content p {
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     margin-bottom: 2rem;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
 }
 
 /* Media Queries */
 @media (max-width: 992px) {
     .banner-slider-container {
-        height: 400px;
+        height: 500px;
     }
     
     .banner-content h3 {
-        font-size: 2.5rem;
+        font-size: 2.8rem;
     }
     
     .full-width-banner {
-        height: 350px;
+        height: 400px;
     }
     
     .full-width-banner-content h3 {
-        font-size: 2rem;
+        font-size: 2.4rem;
     }
 }
 
 @media (max-width: 768px) {
     .banner-slider-container {
-        height: 350px;
+        height: 400px;
     }
     
     .banner-content h3 {
-        font-size: 2rem;
+        font-size: 2.2rem;
     }
     
     .banner-btn {
@@ -2784,25 +2825,36 @@ footer .container {
     }
     
     .full-width-banner {
-        height: 300px;
+        height: 350px;
     }
     
     .full-width-banner-content h3 {
-        font-size: 1.8rem;
+        font-size: 2rem;
     }
     
     .full-width-banner-content p {
-        font-size: 1rem;
+        font-size: 1.2rem;
+    }
+    
+    .banner-prev, .banner-next {
+        width: 40px;
+        height: 40px;
+        margin: 0 15px;
     }
 }
 
 @media (max-width: 576px) {
     .banner-slider-container {
-        height: 250px;
+        height: 300px;
+    }
+    
+    .banner-slide::before,
+    .full-width-banner-inner::before {
+        background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.6));
     }
     
     .banner-content h3 {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
         margin-bottom: 1rem;
     }
     
@@ -2816,28 +2868,28 @@ footer .container {
     }
     
     .banner-prev, .banner-next {
-        width: 30px;
-        height: 30px;
+        width: 35px;
+        height: 35px;
         margin: 0 10px;
     }
     
     .banner-dot {
-        width: 8px;
-        height: 8px;
-        margin: 0 4px;
+        width: 10px;
+        height: 10px;
+        margin: 0 6px;
     }
     
     .full-width-banner {
-        height: 200px;
+        height: 250px;
     }
     
     .full-width-banner-content h3 {
-        font-size: 1.3rem;
+        font-size: 1.6rem;
         margin-bottom: 0.5rem;
     }
     
     .full-width-banner-content p {
-        font-size: 0.9rem;
+        font-size: 1rem;
         margin-bottom: 1rem;
     }
 }
