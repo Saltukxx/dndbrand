@@ -581,8 +581,10 @@ function initializeCountdownTimer() {
     setInterval(updateCountdown, 1000);
 }
 
-// Initialize homepage functionality
+// Function to initialize all homepage functionality
 function initializeHomepage() {
+    console.log("Initializing homepage...");
+    
     // Immediately activate all elements without animations
     const animatedElements = document.querySelectorAll('.fade-in, .slide-in-left, .slide-in-right');
     animatedElements.forEach(el => {
@@ -593,6 +595,9 @@ function initializeHomepage() {
         el.style.opacity = '1';
     });
     
+    // Ensure product cards are initialized
+    initializeProductCards();
+    
     // Add event listeners to cart buttons
     document.querySelectorAll('.add-to-cart').forEach(button => {
         button.addEventListener('click', function(e) {
@@ -602,8 +607,15 @@ function initializeHomepage() {
         });
     });
     
-    // Initialize mobile product slider
-    initializeMobileProductSlider();
+    // Initialize countdown timer if present
+    initializeCountdownTimer();
+    
+    // Fix spacing issues and optimize images
+    fixSectionSpacingAndImages();
+    
+    // Fix banner images and setup sliders
+    fixBannerImagePaths();
+    setupMobileSlider();
     
     // Initialize banner slider
     initializeBannerSlider();
@@ -611,26 +623,17 @@ function initializeHomepage() {
     // Optimize banners for mobile
     optimizeBannersForMobile();
     
-    // Initialize countdown timer
-    initializeCountdownTimer();
+    // Optimize collections for mobile
+    optimizeCollectionsForMobile();
     
-    // Initialize collection items hover effects
+    // Initialize mobile product slider
+    initializeMobileProductSlider();
+    
+    // Ensure text centering
+    ensureTextCentering();
+    
+    // Initialize collections functionality
     initializeCollections();
-    
-    // Ensure no spacing between sections and fix image display issues
-    fixSectionSpacingAndImages();
-    
-    // Preserve padding for the limited-time-offer section
-    const limitedTimeOfferSection = document.querySelector('.limited-time-offer');
-    if (limitedTimeOfferSection) {
-        limitedTimeOfferSection.style.margin = '0';
-        // Let CSS handle the padding for responsive design
-        if (window.innerWidth > 576) {
-            limitedTimeOfferSection.style.padding = '60px 0';
-        } else {
-            limitedTimeOfferSection.style.padding = '30px 15px';
-        }
-    }
     
     // Add click handler to cart preview
     const cartPreview = document.querySelector('.cart-preview');
@@ -643,6 +646,9 @@ function initializeHomepage() {
     
     // Initialize cart count
     updateCartCount();
+    
+    // Optimize single banner
+    optimizeSingleBanner();
     
     // Force reflow to ensure proper rendering of swipeable banners on mobile
     if (window.innerWidth <= 576) {
@@ -661,6 +667,8 @@ function initializeHomepage() {
     window.addEventListener('scroll', function() {
         // Do nothing - prevent scroll animations
     }, { passive: true });
+    
+    console.log("Homepage initialization complete!");
 }
 
 // Fix spacing between sections and ensure images display properly
@@ -1062,11 +1070,21 @@ function setupMobileSlider() {
     // Initialize CSS class for mobile
     bannerSlider.classList.add('mobile-banner-slider');
     
+    // Set display flex for horizontal arrangement
+    bannerSlider.style.display = 'flex';
+    bannerSlider.style.flexDirection = 'row';
+    bannerSlider.style.width = '100%';
+    bannerSlider.style.overflowX = 'scroll';
+    bannerSlider.style.scrollSnapType = 'x mandatory';
+    
     // Make all slides visible for mobile
     bannerSlides.forEach((slide, index) => {
         slide.style.position = 'relative';
         slide.style.opacity = '1';
         slide.style.display = 'block';
+        slide.style.flex = '0 0 100%';
+        slide.style.width = '100%';
+        slide.style.scrollSnapAlign = 'start';
         
         // Set z-index to properly layer slides
         slide.style.zIndex = bannerSlides.length - index;
@@ -1080,6 +1098,19 @@ function setupMobileSlider() {
                 img.parentNode.insertBefore(wrap, img);
                 wrap.appendChild(img);
             }
+        }
+        
+        // Ensure images take full width
+        const img = slide.querySelector('img');
+        if (img) {
+            img.style.width = '100%';
+            img.style.objectFit = 'cover';
+            img.style.height = 'auto';
+            img.style.minHeight = '250px';
+            img.style.margin = '0';
+            img.style.padding = '0';
+            img.style.borderRadius = '0';
+            img.style.boxShadow = 'none';
         }
     });
 
@@ -1148,9 +1179,9 @@ function setupMobileSlider() {
         const scrollPosition = bannerSlider.scrollLeft;
         const index = Math.round(scrollPosition / slideWidth);
         
-        if (index !== currentIndex && index >= 0 && index < bannerSlides.length) {
+        if (index !== currentIndex) {
             currentIndex = index;
-            updateActiveDot(index);
+            updateActiveDot(currentIndex);
         }
     });
     
@@ -1456,4 +1487,67 @@ function optimizeSingleBanner() {
             bannerWrapper.classList.add('active');
         }
     }, 100);
+}
+
+function optimizeCollectionsForMobile() {
+    // Check if we're on mobile
+    if (window.innerWidth <= 576) {
+        const collectionSections = document.querySelectorAll('.featured-collections');
+        
+        collectionSections.forEach(section => {
+            // Remove any padding/margin that might prevent edge-to-edge display
+            section.style.padding = '20px 0 0';
+            section.style.margin = '0';
+            section.style.width = '100%';
+            
+            // Make the container full width
+            const container = section.querySelector('.container');
+            if (container) {
+                container.style.width = '100%';
+                container.style.maxWidth = '100%';
+                container.style.padding = '0';
+                container.style.margin = '0';
+            }
+            
+            // Make collection grid edge-to-edge
+            const grid = section.querySelector('.collection-grid');
+            if (grid) {
+                grid.style.display = 'block';
+                grid.style.gap = '0';
+                grid.style.margin = '0';
+                grid.style.width = '100%';
+            }
+            
+            // Adjust collection items
+            const items = section.querySelectorAll('.collection-item');
+            items.forEach((item, index) => {
+                item.style.marginBottom = index === items.length - 1 ? '0' : '2px';
+                item.style.height = '250px';
+                item.style.borderRadius = '0';
+                
+                // Make overlay always visible on mobile
+                const overlay = item.querySelector('.collection-overlay');
+                if (overlay) {
+                    overlay.style.opacity = '1';
+                    overlay.style.background = 'linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 70%)';
+                }
+                
+                // Adjust collection title position and visibility
+                const title = item.querySelector('.collection-title');
+                if (title) {
+                    title.style.opacity = '1';
+                    title.style.transform = 'translateY(0)';
+                    title.style.bottom = '60px';
+                }
+                
+                // Adjust collection button position and visibility
+                const btn = item.querySelector('.collection-btn');
+                if (btn) {
+                    btn.style.opacity = '1';
+                    btn.style.transform = 'translateY(0)';
+                    btn.style.bottom = '20px';
+                }
+            });
+        });
+    }
 } 
