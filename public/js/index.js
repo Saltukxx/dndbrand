@@ -505,6 +505,82 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
+// Initialize countdown timer
+function initializeCountdownTimer() {
+    // Set the target date to one month from now
+    const now = new Date();
+    const targetDate = new Date(now);
+    targetDate.setMonth(now.getMonth() + 1);
+    
+    // Get elements
+    const daysElement = document.getElementById('countdown-days');
+    const hoursElement = document.getElementById('countdown-hours');
+    const minutesElement = document.getElementById('countdown-minutes');
+    const secondsElement = document.getElementById('countdown-seconds');
+    
+    if (!daysElement || !hoursElement || !minutesElement || !secondsElement) {
+        console.error('Countdown elements not found');
+        return;
+    }
+    
+    // Update the countdown every second
+    function updateCountdown() {
+        // Calculate the remaining time
+        const currentTime = new Date();
+        const timeDifference = targetDate - currentTime;
+        
+        // Check if the countdown has ended
+        if (timeDifference <= 0) {
+            daysElement.textContent = '0';
+            hoursElement.textContent = '0';
+            minutesElement.textContent = '0';
+            secondsElement.textContent = '0';
+            return;
+        }
+        
+        // Calculate days, hours, minutes and seconds
+        const days = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
+        
+        // Update the display with a flip animation
+        updateWithAnimation(daysElement, days);
+        updateWithAnimation(hoursElement, hours);
+        updateWithAnimation(minutesElement, minutes);
+        updateWithAnimation(secondsElement, seconds);
+    }
+    
+    // Function to update with flip animation
+    function updateWithAnimation(element, value) {
+        const currentValue = parseInt(element.textContent);
+        
+        // Only animate if the value has changed
+        if (currentValue !== value) {
+            // Add flip out animation
+            element.classList.add('flip-out');
+            
+            // Wait for animation to complete before changing the value
+            setTimeout(() => {
+                element.textContent = value < 10 ? '0' + value : value;
+                element.classList.remove('flip-out');
+                element.classList.add('flip-in');
+                
+                // Remove flip in animation after it completes
+                setTimeout(() => {
+                    element.classList.remove('flip-in');
+                }, 300);
+            }, 300);
+        }
+    }
+    
+    // Initial update
+    updateCountdown();
+    
+    // Update every second
+    setInterval(updateCountdown, 1000);
+}
+
 // Initialize homepage functionality
 function initializeHomepage() {
     // Activate animations
@@ -531,11 +607,29 @@ function initializeHomepage() {
     // Optimize banners for mobile
     optimizeBannersForMobile();
     
-    // Make sure banners are edge-to-edge
-    document.querySelectorAll('.hero, .promo-banners, .single-banner, .featured-collections').forEach(section => {
+    // Initialize countdown timer
+    initializeCountdownTimer();
+    
+    // Initialize collection items hover effects
+    initializeCollections();
+    
+    // Make sure all sections are edge-to-edge
+    document.querySelectorAll('.hero, .promo-banners, .single-banner, .featured-collections, .limited-time-offer, .premium-banner, .trending').forEach(section => {
         section.style.margin = '0';
         section.style.padding = '0';
     });
+    
+    // Preserve padding for the limited-time-offer section
+    const limitedTimeOfferSection = document.querySelector('.limited-time-offer');
+    if (limitedTimeOfferSection) {
+        limitedTimeOfferSection.style.margin = '0';
+        // Let CSS handle the padding for responsive design
+        if (window.innerWidth > 576) {
+            limitedTimeOfferSection.style.padding = '60px 0';
+        } else {
+            limitedTimeOfferSection.style.padding = '30px 15px';
+        }
+    }
     
     // Add click handler to cart preview
     const cartPreview = document.querySelector('.cart-preview');
@@ -561,6 +655,40 @@ function initializeHomepage() {
             }
         }, 100);
     }
+}
+
+// Initialize collections section
+function initializeCollections() {
+    const collectionItems = document.querySelectorAll('.collection-item');
+    
+    collectionItems.forEach(item => {
+        // Add hover effect for desktop
+        if (window.innerWidth > 768) {
+            item.addEventListener('mouseenter', function() {
+                const overlay = this.querySelector('.collection-overlay');
+                if (overlay) {
+                    overlay.style.paddingBottom = '40px';
+                    overlay.style.background = 'linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0) 100%)';
+                }
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                const overlay = this.querySelector('.collection-overlay');
+                if (overlay) {
+                    overlay.style.paddingBottom = '20px';
+                    overlay.style.background = 'linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 100%)';
+                }
+            });
+        }
+        
+        // Make entire collection item clickable
+        item.addEventListener('click', function() {
+            const link = this.querySelector('.collection-btn');
+            if (link) {
+                window.location.href = link.getAttribute('href');
+            }
+        });
+    });
 }
 
 // Initialize the horizontal scroll behavior for product grid on mobile

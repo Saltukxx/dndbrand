@@ -161,24 +161,19 @@
     </section>
 
     <section class="featured-collections">
-        <div class="container">
-            <h2 class="section-title">Öne Çıkan Koleksiyonlar</h2>
-            <div class="collection-grid">
-                <div class="collection-item fade-in">
-                    <img src="public/images/erkekkoleksiyon.jpg" alt="Erkek Koleksiyonu">
-                    <div class="collection-info">
-                        <h3>Erkek Koleksiyonu</h3>
-                        <p>Modern genç erkek için tasarlanmış premium streetwear parçalar</p>
-                        <a href="/shop?type=men" class="btn">Keşfet</a>
-                    </div>
+        <div class="collection-grid">
+            <div class="collection-item">
+                <img src="public/images/erkekkoleksiyon.jpg" alt="Erkek Koleksiyonu">
+                <div class="collection-overlay">
+                    <div class="collection-title">İKONİK GÖRÜNÜM</div>
+                    <a href="/shop?type=men" class="collection-btn">ELBİSELER</a>
                 </div>
-                <div class="collection-item fade-in">
-                    <img src="public/images/aksesuar.jpg" alt="Aksesuar Koleksiyonu">
-                    <div class="collection-info">
-                        <h3>Aksesuar Koleksiyonu</h3>
-                        <p>Tarzınızı tamamlayacak modern ve şık aksesuarlar</p>
-                        <a href="/shop?type=accessories" class="btn">Keşfet</a>
-                    </div>
+            </div>
+            <div class="collection-item">
+                <img src="public/images/aksesuar.jpg" alt="Aksesuar Koleksiyonu">
+                <div class="collection-overlay">
+                    <div class="collection-title">OFİS ŞIKLIĞI</div>
+                    <a href="/shop?type=accessories" class="collection-btn">HEMEN KEŞFET</a>
                 </div>
             </div>
         </div>
@@ -193,6 +188,35 @@
             </div>
             <div class="premium-banner-image fade-in">
                 <img src="public/images/dndbannersection2.jpg" alt="Premium Kalite">
+            </div>
+        </div>
+    </section>
+
+    <!-- Limited-Time Offer Countdown -->
+    <section class="limited-time-offer">
+        <div class="container">
+            <div class="offer-content">
+                <h2 class="offer-title">SINIRLI SÜRE FIRSATI</h2>
+                <p class="offer-subtitle">Yeni koleksiyonumuza özel indirimler için son</p>
+                <div class="countdown-timer">
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="countdown-days">30</span>
+                        <span class="countdown-label">Gün</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="countdown-hours">24</span>
+                        <span class="countdown-label">Saat</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="countdown-minutes">60</span>
+                        <span class="countdown-label">Dakika</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="countdown-seconds">60</span>
+                        <span class="countdown-label">Saniye</span>
+                    </div>
+                </div>
+                <a href="/shop?promotions=true" class="btn btn-offer">FIRSATI YAKALA</a>
             </div>
         </div>
     </section>
