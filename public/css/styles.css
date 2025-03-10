@@ -663,8 +663,8 @@ nav ul li a.active::after {
 
 /* Featured Collections - Updated Design */
 .featured-collections {
-    padding: 0;
-    margin: 0;
+    padding: 40px 0;
+    margin: 10px 0 40px;
     position: relative;
     background-color: var(--primary-color);
 }
@@ -1345,15 +1345,15 @@ footer {
     
     /* Banner section fixes */
     .promo-banners, .single-banner {
-        margin: 0 !important;
+        margin: 30px 0 !important;
         padding: 0 !important;
     }
     
-    .container {
-        max-width: 100%;
-        width: 100%;
-        padding: 0;
-        margin: 0;
+    .promo-banners .container, .single-banner .container {
+        max-width: 1400px;
+        width: 90%;
+        padding: 0 15px;
+        margin: 0 auto;
     }
     
     /* Banner slider fixes */
@@ -1365,11 +1365,12 @@ footer {
     .banner-slide img, .single-banner-wrapper img {
         margin: 0;
         padding: 0;
-        border-radius: 0;
+        border-radius: 8px;
+        box-shadow: var(--box-shadow);
     }
     
     .banner-navigation {
-        bottom: 8px;
+        bottom: 15px;
     }
     
     /* Single banner fixes */
@@ -1936,7 +1937,6 @@ footer {
     color: var(--text-light);
     margin-bottom: 15px;
     letter-spacing: 2px;
-    text-transform: uppercase;
     text-align: center;
 }
 
@@ -2253,4 +2253,9 @@ footer {
         padding: 10px 20px;
         font-size: 0.9rem;
     }
+}
+
+.parfume-collections {
+    margin-top: 20px;
+    margin-bottom: 60px;
 } 
