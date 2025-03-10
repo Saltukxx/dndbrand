@@ -650,6 +650,9 @@ function initializeHomepage() {
     // Optimize single banner
     optimizeSingleBanner();
     
+    // Enhance touch interactions for mobile
+    enhanceTouchInteractions();
+    
     // Force reflow to ensure proper rendering of swipeable banners on mobile
     if (window.innerWidth <= 576) {
         setTimeout(() => {
@@ -1522,14 +1525,38 @@ function optimizeCollectionsForMobile() {
             const items = section.querySelectorAll('.collection-item');
             items.forEach((item, index) => {
                 item.style.marginBottom = index === items.length - 1 ? '0' : '2px';
-                item.style.height = '250px';
+                
+                // Special handling for parfume collections
+                if (section.classList.contains('parfume-collections')) {
+                    item.style.height = '300px';
+                    
+                    // Optimize perfume bottle image display
+                    const img = item.querySelector('img');
+                    if (img) {
+                        if (img.src.includes('WhatsApp Image 2025-03-10') || img.src.includes('parfume2.jpg')) {
+                            img.style.objectFit = 'cover';
+                            img.style.objectPosition = 'center';
+                        }
+                    }
+                    
+                    // Enhance overlay for perfume display
+                    const overlay = item.querySelector('.collection-overlay');
+                    if (overlay) {
+                        overlay.style.background = 'linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0.2) 100%)';
+                    }
+                } else {
+                    item.style.height = '250px';
+                }
+                
                 item.style.borderRadius = '0';
                 
                 // Make overlay always visible on mobile
                 const overlay = item.querySelector('.collection-overlay');
                 if (overlay) {
                     overlay.style.opacity = '1';
-                    overlay.style.background = 'linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 70%)';
+                    if (!section.classList.contains('parfume-collections')) {
+                        overlay.style.background = 'linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 70%)';
+                    }
                 }
                 
                 // Adjust collection title position and visibility
@@ -1550,4 +1577,60 @@ function optimizeCollectionsForMobile() {
             });
         });
     }
+}
+
+// Enhance swipe detector with better mobile support
+function enhanceTouchInteractions() {
+    // Add better touch handling for all interactive elements
+    const touchElements = document.querySelectorAll('.collection-item, .product-card, .btn, a');
+    
+    touchElements.forEach(element => {
+        // Add active state for touch interactions
+        element.addEventListener('touchstart', () => {
+            element.classList.add('touch-active');
+        }, { passive: true });
+        
+        element.addEventListener('touchend', () => {
+            element.classList.remove('touch-active');
+        }, { passive: true });
+        
+        element.addEventListener('touchcancel', () => {
+            element.classList.remove('touch-active');
+        }, { passive: true });
+    });
+    
+    // Improve banner swipe smoothness
+    const bannerSlider = document.querySelector('.banner-slider');
+    if (bannerSlider) {
+        // Add CSS scroll snapping for smoother performance
+        bannerSlider.style.scrollSnapType = 'x mandatory';
+        
+        const bannerSlides = bannerSlider.querySelectorAll('.banner-slide');
+        bannerSlides.forEach(slide => {
+            slide.style.scrollSnapAlign = 'start';
+        });
+        
+        // Prevent text selection during swiping
+        bannerSlider.style.userSelect = 'none';
+        bannerSlider.style.webkitUserSelect = 'none';
+        
+        // Add momentum scrolling for iOS
+        bannerSlider.style.WebkitOverflowScrolling = 'touch';
+    }
+    
+    // Add active state styles to CSS
+    const style = document.createElement('style');
+    style.textContent = `
+        .touch-active {
+            transform: scale(0.98);
+            opacity: 0.9;
+            transition: transform 0.1s ease, opacity 0.1s ease;
+        }
+        
+        .collection-btn:active, .btn:active {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(1px);
+        }
+    `;
+    document.head.appendChild(style);
 } 
