@@ -295,6 +295,33 @@ app.get('/*.html', (req, res) => {
   }
 });
 
+// Catch-all route for clean URLs like /shop, /about, etc.
+app.get('/*', (req, res, next) => {
+  console.log('[DEBUG] Catch-all handler called for:', req.path);
+  
+  // Skip API and static file requests
+  if (req.path.startsWith('/api') || 
+      req.path.includes('.') || 
+      req.path === '/') {
+    return next();
+  }
+  
+  // Extract the page name from the URL (remove leading slash)
+  const pageName = req.path.substring(1);
+  const htmlPath = path.join(__dirname, 'public', 'html', `${pageName}.html`);
+  
+  console.log(`[DEBUG] Looking for HTML file for clean URL: ${htmlPath}`);
+  console.log(`[DEBUG] File exists: ${fs.existsSync(htmlPath)}`);
+  
+  // Check if corresponding HTML file exists
+  if (fs.existsSync(htmlPath)) {
+    res.sendFile(htmlPath);
+  } else {
+    console.log('[DEBUG] Sending 404 page for clean URL');
+    res.status(404).sendFile(path.join(__dirname, 'public', 'html', '404.html'));
+  }
+});
+
 // Fallback 404 handler for any other routes
 app.use((req, res) => {
   console.log('[DEBUG] Fallback 404 handler called for:', req.path);
