@@ -1345,7 +1345,7 @@ async function processCreditCardPayment() {
                 threeDsContainer.innerHTML = `
                     <div class="threeds-frame">
                         <div class="bank-logo">
-                            <img src="../images/banks/generic-bank.png" alt="Bank" />
+                            <img src="/images/banks/generic-bank.png" alt="Bank" />
                         </div>
                         <h3>3D Secure Doğrulama</h3>
                         <p>Güvenli ödeme için doğrulama kodunu giriniz.</p>

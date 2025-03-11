@@ -43,7 +43,7 @@ async function loadHeader() {
                 <div class="container">
                     <div class="logo">
                         <a href="/">
-                            <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="D&D Brand Logo" class="logo-image">
+                            <img src="/images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="D&D Brand Logo" class="logo-image">
                             <h1>D&D <span>Brand</span></h1>
                         </a>
                     </div>
@@ -76,7 +76,7 @@ async function loadHeader() {
                 <div class="container">
                     <div class="logo">
                         <a href="/">
-                            <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="D&D Brand Logo" class="logo-image">
+                            <img src="/images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="D&D Brand Logo" class="logo-image">
                             <h1>D&D <span>Brand</span></h1>
                         </a>
                     </div>
