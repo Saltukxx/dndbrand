@@ -1,19 +1,20 @@
-# Redirects for clean URLs
-/shop              /html/shop.html        200
-/about             /html/about.html       200
-/contact           /html/contact.html     200
-/cart              /html/cart.html        200
-/checkout          /html/checkout.html    200
-/account           /html/account.html     200
-/search            /html/search.html      200
-/collections       /html/collections.html 200
-/shipping          /html/shipping.html    200
-/returns           /html/returns.html     200
-/faq               /html/faq.html         200
-/sustainability    /html/sustainability.html 200
-/careers           /html/careers.html     200
-/privacy           /html/privacy.html     200
-/product           /html/product.html     200
+# Redirects for clean URLs - make sure these are processed correctly
+/               /html/index.html      200
+/shop           /html/shop.html       200!
+/about          /html/about.html      200!
+/contact        /html/contact.html    200!
+/cart           /html/cart.html       200!
+/checkout       /html/checkout.html   200!
+/account        /html/account.html    200!
+/search         /html/search.html     200!
+/collections    /html/collections.html 200!
+/shipping       /html/shipping.html   200!
+/returns        /html/returns.html    200!
+/faq            /html/faq.html        200!
+/sustainability /html/sustainability.html 200!
+/careers        /html/careers.html    200!
+/privacy        /html/privacy.html    200!
+/product        /html/product.html    200!
 
 # Fallback for 404
-/*                 /html/404.html         404 
+/*              /html/404.html        404 

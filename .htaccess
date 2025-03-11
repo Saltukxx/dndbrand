@@ -12,10 +12,15 @@ RewriteRule ^(.*)index\.html$ /$1 [R=301,L]
 # Handle URL paths with trailing slashes
 RewriteRule ^(.+)/$ /$1 [R=301,L]
 
+# For debugging
+# RewriteLog "/var/log/apache2/rewrite.log"
+# RewriteLogLevel 3
+
 # Map directory requests to index.html
 DirectoryIndex index.html
 
 # Special mapping rules for specific clean URLs
+# These rules MUST come before the generic rules
 RewriteRule ^shop/?$ public/html/shop.html [L]
 RewriteRule ^about/?$ public/html/about.html [L]
 RewriteRule ^contact/?$ public/html/contact.html [L]

@@ -37,6 +37,34 @@ const adminRoutes = require('./routes/adminRoutes');
 // Import the CORS configuration
 const corsMiddleware = require('./cors-config');
 
+// Create logs directory if it doesn't exist
+const logsDir = path.join(__dirname, '..', 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
+
+// Initialize logger
+const winston = require('winston');
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.simple()
+    }),
+    new winston.transports.File({ 
+      filename: path.join(logsDir, 'error.log'), 
+      level: 'error' 
+    }),
+    new winston.transports.File({ 
+      filename: path.join(logsDir, 'combined.log')
+    })
+  ]
+});
+
 // Initialize express app
 const app = express();
 
@@ -52,19 +80,7 @@ app.use(express.json({ limit: '10kb' }));
 // Security headers
 app.use(
   helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://api.iyzipay.com"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
-        imgSrc: ["'self'", "data:", "https://cdnjs.cloudflare.com", "https://res.cloudinary.com"],
-        connectSrc: ["'self'", "https://api.iyzipay.com"],
-        fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
-        objectSrc: ["'none'"],
-        mediaSrc: ["'self'"],
-        frameSrc: ["https://api.iyzipay.com"]
-      }
-    },
+    contentSecurityPolicy: false, // Disable for now if it causes issues with external scripts
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: { policy: "cross-origin" }
   })
@@ -122,133 +138,63 @@ app.get('/healthz', (req, res) => {
   res.status(200).send('OK');
 });
 
-// Define routes for the frontend HTML files
-// Root route serves the index.html
-app.get('/', (req, res) => {
-  const absolutePath = path.resolve(__dirname, '../public/html/index.html');
-  console.log(`[DEBUG] Absolute path for index.html: ${absolutePath}`);
-  console.log(`[DEBUG] File exists: ${fs.existsSync(absolutePath)}`);
-  res.sendFile(absolutePath);
+// Log all requests in production
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.url}`);
+  next();
 });
 
-// Define explicit routes for clean URLs
-app.get('/shop', (req, res) => {
-  const absolutePath = path.resolve(__dirname, '../public/html/shop.html');
-  console.log(`[DEBUG] Absolute path for shop.html: ${absolutePath}`);
-  console.log(`[DEBUG] File exists: ${fs.existsSync(absolutePath)}`);
-  res.sendFile(absolutePath);
+// Define routes for clean URLs BEFORE the catch-all route
+const routes = [
+  { path: '/', file: 'index.html' },
+  { path: '/shop', file: 'shop.html' },
+  { path: '/about', file: 'about.html' },
+  { path: '/contact', file: 'contact.html' },
+  { path: '/cart', file: 'cart.html' },
+  { path: '/checkout', file: 'checkout.html' },
+  { path: '/account', file: 'account.html' },
+  { path: '/search', file: 'search.html' },
+  { path: '/collections', file: 'collections.html' },
+  { path: '/shipping', file: 'shipping.html' },
+  { path: '/returns', file: 'returns.html' },
+  { path: '/faq', file: 'faq.html' },
+  { path: '/sustainability', file: 'sustainability.html' },
+  { path: '/careers', file: 'careers.html' },
+  { path: '/privacy', file: 'privacy.html' },
+  { path: '/product', file: 'product.html' }
+];
+
+// Add routes for each path
+routes.forEach(({ path: routePath, file }) => {
+  app.get(routePath, (req, res) => {
+    const filePath = path.join(__dirname, '../public', 'html', file);
+    logger.info(`Serving ${filePath} for route ${routePath}`);
+    
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      logger.error(`File not found: ${filePath}`);
+      res.status(404).sendFile(path.join(__dirname, '../public', 'html', '404.html'));
+    }
+  });
 });
 
-app.get('/about', (req, res) => {
-  const absolutePath = path.resolve(__dirname, '../public/html/about.html');
-  console.log(`[DEBUG] Absolute path for about.html: ${absolutePath}`);
-  console.log(`[DEBUG] File exists: ${fs.existsSync(absolutePath)}`);
-  res.sendFile(absolutePath);
-});
-
-app.get('/contact', (req, res) => {
-  const absolutePath = path.resolve(__dirname, '../public/html/contact.html');
-  console.log(`[DEBUG] Absolute path for contact.html: ${absolutePath}`);
-  console.log(`[DEBUG] File exists: ${fs.existsSync(absolutePath)}`);
-  res.sendFile(absolutePath);
-});
-
-app.get('/cart', (req, res) => {
-  const absolutePath = path.resolve(__dirname, '../public/html/cart.html');
-  console.log(`[DEBUG] Absolute path for cart.html: ${absolutePath}`);
-  console.log(`[DEBUG] File exists: ${fs.existsSync(absolutePath)}`);
-  res.sendFile(absolutePath);
-});
-
-app.get('/checkout', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/checkout.html'));
-});
-
-app.get('/account', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/account.html'));
-});
-
-app.get('/search', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/search.html'));
-});
-
-app.get('/collections', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/collections.html'));
-});
-
-app.get('/shipping', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/shipping.html'));
-});
-
-app.get('/returns', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/returns.html'));
-});
-
-app.get('/faq', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/faq.html'));
-});
-
-app.get('/sustainability', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/sustainability.html'));
-});
-
-app.get('/careers', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/careers.html'));
-});
-
-app.get('/privacy', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/privacy.html'));
-});
-
-app.get('/product', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/html/product.html'));
-});
-
-// Handle HTML page requests (for any .html file)
-app.get('/*.html', (req, res) => {
-  // Extract the HTML file name from the URL
-  const htmlFile = req.path.substring(1); // Remove the leading slash
-  const htmlPath = path.join(__dirname, '..', htmlFile);
+// Catch-all route for other HTML files in public/html
+app.get('/:page', (req, res, next) => {
+  const page = req.params.page;
+  const filePath = path.join(__dirname, '../public', 'html', `${page}.html`);
   
-  // Check if the file exists
-  if (fs.existsSync(htmlPath)) {
-    res.sendFile(htmlPath);
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
   } else {
-    // If HTML file doesn't exist, send 404 page
-    res.status(404).sendFile(path.join(__dirname, '../public/html/404.html'));
+    next(); // Pass to the next handler if file doesn't exist
   }
 });
 
-// Catch-all route for clean URLs like /shop, /about, etc.
-app.get('/*', (req, res, next) => {
-  console.log('[DEBUG] Catch-all handler called for:', req.path);
-  
-  // Skip API and static file requests
-  if (req.path.startsWith('/api') || 
-      req.path.includes('.') || 
-      req.path === '/') {
-    return next();
-  }
-  
-  // Extract the page name from the URL (remove leading slash)
-  const pageName = req.path.substring(1);
-  const htmlPath = path.join(__dirname, '../public/html', `${pageName}.html`);
-  
-  console.log(`[DEBUG] Looking for HTML file for clean URL: ${htmlPath}`);
-  console.log(`[DEBUG] File exists: ${fs.existsSync(htmlPath)}`);
-  
-  // Check if corresponding HTML file exists
-  if (fs.existsSync(htmlPath)) {
-    res.sendFile(htmlPath);
-  } else {
-    console.log('[DEBUG] Sending 404 page for clean URL');
-    res.status(404).sendFile(path.join(__dirname, '../public/html/404.html'));
-  }
-});
-
-// Fallback 404 handler for any other routes
+// 404 handler - must be last
 app.use((req, res) => {
-  res.status(404).sendFile(path.join(__dirname, '../public/html/404.html'));
+  logger.warn(`404 Not Found: ${req.originalUrl}`);
+  res.status(404).sendFile(path.join(__dirname, '../public', 'html', '404.html'));
 });
 
 // Error handling middleware
