@@ -16,23 +16,33 @@ RewriteRule ^(.+)/$ /$1 [R=301,L]
 DirectoryIndex index.html
 
 # Special mapping rules for specific clean URLs
-RewriteRule ^shop$ public/html/shop.html [L]
-RewriteRule ^about$ public/html/about.html [L]
-RewriteRule ^contact$ public/html/contact.html [L]
-RewriteRule ^cart$ public/html/cart.html [L]
-RewriteRule ^checkout$ public/html/checkout.html [L]
-RewriteRule ^account$ public/html/account.html [L]
-RewriteRule ^search$ public/html/search.html [L]
-RewriteRule ^collections$ public/html/collections.html [L]
-RewriteRule ^shipping$ public/html/shipping.html [L]
-RewriteRule ^returns$ public/html/returns.html [L]
-RewriteRule ^faq$ public/html/faq.html [L]
-RewriteRule ^sustainability$ public/html/sustainability.html [L]
-RewriteRule ^careers$ public/html/careers.html [L]
-RewriteRule ^privacy$ public/html/privacy.html [L]
-RewriteRule ^product$ public/html/product.html [L]
+RewriteRule ^shop/?$ public/html/shop.html [L]
+RewriteRule ^about/?$ public/html/about.html [L]
+RewriteRule ^contact/?$ public/html/contact.html [L]
+RewriteRule ^cart/?$ public/html/cart.html [L]
+RewriteRule ^checkout/?$ public/html/checkout.html [L]
+RewriteRule ^account/?$ public/html/account.html [L]
+RewriteRule ^search/?$ public/html/search.html [L]
+RewriteRule ^collections/?$ public/html/collections.html [L]
+RewriteRule ^shipping/?$ public/html/shipping.html [L]
+RewriteRule ^returns/?$ public/html/returns.html [L]
+RewriteRule ^faq/?$ public/html/faq.html [L]
+RewriteRule ^sustainability/?$ public/html/sustainability.html [L]
+RewriteRule ^careers/?$ public/html/careers.html [L]
+RewriteRule ^privacy/?$ public/html/privacy.html [L]
+RewriteRule ^product/?$ public/html/product.html [L]
 
-# Generic rule for other pages
+# Generic rule for other pages - try HTML files if the exact URL doesn't exist
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^([^\.]+)$ $1.html [NC,L] 
+RewriteRule ^([^\.]+)/?$ public/html/$1.html [NC,L]
+
+# If not found in public/html, just try direct .html extension
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([^\.]+)/?$ $1.html [NC,L]
+
+# If all else fails, serve the 404 page
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule .* public/html/404.html [L] 
