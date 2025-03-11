@@ -25,7 +25,7 @@ services:
   - type: static
     name: dndbrand-frontend
     buildCommand: echo "Static site ready"
-    staticPublishPath: ./public 
+    staticPublishPath: ./public
     # Add routes configuration for SPA-like navigation
     routes:
       - type: rewrite
