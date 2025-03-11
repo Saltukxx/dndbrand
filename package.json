@@ -15,7 +15,9 @@
     "verify-routes": "node verify-routes.js",
     "auto-fix": "node apply-fixes.js",
     "deploy:verify": "npm run verify-routes && cd server && npm run prod",
-    "deploy:safe": "npm run auto-fix && npm run verify-routes && cd server && npm run prod"
+    "deploy:safe": "npm run auto-fix && npm run verify-routes && cd server && npm run prod",
+    "check-files": "node server/check-file-access.js",
+    "deploy:render": "npm run check-files && cd server && node production-server.js"
   },
   "author": "DnD Brand",
   "license": "MIT",

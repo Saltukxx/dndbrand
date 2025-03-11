@@ -111,43 +111,64 @@ app.options('*', corsMiddleware);
 // Compression for faster response times
 app.use(compression());
 
-// Serve static files
-app.use(express.static(path.join(__dirname, '../public')));
-
-// Mount routes
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/customers', customerRoutes);
-app.use('/api/uploads', uploadRoutes);
-app.use('/api/admin', adminRoutes);
-
-// Add health check endpoint near the top of your routes
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    message: 'Server is healthy',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
-
-// Health check endpoint for Render
-app.get('/healthz', (req, res) => {
-  res.status(200).send('OK');
-});
-
 // Log all requests in production
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.url}`);
   next();
 });
 
-// Define routes for clean URLs BEFORE the catch-all route
+// Add special debug handler for the shop page since it's not working
+app.get('/shop', (req, res) => {
+  logger.info(`Shop route handler called for ${req.url}`);
+  const filePath = path.join(__dirname, '../public', 'html', 'shop.html');
+  
+  // Check if the file exists and log the result
+  const fileExists = fs.existsSync(filePath);
+  logger.info(`Shop file path: ${filePath}`);
+  logger.info(`Shop file exists: ${fileExists}`);
+  
+  if (fileExists) {
+    logger.info(`Serving shop.html from ${filePath}`);
+    res.sendFile(filePath);
+  } else {
+    // Try to list the directory contents to debug
+    try {
+      const htmlDir = path.join(__dirname, '../public', 'html');
+      const files = fs.readdirSync(htmlDir);
+      logger.info(`Files in ${htmlDir}: ${files.join(', ')}`);
+    } catch (err) {
+      logger.error(`Error reading html directory: ${err.message}`);
+    }
+    
+    logger.error(`Shop file not found: ${filePath}`);
+    res.status(404).sendFile(path.join(__dirname, '../public', 'html', '404.html'));
+  }
+});
+
+// Add route for trailing slash versions of all paths
+app.get('/shop/', (req, res) => {
+  logger.info('Shop route with trailing slash called, redirecting to /shop');
+  res.redirect(301, '/shop');
+});
+
+// Handle trailing slashes for all routes
+app.use((req, res, next) => {
+  if (req.path.slice(-1) === '/' && req.path.length > 1) {
+    // Skip API routes
+    if (req.path.startsWith('/api/')) {
+      return next();
+    }
+    const query = req.url.slice(req.path.length);
+    const safePath = req.path.slice(0, -1).replace(/\/+/g, '/');
+    res.redirect(301, safePath + query);
+  } else {
+    next();
+  }
+});
+
+// Define routes for clean URLs BEFORE the static file middleware and other routes
 const routes = [
   { path: '/', file: 'index.html' },
-  { path: '/shop', file: 'shop.html' },
   { path: '/about', file: 'about.html' },
   { path: '/contact', file: 'contact.html' },
   { path: '/cart', file: 'cart.html' },
@@ -179,10 +200,43 @@ routes.forEach(({ path: routePath, file }) => {
   });
 });
 
+// Serve static files AFTER defining routes
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Mount routes
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/uploads', uploadRoutes);
+app.use('/api/admin', adminRoutes);
+
+// Add health check endpoint near the top of your routes
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Server is healthy',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Health check endpoint for Render
+app.get('/healthz', (req, res) => {
+  res.status(200).send('OK');
+});
+
 // Catch-all route for other HTML files in public/html
 app.get('/:page', (req, res, next) => {
+  // Skip if it starts with /api/ or includes a file extension
+  if (req.params.page.startsWith('api') || req.params.page.includes('.')) {
+    return next();
+  }
+  
   const page = req.params.page;
   const filePath = path.join(__dirname, '../public', 'html', `${page}.html`);
+  logger.info(`Checking for page: ${filePath}`);
   
   if (fs.existsSync(filePath)) {
     res.sendFile(filePath);
@@ -210,6 +264,15 @@ app.use((err, req, res, next) => {
     stack: process.env.NODE_ENV === 'production' ? '🥞' : err.stack
   });
 });
+
+// Run file system check on startup
+try {
+  require('./check-file-access');
+  console.log('File access check completed');
+} catch (err) {
+  console.error('File access check failed:', err.message);
+  // Don't exit, still try to start the server
+}
 
 // Determine if we should use HTTPS directly or rely on Cloudflare
 const useDirectHttps = process.env.USE_DIRECT_HTTPS === 'true' && 
