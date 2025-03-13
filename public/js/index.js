@@ -5,11 +5,19 @@
 
 // Get API URL from config if available
 let indexApiUrl;
-if (window.CONFIG && window.CONFIG.API_URL) {
-    indexApiUrl = window.CONFIG.API_URL;
-    console.log('Using API URL from config.js:', indexApiUrl);
+if (window.CONFIG) {
+    if (window.CONFIG.API_BASE_URL) {
+        indexApiUrl = `${window.CONFIG.API_BASE_URL}/api`;
+        console.log('Using API_BASE_URL from config.js:', indexApiUrl);
+    } else if (window.CONFIG.API_URL) {
+        indexApiUrl = window.CONFIG.API_URL;
+        console.log('Using legacy API_URL from config.js:', indexApiUrl);
+    } else {
+        indexApiUrl = 'https://api.dndbrand.com/api';
+        console.log('Config found but no API URLs, using default:', indexApiUrl);
+    }
 } else {
-    indexApiUrl = 'https://dndbrand-server.onrender.com/api';
+    indexApiUrl = 'https://api.dndbrand.com/api';
     console.log('Config not found, using fallback API URL:', indexApiUrl);
 }
 

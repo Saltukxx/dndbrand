@@ -1,10 +1,19 @@
 // Configuration settings for D&D Brand
 const CONFIG = {
-    // API URL - Production (HTTPS)
-    API_URL: 'https://dndbrand-server.onrender.com/api',
+    // API Base URL - different for development and production
+    API_BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:8080' 
+        : 'https://api.dndbrand.com',
     
-    // Development API URL - uncomment this line when developing locally
-    // API_URL: 'http://localhost:8080/api',
+    // Version
+    API_VERSION: 'v1',
+    
+    // Image paths
+    IMAGES_PATH: '/images',
+    
+    // Other configuration variables can be added here
+    CURRENCY: '₺',
+    COMPANY_NAME: 'D&D Brand',
     
     // CORS Proxy URLs - multiple options for redundancy
     CORS_PROXIES: [
@@ -27,7 +36,10 @@ const CONFIG = {
         DEBUG_MODE: false, // Disabled for production
         FORCE_HTTPS: true, // Enable for production
         USE_CORS_PROXY: true, // Enable CORS proxy until server CORS is fixed
-        USE_MOCK_DATA: false // MOCK DATA IS DISABLED - MUST REMAIN FALSE
+        USE_MOCK_DATA: false, // MOCK DATA IS DISABLED - MUST REMAIN FALSE
+        ENABLE_CART: true,
+        ENABLE_WISHLIST: true,
+        ENABLE_REVIEWS: true
     },
     
     // Security settings
@@ -61,7 +73,7 @@ const CONFIG = {
 
 // Helper function to fetch from API with CORS handling
 async function fetchAPI(endpoint, options = {}) {
-    const url = endpoint.startsWith('http') ? endpoint : `${CONFIG.API_URL}/${endpoint}`;
+    const url = endpoint.startsWith('http') ? endpoint : `${CONFIG.API_BASE_URL}/${endpoint}`;
     const fetchOptions = { ...CONFIG.API_REQUEST.DEFAULT_OPTIONS, ...options };
     
     console.log(`Attempting to fetch: ${url}`);
@@ -118,7 +130,7 @@ async function fetchAPI(endpoint, options = {}) {
 
 // Helper function for API requests with proper CORS handling
 CONFIG.fetchAPI = async function(endpoint, options = {}) {
-    const url = endpoint.startsWith('http') ? endpoint : `${CONFIG.API_URL}/${endpoint.replace(/^\//, '')}`;
+    const url = endpoint.startsWith('http') ? endpoint : `${CONFIG.API_BASE_URL}/${endpoint.replace(/^\//, '')}`;
     
     // Merge default options with provided options
     const fetchOptions = {
@@ -262,4 +274,7 @@ window.fetchAPI = fetchAPI;
 // This makes the config available to other scripts
 (function() {
     window.CONFIG = CONFIG;
-})(); 
+})();
+
+// Don't allow modification of the config
+Object.freeze(CONFIG); 

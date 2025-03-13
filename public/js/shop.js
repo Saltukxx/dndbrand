@@ -6,11 +6,19 @@
 // API URL
 // Make sure we're using the API URL from config.js
 let shopApiUrl;
-if (window.CONFIG && window.CONFIG.API_URL) {
-    shopApiUrl = window.CONFIG.API_URL;
-    console.log('Using API URL from config.js:', shopApiUrl);
+if (window.CONFIG) {
+    if (window.CONFIG.API_BASE_URL) {
+        shopApiUrl = `${window.CONFIG.API_BASE_URL}/api`;
+        console.log('Using API_BASE_URL from config.js:', shopApiUrl);
+    } else if (window.CONFIG.API_URL) {
+        shopApiUrl = window.CONFIG.API_URL;
+        console.log('Using legacy API_URL from config.js:', shopApiUrl);
+    } else {
+        shopApiUrl = 'https://api.dndbrand.com/api';
+        console.log('Config found but no API URLs, using default:', shopApiUrl);
+    }
 } else {
-    shopApiUrl = 'https://dndbrand-server.onrender.com/api';
+    shopApiUrl = 'https://api.dndbrand.com/api';
     console.log('Config not found, using fallback API URL:', shopApiUrl);
 }
 
