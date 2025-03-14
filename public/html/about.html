@@ -2,16 +2,16 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="D&D Brand hakkında bilgiler, hikayemiz ve değerlerimiz">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="D&D Brand'in hikayesi, değerleri ve vizyonu. Premium moda markamızın arkasındaki tutkuyu keşfedin.">
     <title>Hakkımızda | D&D Brand</title>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/about.css">
-    <link rel="stylesheet" href="/css/contact.css">
+    <link rel="stylesheet" href="/css/mobile.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js" integrity="sha512-Tn2m0TIpgVyTzzvmxLNuqbSJH3JP8jm+Cy3hvHrW7ndTDcJ1w5mBiksqDBb8GpE2ksktFvDB/ykZ0mDpsZj20w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <header>
@@ -26,7 +26,7 @@
                 <ul>
                     <li><a href="/">ANA SAYFA</a></li>
                     <li><a href="/shop">KOLEKSİYON</a></li>
-                    <li><a href="/about">HAKKIMIZDA</a></li>
+                    <li><a href="/about" class="active">HAKKIMIZDA</a></li>
                     <li><a href="/contact">İLETİŞİM</a></li>
                 </ul>
             </nav>
@@ -37,40 +37,27 @@
                     <i class="fas fa-shopping-bag"></i>
                     <span>SEPET</span>
                     <span class="cart-count">0</span>
-                    
-                    <div class="cart-preview">
-                        <div class="cart-preview-header">
-                            <h3>Sepetiniz</h3>
-                            <span class="cart-preview-count">0 Ürün</span>
-                        </div>
-                        <div class="cart-preview-items">
-                            <!-- Cart items will be added here by JavaScript -->
-                            <div class="empty-cart-message">Sepetiniz boş</div>
-                        </div>
-                        <div class="cart-preview-footer">
-                            <div class="cart-preview-total">
-                                <span>Toplam:</span>
-                                <span class="cart-preview-total-price">₺0.00</span>
-                            </div>
-                            <div class="cart-preview-actions">
-                                <a href="/cart" class="view-cart">Sepeti Görüntüle</a>
-                                <a href="/checkout" class="checkout">Ödeme</a>
-                            </div>
-                        </div>
-                    </div>
                 </a>
             </div>
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
     </header>
 
     <div class="mobile-menu">
-        <div class="close-menu">
-            <i class="fas fa-times"></i>
+        <div class="mobile-menu-header">
+            <div class="logo">
+                <h1>D&D <span>Brand</span></h1>
+            </div>
+            <div class="close-btn">
+                <i class="fas fa-times"></i>
+            </div>
         </div>
         <ul>
             <li><a href="/">Ana Sayfa</a></li>
             <li><a href="/shop">Koleksiyon</a></li>
-            <li><a href="/about">Hakkımızda</a></li>
+            <li><a href="/about" class="active">Hakkımızda</a></li>
             <li><a href="/contact">İletişim</a></li>
             <li><a href="/account">Hesabım</a></li>
             <li><a href="/cart">Sepet</a></li>
@@ -88,160 +75,159 @@
         </div>
     </section>
 
-    <section class="about-intro">
+    <section class="about-story">
         <div class="container">
             <div class="about-content">
                 <div class="about-image">
-                    <img src="/images/hakkimizda.jpg" alt="D&D Brand Hakkımızda">
+                    <img src="/images/hakkimizda.jpg" alt="D&D Brand Hikayemiz">
                 </div>
                 <div class="about-text">
                     <h2>Hikayemiz</h2>
-                    <p>D&D Brand, 2020 yılında Erzurum'da kurulmuş, modern ve kaliteli giyim ürünleri sunan bir Türk markasıdır. Amacımız, günlük hayatta şıklığı ve konforu bir araya getiren, özgün tasarımlara sahip ürünler sunmaktır.</p>
-                    <p>Koleksiyonlarımızda kullandığımız kumaşlar özenle seçilmiş olup, her bir parça titizlikle üretilmektedir. Müşteri memnuniyeti ve kalite, markamızın temel değerleridir.</p>
-                    <p>Erzurum'daki merkez ofisimizden Türkiye'nin her yerine hızlı kargo hizmeti sunmaktayız. Online mağazamız üzerinden yapacağınız alışverişlerde, ürünleriniz özenle paketlenerek en kısa sürede adresinize teslim edilir.</p>
+                    <p>D&D Brand, 2020 yılında iki kardeş Deniz ve Derya tarafından İstanbul'da kuruldu. Premium kalitede, modern tasarımlı ve özgün detaylara sahip kıyafetler üretme vizyonuyla yola çıktık.</p>
+                    <p>Başlangıçta küçük bir butik olarak hizmet verirken, kalitemiz ve özgün tasarımlarımız sayesinde hızla büyüdük. Bugün, Türkiye'nin önde gelen lüks giyim markalarından biri olarak, hem yerel hem de uluslararası alanda tanınan bir marka haline geldik.</p>
+                    <p>D&D Brand olarak, her parçamızı en kaliteli kumaşları kullanarak, usta ellerde ve özenle üretiyoruz. Koleksiyonlarımızda konforu, estetiği ve sürdürülebilirliği bir araya getirerek, zamansız parçalar sunuyoruz.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="about-values">
+    <section class="values-section">
         <div class="container">
-            <h2 class="section-title">Değerlerimiz</h2>
+            <h2>Değerlerimiz</h2>
             <div class="values-grid">
-                <div class="value-item">
+                <div class="value-card">
                     <div class="value-icon">
                         <i class="fas fa-gem"></i>
                     </div>
                     <h3>Kalite</h3>
-                    <p>Her ürünümüzde en yüksek kalite standartlarını sağlamak için çalışıyoruz.</p>
+                    <p>En iyi malzemeleri kullanarak, detaylara özen göstererek ve her aşamada kalite kontrolü yaparak üstün kalitede ürünler sunuyoruz.</p>
                 </div>
-                <div class="value-item">
-                    <div class="value-icon">
-                        <i class="fas fa-paint-brush"></i>
-                    </div>
-                    <h3>Özgünlük</h3>
-                    <p>Tasarımlarımızda özgünlüğe önem veriyor, trend ve klasiği harmanlıyoruz.</p>
-                </div>
-                <div class="value-item">
+                <div class="value-card">
                     <div class="value-icon">
                         <i class="fas fa-leaf"></i>
                     </div>
                     <h3>Sürdürülebilirlik</h3>
-                    <p>Çevreye duyarlı üretim süreçleri ve malzemeler kullanmaya özen gösteriyoruz.</p>
+                    <p>Çevreye duyarlı üretim süreçleri benimseyerek, doğal ve geri dönüştürülebilir malzemeler kullanarak, gelecek nesillere daha temiz bir dünya bırakmayı hedefliyoruz.</p>
                 </div>
-                <div class="value-item">
+                <div class="value-card">
                     <div class="value-icon">
-                        <i class="fas fa-heart"></i>
+                        <i class="fas fa-palette"></i>
                     </div>
-                    <h3>Müşteri Memnuniyeti</h3>
-                    <p>Müşterilerimizin memnuniyeti bizim için her şeyden önemlidir.</p>
+                    <h3>Yaratıcılık</h3>
+                    <p>Trend belirleyen, özgün ve yenilikçi tasarımlarla moda dünyasında fark yaratıyoruz. Her koleksiyonumuzda farklı bir hikaye anlatıyoruz.</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Toplum</h3>
+                    <p>Yerel toplulukları destekliyor, adil iş koşulları sağlıyor ve sosyal sorumluluk projelerine katkıda bulunuyoruz.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="about-shipping">
+    <section class="team-section">
         <div class="container">
-            <div class="shipping-content">
-                <div class="shipping-text">
-                    <h2>Kargo ve Teslimat</h2>
-                    <p>D&D Brand olarak, Türkiye'nin her yerine kargo hizmeti sunmaktayız. Siparişleriniz, ödeme onayından sonra 1-3 iş günü içerisinde kargoya verilir ve ortalama 2-5 iş günü içerisinde adresinize ulaşır.</p>
-                    <p>500 TL ve üzeri alışverişlerinizde kargo ücretsizdir. 500 TL altındaki siparişlerde ise sabit kargo ücreti uygulanmaktadır.</p>
-                    <p>Erzurum içi siparişlerde, aynı gün teslimat seçeneğimiz de bulunmaktadır.</p>
-                    <a href="/shipping" class="btn btn-secondary">Detaylı Bilgi</a>
+            <h2>Ekibimiz</h2>
+            <p class="section-intro">D&D Brand ailesinin arkasındaki tutkulu ve yaratıcı ekip ile tanışın.</p>
+            <div class="team-grid">
+                <div class="team-member">
+                    <div class="member-image">
+                        <img src="/images/placeholder-product.jpg" alt="Deniz Arslan">
+                    </div>
+                    <div class="member-info">
+                        <h3>Deniz Arslan</h3>
+                        <p class="member-title">Kurucu & Kreatif Direktör</p>
+                        <p class="member-bio">Modaya olan tutkusu ve yaratıcı vizyonuyla D&D Brand'in estetik kimliğini şekillendiriyor.</p>
+                    </div>
                 </div>
-                <div class="shipping-image">
-                    <img src="/images/kargo2.jpg" alt="Kargo ve Teslimat">
+                <div class="team-member">
+                    <div class="member-image">
+                        <img src="/images/placeholder-product.jpg" alt="Derya Arslan">
+                    </div>
+                    <div class="member-info">
+                        <h3>Derya Arslan</h3>
+                        <p class="member-title">Kurucu & İş Geliştirme Direktörü</p>
+                        <p class="member-bio">İş stratejileri ve büyüme planlarıyla markanın başarısını sürdürülebilir kılıyor.</p>
+                    </div>
+                </div>
+                <div class="team-member">
+                    <div class="member-image">
+                        <img src="/images/placeholder-product.jpg" alt="Elif Demir">
+                    </div>
+                    <div class="member-info">
+                        <h3>Elif Demir</h3>
+                        <p class="member-title">Tasarım Müdürü</p>
+                        <p class="member-bio">15 yıllık deneyimiyle koleksiyonlarımızın benzersiz ve modern tasarımlarını yaratıyor.</p>
+                    </div>
+                </div>
+                <div class="team-member">
+                    <div class="member-image">
+                        <img src="/images/placeholder-product.jpg" alt="Kerem Yılmaz">
+                    </div>
+                    <div class="member-info">
+                        <h3>Kerem Yılmaz</h3>
+                        <p class="member-title">Sürdürülebilirlik Danışmanı</p>
+                        <p class="member-bio">Çevre dostu uygulamalar ve sürdürülebilir üretim süreçlerimizi geliştiriyor.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="about-social">
+    <section class="milestone-section">
         <div class="container">
-            <h2 class="section-title">Bizi Takip Edin</h2>
-            <p class="social-text">En yeni koleksiyonlarımız, kampanyalarımız ve etkinliklerimizden haberdar olmak için sosyal medya hesaplarımızı takip edebilirsiniz.</p>
-            <div class="social-grid">
-                <a href="https://instagram.com/dndbrand" class="social-item instagram">
-                    <i class="fab fa-instagram"></i>
-                    <span>Instagram</span>
-                    <p>@dndbrand</p>
-                </a>
-                <a href="https://facebook.com/dndbrand" class="social-item facebook">
-                    <i class="fab fa-facebook-f"></i>
-                    <span>Facebook</span>
-                    <p>D&D Brand</p>
-                </a>
-                <a href="https://twitter.com/dndbrand" class="social-item twitter">
-                    <i class="fab fa-twitter"></i>
-                    <span>Twitter</span>
-                    <p>@dndbrand</p>
-                </a>
-                <a href="https://pinterest.com/dndbrand" class="social-item pinterest">
-                    <i class="fab fa-pinterest-p"></i>
-                    <span>Pinterest</span>
-                    <p>D&D Brand</p>
-                </a>
+            <h2>Önemli Anlarımız</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <h3>2020</h3>
+                        <p>D&D Brand'in kuruluşu ve ilk butik mağazanın İstanbul Bağdat Caddesi'nde açılışı.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <h3>2021</h3>
+                        <p>İlk kapsamlı koleksiyonun lansmanı ve online mağazanın hizmete açılması.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <h3>2022</h3>
+                        <p>İstanbul Fashion Week'e katılım ve uluslararası pazara açılma.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <h3>2023</h3>
+                        <p>Sürdürülebilir koleksiyonun lansmanı ve ikinci mağazanın Nişantaşı'nda açılışı.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <h3>2024</h3>
+                        <p>Uluslararası ödüllü tasarımlara imza atmak ve global marka elçiliği programının başlatılması.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <section class="about-contact">
+    <section class="newsletter">
         <div class="container">
-            <div class="contact-content">
-                <div class="contact-info">
-                    <h2>İletişim</h2>
-                    <div class="contact-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <div>
-                            <h3>Adres</h3>
-                            <p>Yakutiye Mah. Cumhuriyet Cad. No: 123<br>Erzurum, Türkiye</p>
-                        </div>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fas fa-phone-alt"></i>
-                        <div>
-                            <h3>Telefon</h3>
-                            <p>+90 442 123 45 67</p>
-                        </div>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fas fa-envelope"></i>
-                        <div>
-                            <h3>E-posta</h3>
-                            <p>info@dndbrand.com</p>
-                        </div>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fas fa-clock"></i>
-                        <div>
-                            <h3>Çalışma Saatleri</h3>
-                            <p>Pazartesi - Cumartesi: 09:00 - 18:00<br>Pazar: Kapalı</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="contact-form">
-                    <h2>Bize Ulaşın</h2>
-                    <form id="contactForm">
-                        <div class="form-group">
-                            <label for="name">Adınız Soyadınız</label>
-                            <input type="text" id="name" name="name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="email">E-posta Adresiniz</label>
-                            <input type="email" id="email" name="email" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="subject">Konu</label>
-                            <input type="text" id="subject" name="subject" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="message">Mesajınız</label>
-                            <textarea id="message" name="message" rows="5" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Gönder</button>
-                    </form>
-                </div>
+            <div class="newsletter-content">
+                <h2>Yeniliklerden Haberdar Olun</h2>
+                <p>En yeni koleksiyonlar ve özel fırsatlar için bültenimize abone olun.</p>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="E-posta adresiniz" required>
+                    <button type="submit" class="btn">ABONE OL</button>
+                </form>
             </div>
         </div>
     </section>
@@ -251,19 +237,20 @@
             <div class="footer-content">
                 <div class="footer-column">
                     <h3>D&D Brand</h3>
-                    <p>Modern birey için premium giyim. Özel koleksiyonlarımızla tarzınızı yeniden tanımlayın.</p>
+                    <p>Premium kalite, modern tasarım ve benzersiz detaylarla öne çıkan lüks giyim markası.</p>
                     <div class="social-icons">
                         <a href="#"><i class="fab fa-facebook-f"></i></a>
                         <a href="#"><i class="fab fa-instagram"></i></a>
                         <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-pinterest-p"></i></a>
+                        <a href="#"><i class="fab fa-pinterest"></i></a>
                     </div>
                 </div>
                 <div class="footer-column">
                     <h3>Alışveriş</h3>
                     <ul>
-                        <li><a href="/shop?type=men">Erkek Koleksiyonu</a></li>
-                        <li><a href="/shop?type=accessories">Aksesuarlar</a></li>
+                        <li><a href="/shop?category=men">Erkek Koleksiyonu</a></li>
+                        <li><a href="/shop?category=women">Kadın Koleksiyonu</a></li>
+                        <li><a href="/shop?category=accessories">Aksesuarlar</a></li>
                         <li><a href="/shop?sale=true">İndirim</a></li>
                     </ul>
                 </div>
@@ -293,13 +280,73 @@
     </footer>
 
     <!-- Floating WhatsApp Button -->
-    <a href="https://wa.me/905373058528?text=Merhaba%20D&D%20Brand,%20" target="_blank" class="whatsapp-float">
+    <a href="https://wa.me/905373058528?text=Merhaba%20D%26D%20Brand,%20" target="_blank" class="whatsapp-float">
         <i class="fab fa-whatsapp"></i>
     </a>
 
-    <script src="/js/storage-manager.js"></script>
+    <script src="/js/config.js"></script>
     <script src="/js/script.js"></script>
-    <script src="/js/about.js"></script>
-    <script src="/js/contact.js"></script>
+    <script>
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const mobileMenu = document.querySelector('.mobile-menu');
+        const mobileMenuOverlay = document.querySelector('.mobile-menu-overlay');
+        const closeBtn = document.querySelector('.close-btn');
+
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', function() {
+                mobileMenu.classList.add('active');
+                mobileMenuOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+
+        if (mobileMenuOverlay) {
+            mobileMenuOverlay.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+
+        // Timeline Animation
+        document.addEventListener('DOMContentLoaded', function() {
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('appear');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, {
+                    threshold: 0.1,
+                    rootMargin: '0px 0px -50px 0px'
+                });
+                
+                timelineItems.forEach(item => {
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateY(20px)';
+                    item.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    observer.observe(item);
+                });
+            } else {
+                timelineItems.forEach(item => {
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateY(0)';
+                });
+            }
+        });
+    </script>
 </body>
 </html> 

@@ -7,11 +7,11 @@
     <title>Koleksiyon | D&D Brand</title>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/shop.css">
-    <link rel="stylesheet" href="/css/contact.css">
+    <link rel="stylesheet" href="/css/mobile.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js" integrity="sha512-Tn2m0TIpgVyTzzvmxLNuqbSJH3JP8jm+Cy3hvHrW7ndTDcJ1w5mBiksqDBb8GpE2ksktFvDB/ykZ0mDpsZj20w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.6.3/nouislider.min.css">
     <!-- Custom fixes for mobile spacing issues -->
     <style>
@@ -139,17 +139,20 @@
                     </div>
                 </a>
             </div>
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
     </header>
 
     <div class="mobile-menu">
         <div class="mobile-menu-header">
             <div class="logo">
-                <a href="/" class="mobile-logo">
-                    <div class="logo">D&D Brand</div>
-                </a>
+                <h1>D&D <span>Brand</span></h1>
             </div>
-            <div class="close-btn"><i class="fas fa-times"></i></div>
+            <div class="close-btn">
+                <i class="fas fa-times"></i>
+            </div>
         </div>
         <ul>
             <li><a href="/">Ana Sayfa</a></li>
@@ -339,7 +342,7 @@
                 <p>En yeni koleksiyonlar ve özel fırsatlar için bültenimize abone olun.</p>
                 <form class="newsletter-form">
                     <input type="email" placeholder="E-posta adresiniz" required>
-                    <button type="submit" class="btn">Abone Ol</button>
+                    <button type="submit" class="btn">ABONE OL</button>
                 </form>
             </div>
         </div>
@@ -361,8 +364,9 @@
                 <div class="footer-column">
                     <h3>Alışveriş</h3>
                     <ul>
-                        <li><a href="/shop?type=men">Erkek Koleksiyonu</a></li>
-                        <li><a href="/shop?type=accessories">Aksesuarlar</a></li>
+                        <li><a href="/shop?category=men">Erkek Koleksiyonu</a></li>
+                        <li><a href="/shop?category=women">Kadın Koleksiyonu</a></li>
+                        <li><a href="/shop?category=accessories">Aksesuarlar</a></li>
                         <li><a href="/shop?sale=true">İndirim</a></li>
                     </ul>
                 </div>
@@ -384,28 +388,17 @@
                         <li><a href="/privacy">Gizlilik Politikası</a></li>
                     </ul>
                 </div>
-                <div class="footer-column">
-                    <h3>İletişim</h3>
-                    <ul>
-                        <li><i class="fas fa-map-marker-alt"></i> Bağdat Caddesi No:123, Kadıköy, İstanbul</li>
-                        <li><i class="fas fa-phone"></i> +90 212 123 45 67</li>
-                        <li><i class="fas fa-envelope"></i> info@dndbrand.com</li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h3>Hızlı Erişim</h3>
-                    <ul>
-                        <li><a href="/shop">Koleksiyon</a></li>
-                        <li><a href="/about">Hakkımızda</a></li>
-                        <li><a href="/contact">İletişim</a></li>
-                    </ul>
-                </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2023 D&D Brand. Tüm hakları saklıdır. | Tasarım: <a href="#">D&D Brand</a></p>
+                <p>&copy; 2023 D&D Brand. Tüm hakları saklıdır.</p>
             </div>
         </div>
     </footer>
+
+    <!-- Floating WhatsApp Button -->
+    <a href="https://wa.me/905373058528?text=Merhaba%20D%26D%20Brand,%20" target="_blank" class="whatsapp-float">
+        <i class="fab fa-whatsapp"></i>
+    </a>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.6.3/nouislider.min.js"></script>
     <script src="/js/config.js"></script>
@@ -413,11 +406,323 @@
     <script src="/js/storage-manager.js"></script>
     <script src="/js/script.js"></script>
     <script src="/js/shop.js"></script>
-    <script src="/js/contact.js"></script>
+    <script>
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const mobileMenu = document.querySelector('.mobile-menu');
+        const mobileMenuOverlay = document.querySelector('.mobile-menu-overlay');
+        const closeBtn = document.querySelector('.close-btn');
 
-    <!-- Floating WhatsApp Button -->
-    <a href="https://wa.me/905373058528?text=Merhaba%20D%26D%20Brand,%20" target="_blank" class="whatsapp-float">
-        <i class="fab fa-whatsapp"></i>
-    </a>
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', function() {
+                mobileMenu.classList.add('active');
+                mobileMenuOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+
+        if (mobileMenuOverlay) {
+            mobileMenuOverlay.addEventListener('click', function() {
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+
+        // Filter Toggle
+        const filterToggle = document.querySelector('.mobile-filter-toggle');
+        const filterSidebar = document.querySelector('.shop-sidebar');
+        const filterOverlay = document.querySelector('.filter-overlay');
+        const filterClose = document.querySelector('.filter-close');
+
+        if (filterToggle && filterSidebar) {
+            filterToggle.addEventListener('click', function() {
+                filterSidebar.classList.add('active');
+                filterOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+        }
+
+        if (filterClose && filterSidebar) {
+            filterClose.addEventListener('click', function() {
+                filterSidebar.classList.remove('active');
+                filterOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+
+        if (filterOverlay && filterSidebar) {
+            filterOverlay.addEventListener('click', function() {
+                filterSidebar.classList.remove('active');
+                filterOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+
+        // Initialize price slider
+        document.addEventListener('DOMContentLoaded', function() {
+            const priceSlider = document.getElementById('price-slider');
+            if (priceSlider) {
+                noUiSlider.create(priceSlider, {
+                    start: [0, 2000],
+                    connect: true,
+                    step: 50,
+                    range: {
+                        'min': 0,
+                        'max': 5000
+                    },
+                    format: {
+                        to: function (value) {
+                            return Math.round(value);
+                        },
+                        from: function (value) {
+                            return Number(value);
+                        }
+                    }
+                });
+
+                const minPriceInput = document.getElementById('min-price');
+                const maxPriceInput = document.getElementById('max-price');
+
+                priceSlider.noUiSlider.on('update', function (values, handle) {
+                    if (handle === 0) {
+                        minPriceInput.value = '₺' + values[handle];
+                    } else {
+                        maxPriceInput.value = '₺' + values[handle];
+                    }
+                });
+            }
+        });
+        
+        // Sample Products Data
+        const products = [
+            {
+                id: 1,
+                name: 'Premium Pamuklu T-Shirt',
+                brand: 'D&D Brand',
+                price: 299.99,
+                oldPrice: 349.99,
+                image: '/images/placeholder-product.jpg',
+                isSale: true,
+                isNew: false,
+                category: 'men',
+                color: 'black',
+                size: ['S', 'M', 'L', 'XL']
+            },
+            {
+                id: 2,
+                name: 'Slim Fit Jean',
+                brand: 'D&D Brand',
+                price: 599.99,
+                oldPrice: null,
+                image: '/images/placeholder-product.jpg',
+                isSale: false,
+                isNew: true,
+                category: 'men',
+                color: 'blue',
+                size: ['M', 'L', 'XL']
+            },
+            {
+                id: 3,
+                name: 'Oversize Hoodie',
+                brand: 'D&D Brand',
+                price: 499.99,
+                oldPrice: 599.99,
+                image: '/images/placeholder-product.jpg',
+                isSale: true,
+                isNew: false,
+                category: 'men',
+                color: 'red',
+                size: ['S', 'M', 'L']
+            },
+            {
+                id: 4,
+                name: 'Kış Ceketi',
+                brand: 'D&D Brand',
+                price: 1299.99,
+                oldPrice: null,
+                image: '/images/placeholder-product.jpg',
+                isSale: false,
+                isNew: true,
+                category: 'men',
+                color: 'black',
+                size: ['M', 'L', 'XL']
+            },
+            {
+                id: 5,
+                name: 'Bluz',
+                brand: 'D&D Brand',
+                price: 349.99,
+                oldPrice: null,
+                image: '/images/placeholder-product.jpg',
+                isSale: false,
+                isNew: true,
+                category: 'women',
+                color: 'white',
+                size: ['S', 'M', 'L']
+            },
+            {
+                id: 6,
+                name: 'Deri Çanta',
+                brand: 'D&D Brand',
+                price: 899.99,
+                oldPrice: 1099.99,
+                image: '/images/placeholder-product.jpg',
+                isSale: true,
+                isNew: false,
+                category: 'accessories',
+                color: 'brown',
+                size: []
+            }
+        ];
+
+        // Render Products
+        function renderProducts(productList) {
+            const container = document.getElementById('products-container');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            if (productList.length === 0) {
+                container.innerHTML = '<div class="no-products">Ürün bulunamadı</div>';
+                document.getElementById('product-count').textContent = '0';
+                return;
+            }
+            
+            document.getElementById('product-count').textContent = productList.length.toString();
+            
+            productList.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.classList.add('product-card', 'fade-in');
+                
+                productCard.innerHTML = `
+                    <div class="product-image">
+                        <img src="${product.image}" alt="${product.name}">
+                        ${product.isSale ? '<span class="product-badge sale">İNDİRİM</span>' : ''}
+                        ${product.isNew ? '<span class="product-badge new">YENİ</span>' : ''}
+                    </div>
+                    <div class="product-info">
+                        <span class="brand">${product.brand}</span>
+                        <h3>${product.name}</h3>
+                        <div class="price">
+                            ${product.oldPrice ? `<span class="old-price">₺${product.oldPrice}</span>` : ''}
+                            <span>₺${product.price}</span>
+                        </div>
+                    </div>
+                `;
+                
+                productCard.addEventListener('click', () => {
+                    window.location.href = `/product?id=${product.id}`;
+                });
+                
+                container.appendChild(productCard);
+            });
+            
+            // Animate products
+            const fadeElements = document.querySelectorAll('.fade-in');
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.style.opacity = '1';
+                            entry.target.style.transform = 'translateY(0)';
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, {
+                    threshold: 0.1,
+                    rootMargin: '0px 0px -50px 0px'
+                });
+                
+                fadeElements.forEach((element, index) => {
+                    element.style.opacity = '0';
+                    element.style.transform = 'translateY(20px)';
+                    element.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    element.style.transitionDelay = `${index * 0.05}s`;
+                    observer.observe(element);
+                });
+            } else {
+                fadeElements.forEach(element => {
+                    element.style.opacity = '1';
+                    element.style.transform = 'translateY(0)';
+                });
+            }
+        }
+
+        // Initialize products
+        document.addEventListener('DOMContentLoaded', function() {
+            renderProducts(products);
+            
+            // Category filter
+            const categoryLinks = document.querySelectorAll('.category-list a');
+            categoryLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all links
+                    categoryLinks.forEach(l => l.classList.remove('active'));
+                    
+                    // Add active class to clicked link
+                    this.classList.add('active');
+                    
+                    const category = this.dataset.category;
+                    
+                    // Filter products
+                    let filteredProducts;
+                    if (category === 'all') {
+                        filteredProducts = products;
+                    } else {
+                        filteredProducts = products.filter(product => product.category === category);
+                    }
+                    
+                    renderProducts(filteredProducts);
+                    
+                    // Close mobile filter on selection
+                    if (window.innerWidth <= 768) {
+                        filterSidebar.classList.remove('active');
+                        filterOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                });
+            });
+            
+            // Sort by change
+            const sortBy = document.getElementById('sort-by');
+            if (sortBy) {
+                sortBy.addEventListener('change', function() {
+                    const value = this.value;
+                    let sortedProducts = [...products];
+                    
+                    switch (value) {
+                        case 'price-low':
+                            sortedProducts.sort((a, b) => a.price - b.price);
+                            break;
+                        case 'price-high':
+                            sortedProducts.sort((a, b) => b.price - a.price);
+                            break;
+                        case 'name-asc':
+                            sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
+                            break;
+                        case 'name-desc':
+                            sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
+                            break;
+                        case 'newest':
+                            sortedProducts.sort((a, b) => b.isNew - a.isNew);
+                            break;
+                    }
+                    
+                    renderProducts(sortedProducts);
+                });
+            }
+        });
+    </script>
 </body>
 </html> 
