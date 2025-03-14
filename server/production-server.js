@@ -71,6 +71,40 @@ const app = express();
 // Trust proxy - needed for Render and other cloud platforms
 app.set('trust proxy', 1);
 
+// URL rewriting middleware - added for clean URLs
+app.use((req, res, next) => {
+  // Log incoming requests
+  logger.info(`[URL Rewriter] Original URL: ${req.url}`);
+  
+  // Clean URLs mapping to HTML files
+  const urlMap = {
+    '/': '/html/index.html',
+    '/shop': '/html/shop.html',
+    '/about': '/html/about.html',
+    '/contact': '/html/contact.html',
+    '/cart': '/html/cart.html',
+    '/checkout': '/html/checkout.html',
+    '/account': '/html/account.html',
+    '/search': '/html/search.html',
+    '/collections': '/html/collections.html',
+    '/shipping': '/html/shipping.html',
+    '/returns': '/html/returns.html',
+    '/faq': '/html/faq.html',
+    '/sustainability': '/html/sustainability.html',
+    '/careers': '/html/careers.html',
+    '/privacy': '/html/privacy.html',
+    '/product': '/html/product.html'
+  };
+  
+  // Check if the URL matches any of our clean URLs
+  if (urlMap[req.url]) {
+    logger.info(`[URL Rewriter] Rewriting ${req.url} to ${urlMap[req.url]}`);
+    req.url = urlMap[req.url];
+  }
+  
+  next();
+});
+
 // Connect to database
 connectDB();
 
