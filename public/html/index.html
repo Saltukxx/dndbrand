@@ -5,21 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Premium giyim ürünleri sunan D&D Brand resmi web sitesi">
     <title>D&D Brand | Premium Giyim</title>
-    <link rel="stylesheet" href="../css/styles.css">
-    <link rel="stylesheet" href="../css/contact.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/contact.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js" integrity="sha512-Tn2m0TIpgVyTzzvmxLNuqbSJH3JP8jm+Cy3hvHrW7ndTDcJ1w5mBiksqDBb8GpE2ksktFvDB/ykZ0mDpsZj20w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="../js/config.js"></script>
-    <script src="../js/services/imageService.js"></script>
+    <script src="/js/config.js"></script>
+    <script src="/js/services/imageService.js"></script>
 </head>
 <body>
     <header>
         <div class="container">
             <div class="logo">
                 <a href="/" class="logo-link">
-                    <img src="../images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="D&D Brand Logo" class="logo-image">
+                    <img src="/images/WhatsApp_Image_2025-03-04_at_01.39.12_65330df1-removebg-preview.png" alt="D&D Brand Logo" class="logo-image">
                 </a>
                 <h1>D&D <span>Brand</span></h1>
             </div>
@@ -90,7 +90,7 @@
     <div class="mobile-menu-overlay"></div>
 
     <section class="hero">
-        <img src="../images/dndherosection.jpg" alt="D&D Brand Koleksiyon" class="hero-background">
+        <img src="/images/dndherosection.jpg" alt="D&D Brand Koleksiyon" class="hero-background">
         <div class="hero-overlay"></div>
         <div class="hero-content">
             <h1 class="hero-title">Tarzınızı <span class="highlight">Yeniden</span> Tanımlayın</h1>
@@ -116,39 +116,66 @@
         </div>
     </section>
 
-    <section class="featured-collections">
-        <div class="container">
-            <h2 class="section-title">Öne Çıkan Koleksiyonlar</h2>
-            <div class="collection-grid">
-                <div class="collection-item fade-in">
-                    <img src="../images/erkekkoleksiyon.jpg" alt="Erkek Koleksiyonu">
-                    <div class="collection-info">
-                        <h3>Erkek Koleksiyonu</h3>
-                        <p>Modern genç erkek için tasarlanmış premium streetwear parçalar</p>
-                        <a href="/shop?type=men" class="btn">Keşfet</a>
-                    </div>
+    <!-- Merged Collections Section -->
+    <section class="featured-collections edge-to-edge">
+        <div class="collection-grid">
+            <!-- Men's Collection -->
+            <div class="collection-item fade-in" data-animation-delay="100">
+                <img src="/images/erkekkoleksiyon.jpg" alt="Erkek Koleksiyonu">
+                <div class="collection-overlay">
+                    <div class="collection-title">İKONİK GÖRÜNÜM</div>
+                    <a href="/shop?type=men" class="collection-btn">ELBİSELER</a>
                 </div>
-                <div class="collection-item fade-in">
-                    <img src="../images/aksesuar.jpg" alt="Aksesuar Koleksiyonu">
-                    <div class="collection-info">
-                        <h3>Aksesuar Koleksiyonu</h3>
-                        <p>Tarzınızı tamamlayacak modern ve şık aksesuarlar</p>
-                        <a href="/shop?type=accessories" class="btn">Keşfet</a>
-                    </div>
+            </div>
+            
+            <!-- Accessories Collection -->
+            <div class="collection-item fade-in" data-animation-delay="200">
+                <img src="/images/aksesuar.jpg" alt="Aksesuar Koleksiyonu">
+                <div class="collection-overlay">
+                    <div class="collection-title">OFİS ŞIKLIĞI</div>
+                    <a href="/shop?type=accessories" class="collection-btn">HEMEN KEŞFET</a>
+                </div>
+            </div>
+            
+            <!-- Parfume Collection - Men -->
+            <div class="collection-item fade-in" data-animation-delay="300">
+                <img src="/images/WhatsApp Image 2025-03-10 at 15.40.48_97ffb570.jpg" alt="D&D Brand Parfüm">
+                <div class="collection-overlay">
+                    <div class="collection-title">PARFÜM KOLEKSİYONU</div>
+                    <a href="/shop?type=parfume-men" class="collection-btn">ÖZEL ÜRETİM</a>
+                </div>
+            </div>
+            
+            <!-- Parfume Collection - Women -->
+            <div class="collection-item fade-in" data-animation-delay="400">
+                <img src="/images/parfume2.jpg" alt="D&D Brand Parfüm">
+                <div class="collection-overlay">
+                    <div class="collection-title">LÜKS KOKULAR</div>
+                    <a href="/shop?type=parfume-women" class="collection-btn">KEŞFET</a>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- New Edge-to-Edge Single Banner -->
+    <section class="full-width-banner">
+        <div class="full-width-banner-inner">
+            <img src="/images/banner3.jpg" alt="D&D Brand İndirim">
+            <div class="full-width-banner-content">
+            </div>
+        </div>
+    </section>
+
+    <!-- Premium Banner Section -->
     <section class="premium-banner">
         <div class="container">
-            <div class="premium-banner-content fade-in">
+            <div class="premium-banner-content">
                 <h2>Premium Kalite</h2>
                 <p>En kaliteli kumaşlar ve üstün işçilik ile üretilen D&D Brand ürünleri, uzun ömürlü kullanım için tasarlandı.</p>
                 <a href="/about" class="btn btn-premium">Daha Fazla Bilgi</a>
             </div>
-            <div class="premium-banner-image fade-in">
-                <img src="../images/dndbannersection2.jpg" alt="Premium Kalite">
+            <div class="premium-banner-image">
+                <img src="/images/dndbannersection2.jpg" alt="Premium Kalite">
             </div>
         </div>
     </section>
@@ -287,10 +314,10 @@
         <i class="fab fa-whatsapp"></i>
     </a>
 
-    <script src="../js/index.js"></script>
-    <script src="../js/storage-manager.js"></script>
-    <script src="../js/script.js"></script>
-    <script src="../js/contact.js"></script>
+    <script src="/js/index.js"></script>
+    <script src="/js/storage-manager.js"></script>
+    <script src="/js/script.js"></script>
+    <script src="/js/contact.js"></script>
     <script>
         // Scroll animation for fade-in elements
         document.addEventListener('DOMContentLoaded', function() {

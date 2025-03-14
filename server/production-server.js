@@ -71,6 +71,30 @@ const app = express();
 // Trust proxy - needed for Render and other cloud platforms
 app.set('trust proxy', 1);
 
+// Debug middleware - MUST BE FIRST MIDDLEWARE
+app.use((req, res, next) => {
+  console.log(`[DEBUG-FIRST] Request received: ${req.method} ${req.url}`);
+  logger.info(`[DEBUG-FIRST] Request received: ${req.method} ${req.url}`, {
+    headers: req.headers,
+    ip: req.ip,
+    originalUrl: req.originalUrl,
+    path: req.path
+  });
+  next();
+});
+
+// Force HTTPS redirect in production
+app.use((req, res, next) => {
+  // Check if we're in production and the request is not secure
+  if (process.env.NODE_ENV === 'production' && !req.secure && req.headers['x-forwarded-proto'] !== 'https') {
+    console.log(`[HTTPS-REDIRECT] Redirecting ${req.method} ${req.originalUrl} to HTTPS`);
+    
+    // Redirect to HTTPS
+    return res.redirect(`https://${req.headers.host}${req.url}`);
+  }
+  next();
+});
+
 // URL rewriting middleware - added for clean URLs
 app.use((req, res, next) => {
   // Log incoming requests
@@ -153,28 +177,41 @@ app.use((req, res, next) => {
 
 // Add special debug handler for the shop page since it's not working
 app.get('/shop', (req, res) => {
-  logger.info(`Shop route handler called for ${req.url}`);
+  console.log('[SHOP-DEBUG] Shop route handler called');
+  logger.info('[SHOP-DEBUG] Shop route handler called', {
+    url: req.url,
+    originalUrl: req.originalUrl,
+    path: req.path,
+    headers: req.headers
+  });
+  
   const filePath = path.join(__dirname, '../public', 'html', 'shop.html');
   
   // Check if the file exists and log the result
   const fileExists = fs.existsSync(filePath);
-  logger.info(`Shop file path: ${filePath}`);
-  logger.info(`Shop file exists: ${fileExists}`);
+  console.log(`[SHOP-DEBUG] Shop file path: ${filePath}`);
+  console.log(`[SHOP-DEBUG] Shop file exists: ${fileExists}`);
+  logger.info(`[SHOP-DEBUG] Shop file path: ${filePath}`);
+  logger.info(`[SHOP-DEBUG] Shop file exists: ${fileExists}`);
   
   if (fileExists) {
-    logger.info(`Serving shop.html from ${filePath}`);
+    console.log(`[SHOP-DEBUG] Serving shop.html from ${filePath}`);
+    logger.info(`[SHOP-DEBUG] Serving shop.html from ${filePath}`);
     res.sendFile(filePath);
   } else {
     // Try to list the directory contents to debug
     try {
       const htmlDir = path.join(__dirname, '../public', 'html');
       const files = fs.readdirSync(htmlDir);
-      logger.info(`Files in ${htmlDir}: ${files.join(', ')}`);
+      console.log(`[SHOP-DEBUG] Files in ${htmlDir}: ${files.join(', ')}`);
+      logger.info(`[SHOP-DEBUG] Files in ${htmlDir}: ${files.join(', ')}`);
     } catch (err) {
-      logger.error(`Error reading html directory: ${err.message}`);
+      console.error(`[SHOP-DEBUG] Error reading html directory: ${err.message}`);
+      logger.error(`[SHOP-DEBUG] Error reading html directory: ${err.message}`);
     }
     
-    logger.error(`Shop file not found: ${filePath}`);
+    console.error(`[SHOP-DEBUG] Shop file not found: ${filePath}`);
+    logger.error(`[SHOP-DEBUG] Shop file not found: ${filePath}`);
     res.status(404).sendFile(path.join(__dirname, '../public', 'html', '404.html'));
   }
 });
@@ -281,6 +318,27 @@ app.get('/:page', (req, res, next) => {
 
 // 404 handler - must be last
 app.use((req, res) => {
+  // Try to handle as a clean URL first before showing 404
+  console.log(`[FALLBACK-DEBUG] URL not matched by other routes: ${req.originalUrl}`);
+  logger.warn(`[FALLBACK-DEBUG] URL not matched by other routes: ${req.originalUrl}`);
+  
+  // Strip query parameters and leading/trailing slashes
+  const cleanPath = req.path.replace(/^\/+|\/+$/g, '');
+  
+  if (cleanPath && !cleanPath.includes('.')) {
+    // This might be a clean URL - try to find a matching HTML file
+    const htmlPath = path.join(__dirname, '../public', 'html', `${cleanPath}.html`);
+    console.log(`[FALLBACK-DEBUG] Checking for HTML file: ${htmlPath}`);
+    logger.info(`[FALLBACK-DEBUG] Checking for HTML file: ${htmlPath}`);
+    
+    if (fs.existsSync(htmlPath)) {
+      console.log(`[FALLBACK-DEBUG] Found HTML file, serving: ${htmlPath}`);
+      logger.info(`[FALLBACK-DEBUG] Found HTML file, serving: ${htmlPath}`);
+      return res.sendFile(htmlPath);
+    }
+  }
+  
+  // If we reach here, it's a genuine 404
   logger.warn(`404 Not Found: ${req.originalUrl}`);
   res.status(404).sendFile(path.join(__dirname, '../public', 'html', '404.html'));
 });
