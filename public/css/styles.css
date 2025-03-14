@@ -13,6 +13,14 @@
     --transition: all 0.3s ease;
     --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     --premium-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    
+    /* Additional color variables */
+    --color-primary: #FE5000;
+    --color-dark: #121212;
+    --color-gray: #777777;
+    --color-background: #f8f8f8;
+    --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 8px 15px rgba(0, 0, 0, 0.1);
 }
 
 * {
@@ -2375,9 +2383,10 @@ footer .container {
 /* Fix featured products (öne çıkarılan ürünler) section */
 .trending {
     width: 100%;
-    padding: 50px 0;
+    padding: 80px 0;
     margin: 0;
     background-color: var(--color-background);
+    position: relative;
 }
 
 .trending .container {
@@ -2388,10 +2397,20 @@ footer .container {
 
 .trending .section-title {
     text-align: center;
-    margin-bottom: 30px;
-    font-size: 2rem;
-    font-weight: 600;
-    color: var(--dark-color);
+    margin-bottom: 50px;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--color-dark);
+    position: relative;
+}
+
+.trending .section-title::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 3px;
+    background-color: var(--color-primary);
+    margin: 15px auto 0;
 }
 
 .trending .product-grid {
@@ -2405,13 +2424,15 @@ footer .container {
     background-color: #fff;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .trending .product-card:hover {
     transform: translateY(-10px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
 }
 
 .trending .product-image {
@@ -2419,6 +2440,7 @@ footer .container {
     overflow: hidden;
     height: 0;
     padding-bottom: 125%; /* 4:5 aspect ratio */
+    background-color: #f9f9f9;
 }
 
 .trending .product-image img {
@@ -2432,24 +2454,30 @@ footer .container {
 }
 
 .trending .product-card:hover .product-image img {
-    transform: scale(1.05);
+    transform: scale(1.08);
 }
 
 .trending .product-badge {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    background-color: var(--secondary-color);
+    top: 15px;
+    left: 15px;
+    background-color: var(--color-primary);
     color: #fff;
     font-size: 0.75rem;
     font-weight: 700;
-    padding: 5px 10px;
+    padding: 6px 12px;
     border-radius: 4px;
     z-index: 2;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .trending .product-badge.sale {
-    background-color: var(--accent-color);
+    background-color: #e74c3c;
+}
+
+.trending .product-badge.new {
+    background-color: #2ecc71;
 }
 
 .trending .product-overlay {
@@ -2463,6 +2491,7 @@ footer .container {
     transition: transform 0.3s ease;
     display: flex;
     justify-content: space-between;
+    z-index: 3;
 }
 
 .trending .product-card:hover .product-overlay {
@@ -2473,102 +2502,171 @@ footer .container {
 .trending .view-details {
     color: #fff;
     font-size: 0.85rem;
-    font-weight: 500;
+    font-weight: 600;
     text-transform: uppercase;
-    transition: color 0.3s ease;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    position: relative;
+    padding: 5px 0;
+}
+
+.trending .add-to-cart::after,
+.trending .view-details::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: var(--color-primary);
+    transition: width 0.3s ease;
 }
 
 .trending .add-to-cart:hover,
 .trending .view-details:hover {
-    color: var(--secondary-color);
+    color: var(--color-primary);
+}
+
+.trending .add-to-cart:hover::after,
+.trending .view-details:hover::after {
+    width: 100%;
 }
 
 .trending .product-info {
-    padding: 15px;
+    padding: 20px;
+    position: relative;
+    z-index: 2;
+    background-color: #fff;
 }
 
 .trending .brand {
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    margin-bottom: 5px;
+    color: var(--color-gray);
+    font-size: 0.85rem;
+    margin-bottom: 8px;
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .trending .product-info h3 {
-    font-size: 1rem;
-    margin-bottom: 10px;
+    font-size: 1.1rem;
+    margin-bottom: 12px;
     font-weight: 600;
-    color: var(--dark-color);
+    color: var(--color-dark);
+    line-height: 1.4;
+    transition: color 0.3s ease;
+}
+
+.trending .product-card:hover .product-info h3 {
+    color: var(--color-primary);
 }
 
 .trending .price {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 700;
-    color: var(--dark-color);
+    color: var(--color-dark);
+    display: flex;
+    align-items: center;
 }
 
 .trending .old-price {
     text-decoration: line-through;
-    color: var(--text-secondary);
+    color: var(--color-gray);
     font-weight: 400;
-    margin-right: 8px;
-    font-size: 0.9rem;
+    margin-right: 10px;
+    font-size: 0.95rem;
 }
 
 .trending .view-all {
     text-align: center;
-    margin-top: 20px;
+    margin-top: 40px;
+}
+
+.trending .view-all .btn {
+    padding: 12px 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    background-color: var(--color-dark);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.trending .view-all .btn:hover {
+    background-color: var(--color-primary);
 }
 
 /* Responsive for trending products */
 @media (max-width: 1200px) {
     .trending .product-grid {
         grid-template-columns: repeat(3, 1fr);
+        gap: 25px;
     }
 }
 
 @media (max-width: 992px) {
     .trending .product-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    
+    .trending {
+        padding: 60px 0;
+    }
+    
+    .trending .section-title {
+        font-size: 2rem;
+        margin-bottom: 40px;
     }
 }
 
 @media (max-width: 576px) {
     .trending .product-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
     }
     
     .trending {
-        padding: 30px 0;
+        padding: 40px 0;
+    }
+    
+    .trending .product-info {
+        padding: 15px;
+    }
+    
+    .trending .brand {
+        font-size: 0.75rem;
+    }
+    
+    .trending .product-info h3 {
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+    
+    .trending .price {
+        font-size: 1rem;
+    }
+    
+    .trending .old-price {
+        font-size: 0.8rem;
+    }
+    
+    .trending .section-title {
+        font-size: 1.7rem;
+        margin-bottom: 30px;
     }
 }
 
-/* Ensure mobile banner display is correct */
-@media (max-width: 768px) {
-    /* Remove any margins and paddings for banners */
-    .hero, 
-    .promo-banners, 
-    .single-banner {
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100vw;
-    }
-    
-    /* Banner sliders should display properly */
-    .banner-slider, 
-    .mobile-banner-slider {
-        width: 100vw;
-        margin: 0;
-        padding: 0;
-    }
-    
-    /* Make banner slides visible */
-    .mobile-banner-slider .banner-slide {
-        display: block !important;
-        opacity: 1 !important;
-        width: 100%;
-        height: auto;
+@media (max-width: 400px) {
+    .trending .product-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
     }
 }
 
