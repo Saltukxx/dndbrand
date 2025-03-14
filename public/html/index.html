@@ -357,6 +357,47 @@
                 padding: 6px 15px;
             }
             
+            /* Enhanced Edge-to-Edge for Featured Collections */
+            .featured-collections.edge-to-edge {
+                width: 100vw;
+                margin-left: -50vw;
+                margin-right: -50vw;
+                left: 50%;
+                right: 50%;
+                position: relative;
+                padding: 40px 0 0;
+                overflow-x: hidden;
+                max-width: 100vw;
+            }
+
+            .featured-collections.edge-to-edge .container {
+                width: 100%;
+                max-width: 100%;
+                padding: 0;
+                margin: 0;
+            }
+
+            .featured-collections.edge-to-edge .collection-grid {
+                width: 100%;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1px;
+                margin: 0;
+                padding: 0;
+            }
+
+            .featured-collections.edge-to-edge .collection-item {
+                margin: 0;
+                padding: 0;
+                border-radius: 0;
+            }
+
+            .featured-collections.edge-to-edge .collection-item img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            
             /* Category Cards Improvements */
             .category-cards {
                 padding: 0;

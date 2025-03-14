@@ -45,6 +45,12 @@
         box-sizing: border-box;
     }
     
+    /* Update for edge-to-edge sections */
+    section.featured-collections,
+    section.parfume-collections {
+        padding: 0;
+    }
+    
     .container {
         width: 100%;
         padding: 0 15px;
@@ -242,12 +248,16 @@
         grid-template-columns: repeat(2, 1fr);
         gap: 0;
         width: 100%;
+        margin: 0;
+        padding: 0;
     }
     
     .collection-item {
         position: relative;
         height: 200px;
         overflow: hidden;
+        margin: 0;
+        padding: 0;
     }
     
     .collection-image {
@@ -797,6 +807,43 @@
         padding: 0;
     }
     
+    /* Parfume Collection Edge-to-Edge Styling */
+    .parfume-collections {
+        padding: 0;
+        margin: 0;
+        width: 100%;
+    }
+    
+    .parfume-collections .collection-grid {
+        gap: 0;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .parfume-collections .collection-item {
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* Fix for Öne Çıkarilan Kategoriler - Edge to Edge */
+    .featured-collections {
+        padding: 0;
+        margin: 0;
+        width: 100%;
+    }
+    
+    .featured-collections .collection-grid {
+        gap: 0;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+    }
+    
+    .featured-collections .collection-item {
+        margin: 0;
+        padding: 0;
+    }
+    
     /* About Page Specific Styles */
     .about-story {
         padding: 40px 15px;
@@ -1085,5 +1132,44 @@
         width: 100%;
         height: 100%;
         border: 0;
+    }
+
+    /* Parfume Item Specific Styling */
+    .parfume-item {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .parfume-item .collection-overlay {
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.8));
+    }
+
+    .featured-collections .parfume-item img {
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Further ensure no extra margins/padding that could cause spacing */
+    .featured-collections.edge-to-edge {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        overflow: hidden;
+    }
+    
+    .featured-collections.edge-to-edge .collection-grid {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* Remove any potential horizontal scroll by ensuring content doesn't exceed viewport width */
+    .featured-collections.edge-to-edge, 
+    .featured-collections.edge-to-edge .collection-grid, 
+    .featured-collections.edge-to-edge .collection-item {
+        box-sizing: border-box;
     }
 } 
