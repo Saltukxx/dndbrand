@@ -5,13 +5,8 @@
 
 class AccountAPI {
   constructor() {
-    // Use the API_BASE_URL from config if available
-    this.baseUrl = window.CONFIG && window.CONFIG.API_BASE_URL 
-      ? `${window.CONFIG.API_BASE_URL}/api`
-      : '/api';
+    this.baseUrl = '/api';
     this.token = localStorage.getItem('token');
-    
-    console.log('AccountAPI initialized with baseUrl:', this.baseUrl);
   }
 
   // Set auth token

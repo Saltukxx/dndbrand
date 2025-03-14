@@ -1,6 +1,6 @@
 /**
- * DnD Brand Production Server - API Backend
- * Configured to work with GitHub Pages frontend
+ * DnD Brand Production Server
+ * Configured for HTTPS and optimized for production use
  */
 
 // Load environment variables
@@ -102,16 +102,11 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Enhanced CORS for GitHub Pages integration
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'https://dndbrand.com',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  credentials: true
-}));
+// Apply CORS middleware
+app.use(corsMiddleware);
 
 // Add OPTIONS pre-flight handler
-app.options('*', cors());
+app.options('*', corsMiddleware);
 
 // Compression for faster response times
 app.use(compression());
@@ -121,6 +116,101 @@ app.use((req, res, next) => {
   logger.info(`${req.method} ${req.url}`);
   next();
 });
+
+// Add special debug handler for the shop page since it's not working
+app.get('/shop', (req, res) => {
+  logger.info(`Shop route handler called for ${req.url}`);
+  const filePath = path.join(__dirname, '../public', 'html', 'shop.html');
+  
+  // Check if the file exists and log the result
+  const fileExists = fs.existsSync(filePath);
+  logger.info(`Shop file path: ${filePath}`);
+  logger.info(`Shop file exists: ${fileExists}`);
+  
+  if (fileExists) {
+    logger.info(`Serving shop.html from ${filePath}`);
+    res.sendFile(filePath);
+  } else {
+    // Try to list the directory contents to debug
+    try {
+      const htmlDir = path.join(__dirname, '../public', 'html');
+      const files = fs.readdirSync(htmlDir);
+      logger.info(`Files in ${htmlDir}: ${files.join(', ')}`);
+    } catch (err) {
+      logger.error(`Error reading html directory: ${err.message}`);
+    }
+    
+    logger.error(`Shop file not found: ${filePath}`);
+    res.status(404).sendFile(path.join(__dirname, '../public', 'html', '404.html'));
+  }
+});
+
+// Add route for trailing slash versions of all paths
+app.get('/shop/', (req, res) => {
+  logger.info('Shop route with trailing slash called, redirecting to /shop');
+  res.redirect(301, '/shop');
+});
+
+// Handle trailing slashes for all routes
+app.use((req, res, next) => {
+  if (req.path.slice(-1) === '/' && req.path.length > 1) {
+    // Skip API routes
+    if (req.path.startsWith('/api/')) {
+      return next();
+    }
+    const query = req.url.slice(req.path.length);
+    const safePath = req.path.slice(0, -1).replace(/\/+/g, '/');
+    res.redirect(301, safePath + query);
+  } else {
+    next();
+  }
+});
+
+// Define routes for clean URLs BEFORE the static file middleware and other routes
+const routes = [
+  { path: '/', file: 'index.html' },
+  { path: '/about', file: 'about.html' },
+  { path: '/contact', file: 'contact.html' },
+  { path: '/cart', file: 'cart.html' },
+  { path: '/checkout', file: 'checkout.html' },
+  { path: '/account', file: 'account.html' },
+  { path: '/search', file: 'search.html' },
+  { path: '/collections', file: 'collections.html' },
+  { path: '/shipping', file: 'shipping.html' },
+  { path: '/returns', file: 'returns.html' },
+  { path: '/faq', file: 'faq.html' },
+  { path: '/sustainability', file: 'sustainability.html' },
+  { path: '/careers', file: 'careers.html' },
+  { path: '/privacy', file: 'privacy.html' },
+  { path: '/product', file: 'product.html' }
+];
+
+// Add routes for each path
+routes.forEach(({ path: routePath, file }) => {
+  app.get(routePath, (req, res) => {
+    const filePath = path.join(__dirname, '../public', 'html', file);
+    logger.info(`Serving ${filePath} for route ${routePath}`);
+    
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      logger.error(`File not found: ${filePath}`);
+      res.status(404).sendFile(path.join(__dirname, '../public', 'html', '404.html'));
+    }
+  });
+});
+
+// Serve static files AFTER defining routes
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Mount routes
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/uploads', uploadRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Add health check endpoint near the top of your routes
 app.get('/api/health', (req, res) => {
@@ -137,29 +227,28 @@ app.get('/healthz', (req, res) => {
   res.status(200).send('OK');
 });
 
-// Mount API routes
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/customers', customerRoutes);
-app.use('/api/uploads', uploadRoutes);
-app.use('/api/admin', adminRoutes);
-
-// Fallback route for API not found
-app.use('/api/*', (req, res) => {
-  res.status(404).json({
-    status: 'error',
-    message: 'API endpoint not found'
-  });
+// Catch-all route for other HTML files in public/html
+app.get('/:page', (req, res, next) => {
+  // Skip if it starts with /api/ or includes a file extension
+  if (req.params.page.startsWith('api') || req.params.page.includes('.')) {
+    return next();
+  }
+  
+  const page = req.params.page;
+  const filePath = path.join(__dirname, '../public', 'html', `${page}.html`);
+  logger.info(`Checking for page: ${filePath}`);
+  
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    next(); // Pass to the next handler if file doesn't exist
+  }
 });
 
-// For non-API routes, return a JSON response redirecting to the frontend
-app.use('*', (req, res) => {
-  res.status(404).json({
-    status: 'error',
-    message: 'This endpoint is not available on the API server. Please use the main website at https://dndbrand.com'
-  });
+// 404 handler - must be last
+app.use((req, res) => {
+  logger.warn(`404 Not Found: ${req.originalUrl}`);
+  res.status(404).sendFile(path.join(__dirname, '../public', 'html', '404.html'));
 });
 
 // Error handling middleware
@@ -176,18 +265,68 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Get port from environment or use defaults
-const HTTP_PORT = process.env.PORT || 8080;
+// Run file system check on startup
+try {
+  require('./check-file-access');
+  console.log('File access check completed');
+} catch (err) {
+  console.error('File access check failed:', err.message);
+  // Don't exit, still try to start the server
+}
 
-// Create HTTP server
-const httpServer = http.createServer(app);
+// Determine if we should use HTTPS directly or rely on Cloudflare
+const useDirectHttps = process.env.USE_DIRECT_HTTPS === 'true' && 
+                       process.env.SSL_KEY_PATH && 
+                       process.env.SSL_CERT_PATH &&
+                       fs.existsSync(process.env.SSL_KEY_PATH) && 
+                       fs.existsSync(process.env.SSL_CERT_PATH);
 
-// Start the server
+// Get ports from environment or use defaults
+const HTTP_PORT = process.env.PORT || process.env.HTTP_PORT || 80;
+const HTTPS_PORT = process.env.HTTPS_PORT || 443;
+
+// Create HTTP server - always needed for redirects or as main server
+let httpServer;
+
+if (useDirectHttps) {
+  // If using direct HTTPS, create a redirect server
+  httpServer = http.createServer((req, res) => {
+    const host = req.headers.host?.split(':')[0] || 'localhost';
+    res.writeHead(301, { Location: `https://${host}${req.url}` });
+    res.end();
+  });
+} else {
+  // Otherwise, use Express app directly
+  httpServer = http.createServer(app);
+}
+
+// Start the servers
 httpServer.listen(HTTP_PORT, () => {
-  console.log(`API server running on port ${HTTP_PORT}`);
-  logger.info(`Server running at http://localhost:${HTTP_PORT}`);
-  logger.info(`API available at http://localhost:${HTTP_PORT}/api/`);
+  console.log(`HTTP server running on port ${HTTP_PORT}`);
 });
+
+// If we have SSL certificates, also start HTTPS server
+if (useDirectHttps) {
+  try {
+    const httpsOptions = {
+      key: fs.readFileSync(process.env.SSL_KEY_PATH),
+      cert: fs.readFileSync(process.env.SSL_CERT_PATH)
+    };
+    
+    const httpsServer = https.createServer(httpsOptions, app);
+    
+    httpsServer.listen(HTTPS_PORT, () => {
+      console.log(`HTTPS server running on port ${HTTPS_PORT}`);
+    });
+    
+    console.log('Server running with direct HTTPS support');
+  } catch (error) {
+    console.error('Failed to start HTTPS server:', error.message);
+    console.log('Falling back to HTTP only');
+  }
+} else {
+  console.log('Running without direct HTTPS - ensure you are using Cloudflare or another SSL provider');
+}
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {

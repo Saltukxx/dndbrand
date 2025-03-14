@@ -42,7 +42,8 @@
     "multer-gridfs-storage": "^5.0.2",
     "node-cache": "^5.1.2",
     "path": "^0.12.7",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "nginx-light": "^1.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

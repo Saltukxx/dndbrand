@@ -3,59 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page Redirecting...</title>
-    <script>
-        // This script redirects clean URLs to their .html versions
-        (function() {
-            var path = window.location.pathname;
-            var route = path.substring(1); // Remove leading slash
-            var htmlFile = '';
-            
-            // Special case for the home page
-            if (path === '/') {
-                window.location.replace('/index.html');
-                return;
+    <title>Sayfa Bulunamadı | D&D Brand</title>
+    <link rel="stylesheet" href="public/css/styles.css">
+    <style>
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70vh;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .error-code {
+            font-size: 8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 0;
+            line-height: 1;
+        }
+        
+        .error-title {
+            font-size: 2rem;
+            margin: 1rem 0;
+            color: var(--text-color);
+        }
+        
+        .error-message {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+        
+        .error-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        @media (max-width: 768px) {
+            .error-code {
+                font-size: 6rem;
             }
             
-            // Map routes to HTML files
-            var routes = {
-                'shop': 'html/shop.html',
-                'about': 'html/about.html',
-                'contact': 'html/contact.html',
-                'cart': 'html/cart.html',
-                'checkout': 'html/checkout.html',
-                'account': 'html/account.html',
-                'search': 'html/search.html',
-                'collections': 'html/collections.html',
-                'shipping': 'html/shipping.html',
-                'returns': 'html/returns.html',
-                'faq': 'html/faq.html',
-                'sustainability': 'html/sustainability.html',
-                'careers': 'html/careers.html',
-                'privacy': 'html/privacy.html',
-                'product': 'html/product.html'
-            };
-            
-            // Check if the route is known
-            if (routes[route]) {
-                htmlFile = routes[route];
-            } else {
-                // If it's not a known route, check if it contains parameters
-                var basePath = route.split('?')[0];
-                if (routes[basePath]) {
-                    htmlFile = routes[basePath] + window.location.search;
-                } else {
-                    // If it's still not recognized, show the actual 404 page
-                    htmlFile = 'html/404.html';
-                }
+            .error-title {
+                font-size: 1.5rem;
             }
-            
-            // Redirect to the appropriate HTML file
-            window.location.replace('/' + htmlFile);
-        })();
-    </script>
+        }
+    </style>
 </head>
 <body>
-    <p>Redirecting you to the right page...</p>
+    <main class="container">
+        <div class="error-container">
+            <h1 class="error-code">404</h1>
+            <h2 class="error-title">Sayfa Bulunamadı</h2>
+            <p class="error-message">Aradığınız sayfa mevcut değil veya taşınmış olabilir. Lütfen ana sayfaya dönün veya başka bir sayfayı ziyaret edin.</p>
+            <div class="error-actions">
+                <a href="/" class="btn">Ana Sayfaya Dön</a>
+                <a href="/shop" class="btn">Alışverişe Devam Et</a>
+                <a href="/contact" class="btn">Bize Ulaşın</a>
+            </div>
+        </div>
+    </main>
 </body>
 </html> 

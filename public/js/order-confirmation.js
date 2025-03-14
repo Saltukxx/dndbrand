@@ -14,18 +14,6 @@ const totalElement = document.getElementById('total');
 // State
 let order = null;
 
-// Get API URL from config
-let apiBaseUrl = '/api';
-if (window.CONFIG) {
-    if (window.CONFIG.API_BASE_URL) {
-        apiBaseUrl = `${window.CONFIG.API_BASE_URL}/api`;
-        console.log('Using API_BASE_URL from config.js:', apiBaseUrl);
-    } else if (window.CONFIG.API_URL) {
-        apiBaseUrl = window.CONFIG.API_URL;
-        console.log('Using legacy API_URL from config.js:', apiBaseUrl);
-    }
-}
-
 // Initialize the page
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Order confirmation page initialized');
@@ -91,7 +79,7 @@ async function loadOrderDetails(orderId) {
         }
         
         // Fetch order details from API
-        const response = await fetch(`${apiBaseUrl}/orders/${orderId}`, {
+        const response = await fetch(`/api/orders/${orderId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
